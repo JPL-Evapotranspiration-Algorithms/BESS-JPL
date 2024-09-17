@@ -14,16 +14,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "geos5fp",
-    "keras==2.15",
-    "koppengeiger",
-    "numpy<2",
-    "pandas",
-    "rasters",
-    "sentinel-tiles",
-    "solar-apparent-time",
-    "sun-angles",
-    "tensorflow==2.15"
+    "FLiESANN"
 ]
 
 requires-python = ">=3.11"
