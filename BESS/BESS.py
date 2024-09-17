@@ -2,8 +2,9 @@ from os.path import join, abspath, dirname
 from typing import Union
 
 import numpy as np
+import rasters as rt
+
 from .SZA import calculate_SZA_from_doy_and_hour
-from .rasters import RasterGeometry, Raster
 from .vegetation_conversion.vegetation_conversion import LAI_from_NDVI
 from .VCmax import calculate_VCmax
 from .canopy_shortwave_radiation import canopy_shortwave_radiation
@@ -13,9 +14,9 @@ from .meteorology import meteorology, SVP_Pa_from_Ta_K
 
 BALL_BERRY_INTERCEPT_C4 = 0.04
 
-def load_C4_fraction(self, geometry: RasterGeometry) -> Raster:
+def load_C4_fraction(self, geometry: rt.RasterGeometry) -> rt.Raster:
     filename = join(abspath(dirname(__file__)), "C4_fraction.tif")
-    image = Raster.open(filename, geometry=geometry, resampling=self.resampling)
+    image = rt.Raster.open(filename, geometry=geometry, resampling=self.resampling)
 
     return image
 
@@ -86,7 +87,7 @@ def process_BESS_latlon(
     if SZA is None:
         SZA = calculate_SZA_from_doy_and_hour(lat, lon, day_of_year, hour_of_day)
 
-    geometry = CoordinateArray(longitude, latitude)
+    geometry = rt.CoordinateArray(longitude, latitude)
 
     # canopy height defaults to zero
     canopy_height_meters = np.where(np.isnan(canopy_height_meters), 0, canopy_height_meters)
