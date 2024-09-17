@@ -4,7 +4,8 @@ from typing import Union
 import numpy as np
 import rasters as rt
 
-from .SZA import calculate_SZA_from_doy_and_hour
+from sun_angles import calculate_SZA_from_DOY_and_hour
+
 from .vegetation_conversion.vegetation_conversion import LAI_from_NDVI
 from .VCmax import calculate_VCmax
 from .canopy_shortwave_radiation import canopy_shortwave_radiation
