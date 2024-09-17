@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=60", "setuptools-scm>=8.0", "wheel"]
+
+[project]
+name = "BESS"
+version = "1.0.0"
+description = "Breathing Earth System Simulator (BESS) Gross Primary Production (GPP) Model Python Implementation"
+readme = "README.md"
+authors = [
+    { name = "Gregory Halverson", email = "gregory.h.halverson@jpl.nasa.gov" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "geos5fp",
+    "keras==2.15",
+    "koppengeiger",
+    "numpy<2",
+    "pandas",
+    "rasters",
+    "sentinel-tiles",
+    "solar-apparent-time",
+    "sun-angles",
+    "tensorflow==2.15"
+]
+
+requires-python = ">=3.11"
+
+[tool.setuptools.package-data]
+BESS = ["*.txt", "*.tif"]
+
+[project.urls]
+"Homepage" = "https://github.com/JPL-Evapotranspiration-Algorithms/BESS"
