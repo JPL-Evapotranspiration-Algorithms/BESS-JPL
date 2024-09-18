@@ -14,7 +14,12 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "FLiESANN"
+    "FLiESANN",
+    "gedi-canopy-height",
+    "geos5fp",
+    "modisci",
+    "numpy",
+    "rasters"
 ]
 
 requires-python = ">=3.11"

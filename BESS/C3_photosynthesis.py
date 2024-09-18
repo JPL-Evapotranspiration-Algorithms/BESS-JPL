@@ -1,16 +1,4 @@
-from os.path import join, abspath, dirname
-
 import numpy as np
-import rasters as rt
-
-from rasters import RasterGeometry, Raster
-
-
-def load_carbon_uptake_efficiency(geometry: RasterGeometry, resampling: str = None) -> Raster:
-    filename = join(abspath(dirname(__file__)), "carbon_uptake_efficiency.tif")
-    image = rt.Raster.open(filename, geometry=geometry, resampling=resampling)
-
-    return image
 
 
 def calculate_C3_photosynthesis(

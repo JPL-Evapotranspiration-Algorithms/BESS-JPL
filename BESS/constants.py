@@ -1,3 +1,4 @@
+A = 0.3
 KPAR = 0.5
 MIN_FIPAR = 0.0
 MAX_FIPAR = 1.0
