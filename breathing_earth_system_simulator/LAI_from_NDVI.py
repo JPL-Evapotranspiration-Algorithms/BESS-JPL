@@ -4,7 +4,7 @@ import numpy as np
 import rasters as rt
 from rasters import Raster
 
-from BESS.constants import KPAR, MIN_FIPAR, MAX_FIPAR, MIN_LAI, MAX_LAI
+from .constants import KPAR, MIN_FIPAR, MAX_FIPAR, MIN_LAI, MAX_LAI
 
 
 def LAI_from_NDVI(
