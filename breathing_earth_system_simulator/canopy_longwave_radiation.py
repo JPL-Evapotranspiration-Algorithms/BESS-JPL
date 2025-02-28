@@ -53,20 +53,40 @@ def canopy_longwave_radiation(
     # For simplicity
     kd_LAI = kd * LAI
 
-    # Absorbed longwave radiation by sunlit leaves
-    ALW_sunlit = np.clip(
-        np.clip(Ls - Lf, intermediate_min, None) * kd * (np.exp(-kd_LAI) - np.exp(-kb * LAI)) / (
-                kd - kb) + kd * np.clip(La - Lf,
-                                        intermediate_min, intermediate_max) * (
-                1.0 - np.exp(-(kb + kd) * LAI)), ALW_min, None) / (kd + kb)  # Eq. (44)
+    soil_leaf_difference = Ls - Lf
 
+    if intermediate_min is not None:
+        soil_leaf_difference = np.clip(soil_leaf_difference, intermediate_min, None)
+
+    air_leaf_difference = La - Lf
+
+    if intermediate_min is not None:
+        air_leaf_difference = np.clip(air_leaf_difference, intermediate_min, intermediate_max)
+    
+    # Absorbed longwave radiation by sunlit leaves
+    numerator = soil_leaf_difference * kd * (np.exp(-kd_LAI) - np.exp(-kb * LAI)) / (kd - kb) + kd * air_leaf_difference * (1.0 - np.exp(-(kb + kd) * LAI))
+    denominator = kd + kb
+    
+    if ALW_min is not None:
+        numerator = np.clip(numerator, ALW_min, None)
+
+    ALW_sunlit = numerator / denominator  # Eq. (44)
+
+    soil_air_leaf = Ls + La - 2 * Lf
+
+    if intermediate_min is not None or intermediate_max is not None:
+        soil_air_leaf = np.clip(soil_air_leaf, intermediate_min, intermediate_max)
+    
     # Absorbed longwave radiation by shaded leaves
-    ALW_shaded = np.clip(
-        (1.0 - np.exp(-kd_LAI)) * np.clip(Ls + La - 2 * Lf, intermediate_min, intermediate_max) - ALW_sunlit,
-        ALW_min,
-        None)  # Eq. (45)
+    ALW_shaded = (1.0 - np.exp(-kd_LAI)) * soil_air_leaf - ALW_sunlit  # Eq. (45)
+    
+    if ALW_min is not None:
+        ALW_shaded = np.clip(ALW_shaded, ALW_min, None)
 
     # Absorbed longwave radiation by soil
-    ALW_soil = np.clip((1.0 - np.exp(-kd_LAI)) * Lf + np.exp(-kd_LAI) * La, ALW_min, None)  # Eq. (41)
+    ALW_soil = (1.0 - np.exp(-kd_LAI)) * Lf + np.exp(-kd_LAI) * La  # Eq. (41)
+
+    if ALW_min is not None:
+        ALW_soil = np.clip(ALW_soil, ALW_min, None)
 
     return ALW_sunlit, ALW_shaded, ALW_soil, Ls, La, Lf

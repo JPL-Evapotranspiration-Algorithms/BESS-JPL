@@ -7,13 +7,17 @@ version = "1.0.5"
 description = "Breathing Earth System Simulator (BESS) Gross Primary Production (GPP) and Evapotranspiration (ET) Model Python"
 readme = "README.md"
 authors = [
-    { name = "Gregory H. Halverson", email = "gregory.h.halverson@jpl.nasa.gov" },
+    { name = "Gregory Halverson", email = "gregory.h.halverson@jpl.nasa.gov" },
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "FLiESANN",
+    "gedi-canopy-height",
+    "geos5fp",
+    "modisci",
     "numpy",
     "rasters"
 ]
