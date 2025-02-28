@@ -1,4 +1,3 @@
-from .FLiESANN import *
 from .breathing_earth_system_simulator import *
 
 from os.path import join, dirname, abspath
