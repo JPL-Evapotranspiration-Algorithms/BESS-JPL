@@ -19,5 +19,5 @@ from .load_ball_berry_intercept_C3 import load_ball_berry_intercept_C3
 from .load_ball_berry_slope_C3 import load_ball_berry_slope_C3
 from .load_ball_berry_slope_C4 import load_ball_berry_slope_C4
 from .meteorology import *
-from .process_BESS_latlon import process_BESS_latlon
+from .BESS import BESS
 from .soil_energy_balance import *

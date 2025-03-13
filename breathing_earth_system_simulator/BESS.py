@@ -1,47 +1,72 @@
 from typing import Union
+from datetime import datetime
 import numpy as np
 
 import rasters as rt
+from rasters import Raster, RasterGeometry
 
 from sun_angles import calculate_SZA_from_DOY_and_hour
 
-from .constants import BALL_BERRY_INTERCEPT_C4
+from koppengeiger import load_koppen_geiger
+from gedi_canopy_height import load_canopy_height
+from FLiESANN import process_FLiES_ANN
+from geos5fp import GEOS5FP
+
+from .constants import *
 from .vegetation_conversion import LAI_from_NDVI
 from .canopy_shortwave_radiation import canopy_shortwave_radiation
 from .carbon_water_fluxes import carbon_water_fluxes
 from .meteorology import meteorology, SVP_Pa_from_Ta_K
 from .interpolate_C3_C4 import interpolate_C3_C4
 from .calculate_VCmax import calculate_VCmax
+from .load_NDVI_minimum import load_NDVI_minimum
+from .load_NDVI_maximum import load_NDVI_maximum
+from .load_C4_fraction import load_C4_fraction
+from .load_carbon_uptake_efficiency import load_carbon_uptake_efficiency
+from .load_kn import load_kn
+from .load_peakVCmax_C3 import load_peakVCmax_C3
+from .load_peakVCmax_C4 import load_peakVCmax_C4
+from .load_ball_berry_intercept_C3 import load_ball_berry_intercept_C3
+from .load_ball_berry_slope_C3 import load_ball_berry_slope_C3
+from .load_ball_berry_slope_C4 import load_ball_berry_slope_C4
 
-def process_BESS_latlon(
+GEOS5FP_DOWNLOAD_DIRECTORY = "~/data/GEOS5FP_download"
+
+def BESS(
         hour_of_day: np.ndarray,  # hour of day
         day_of_year: np.ndarray,  # day of year
-        latitude: np.ndarray,  # latitude
-        longitude: np.ndarray,  # longitude
-        elevation_km: np.ndarray,  # elevation in kilometers
-        ST_K: np.ndarray,  # surface temperature in Kelvin
-        NDVI: np.ndarray,  # NDVI
-        NDVI_minimum: np.ndarray,  # minimum NDVI
-        NDVI_maximum: np.ndarray,  # maximum NDVI
-        albedo: np.ndarray,  # surface albedo
-        Ta_K: np.ndarray,  # air temperature in Kelvin
-        RH: np.ndarray,  # relative humidity as a proportion
-        Rg: np.ndarray,  # incoming shortwave radiation in W/m^2
-        VISdiff: np.ndarray,  # diffuse visible radiation in W/m^2
-        VISdir: np.ndarray,  # direct visible radiation in W/m^2
-        NIRdiff: np.ndarray,  # diffuse near-infrared radiation in W/m^2
-        NIRdir: np.ndarray,  # direct near-infrared radiation in W/m^2
-        UV: np.ndarray,  # incoming ultraviolet radiation in W/m^2
-        canopy_height_meters: np.ndarray,  # canopy height in meters
-        Ca: np.ndarray,  # atmospheric CO2 concentration in ppm
-        wind_speed_mps: np.ndarray,  # wind speed in meters per second
-        SZA: np.ndarray = None,  # solar zenith angle in degrees
-        canopy_temperature_K: np.ndarray = None, # canopy temperature in Kelvin (initialized to surface temperature if left as None)
-        soil_temperature_K: np.ndarray = None, # soil temperature in Kelvin (initialized to surface temperature if left as None)
-        albedo_visible: np.ndarray = None, # surface albedo in visible wavelengths (initialized to surface albedo if left as None)
-        albedo_NIR: np.ndarray = None, # surface albedo in near-infrared wavelengths (initialized to surface albedo if left as None)
-        C4_fraction: np.ndarray = None,  # fraction of C4 plants
-        carbon_uptake_efficiency: np.ndarray = None,  # intrinsic quantum efficiency for carbon uptake
+        elevation_km: Union[Raster, np.ndarray],  # elevation in kilometers
+        ST_C: Union[Raster, np.ndarray],  # surface temperature in Celsius
+        NDVI: Union[Raster, np.ndarray],  # NDVI
+        albedo: Union[Raster, np.ndarray],  # surface albedo
+        geometry: RasterGeometry = None,
+        datetime_UTC: datetime = None,
+        GEOS5FP_connection: GEOS5FP = None,
+        Ta_C: Union[Raster, np.ndarray] = None,  # air temperature in Celsius
+        RH: Union[Raster, np.ndarray] = None,  # relative humidity as a proportion
+        NDVI_minimum: Union[Raster, np.ndarray] = None,  # minimum NDVI
+        NDVI_maximum: Union[Raster, np.ndarray] = None,  # maximum NDVI
+        Rg: Union[Raster, np.ndarray] = None,  # incoming shortwave radiation in W/m^2
+        VISdiff: Union[Raster, np.ndarray] = None,  # diffuse visible radiation in W/m^2
+        VISdir: Union[Raster, np.ndarray] = None,  # direct visible radiation in W/m^2
+        NIRdiff: Union[Raster, np.ndarray] = None,  # diffuse near-infrared radiation in W/m^2
+        NIRdir: Union[Raster, np.ndarray] = None,  # direct near-infrared radiation in W/m^2
+        UV: Union[Raster, np.ndarray] = None,  # incoming ultraviolet radiation in W/m^2
+        albedo_visible: Union[Raster, np.ndarray] = None, # surface albedo in visible wavelengths (initialized to surface albedo if left as None)
+        albedo_NIR: Union[Raster, np.ndarray] = None, # surface albedo in near-infrared wavelengths (initialized to surface albedo if left as None)
+        COT: Union[Raster, np.ndarray] = None,  # cloud optical thickness
+        AOT: Union[Raster, np.ndarray] = None,  # aerosol optical thickness
+        vapor_gccm: Union[Raster, np.ndarray] = None,  # water vapor in g/ccm
+        ozone_cm: Union[Raster, np.ndarray] = None,  # ozone in cm
+        KG_climate: Union[Raster, np.ndarray] = None,  # KG climate
+        canopy_height_meters: Union[Raster, np.ndarray] = None,  # canopy height in meters
+        Ca: Union[Raster, np.ndarray] = None,  # atmospheric CO2 concentration in ppm
+        wind_speed_mps: Union[Raster, np.ndarray] = None,  # wind speed in meters per second
+        SZA: Union[Raster, np.ndarray] = None,  # solar zenith angle in degrees
+        canopy_temperature_C: Union[Raster, np.ndarray] = None, # canopy temperature in Celsius (initialized to surface temperature if left as None)
+        soil_temperature_C: Union[Raster, np.ndarray] = None, # soil temperature in Celsius (initialized to surface temperature if left as None)
+        C4_fraction: Union[Raster, np.ndarray] = None,  # fraction of C4 plants
+        carbon_uptake_efficiency: Union[Raster, np.ndarray] = None,  # intrinsic quantum efficiency for carbon uptake
         kn: np.ndarray = None,
         ball_berry_intercept_C3: np.ndarray = None,  # Ball-Berry intercept for C3 plants
         ball_berry_intercept_C4: Union[np.ndarray, float] = BALL_BERRY_INTERCEPT_C4, # Ball-Berry intercept for C4 plants
@@ -49,14 +74,117 @@ def process_BESS_latlon(
         ball_berry_slope_C4: np.ndarray = None,  # Ball-Berry slope for C4 plants
         peakVCmax_C3: np.ndarray = None,  # peak maximum carboxylation rate for C3 plants
         peakVCmax_C4: np.ndarray = None,  # peak maximum carboxylation rate for C4 plants
-        CI: np.ndarray = None):  # clumping index
+        CI: Union[Raster, np.ndarray] = None,
+        GEOS5FP_download_directory: str = GEOS5FP_DOWNLOAD_DIRECTORY,
+        resampling: str = RESAMPLING):  # clumping index
+    if geometry is None and isinstance(ST_C, Raster):
+        geometry = ST_C.geometry
+
+    # load air temperature in Celsius if not provided
+    if Ta_C is None:
+        Ta_C = GEOS5FP_connection.Ta_C(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+
+    # load relative humidity if not provided
+    if RH is None:
+        RH = GEOS5FP_connection.RH(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+
+    # load minimum NDVI if not provided
+    if NDVI_minimum is None and geometry is not None:
+        NDVI_minimum = load_NDVI_minimum(geometry=geometry, resampling=resampling)
+
+    # load maximum NDVI if not provided
+    if NDVI_maximum is None and geometry is not None:
+        NDVI_maximum = load_NDVI_maximum(geometry=geometry, resampling=resampling)
+
+    # load C4 fraction if not provided
+    if C4_fraction is None:
+        C4_fraction = load_C4_fraction(geometry=geometry, resampling=resampling)
+
+    # load carbon uptake efficiency if not provided
+    if carbon_uptake_efficiency is None:
+        carbon_uptake_efficiency = load_carbon_uptake_efficiency(geometry=geometry, resampling=resampling)
+    
+    # load kn if not provided
+    if kn is None:
+        kn = load_kn(geometry=geometry, resampling=resampling)
+
+    # load peak VC max for C3 plants if not provided
+    if peakVCmax_C3 is None:
+        peakVCmax_C3 = load_peakVCmax_C3(geometry=geometry, resampling=resampling)
+
+    # load peak VC max for C4 plants if not provided
+    if peakVCmax_C4 is None:
+        peakVCmax_C4 = load_peakVCmax_C4(geometry=geometry, resampling=resampling)
+
+    # load Ball-Berry slope for C3 plants if not provided
+    if ball_berry_slope_C3 is None:
+        ball_berry_slope_C3 = load_ball_berry_slope_C3(geometry=geometry, resampling=resampling)
+    
+    # load Ball-Berry slope for C4 plants if not provided
+    if ball_berry_slope_C4 is None:
+        ball_berry_slope_C4 = load_ball_berry_slope_C4(geometry=geometry, resampling=resampling)
+
+    # load Ball-Berry intercept for C3 plants if not provided
+    if ball_berry_intercept_C3 is None:
+        ball_berry_intercept_C3 = load_ball_berry_intercept_C3(geometry=geometry, resampling=resampling)
+
+    # check if any of the FLiES outputs are not given
+    if None in (Rg, VISdiff, VISdir, NIRdiff, NIRdir, UV, albedo_visible, albedo_NIR):
+        # load cloud optical thickness if not provided
+        if COT is None:
+            COT = GEOS5FP_connection.COT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+
+        # load aerosol optical thickness if not provided
+        if AOT is None:
+            AOT = GEOS5FP_connection.AOT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+
+        # run FLiES radiative transfer model
+        FLiES_results = process_FLiES_ANN(
+            doy=day_of_year,
+            albedo=albedo,
+            COT=COT,
+            AOT=AOT,
+            vapor_gccm=vapor_gccm,
+            ozone_cm=ozone_cm,
+            elevation_km=elevation_km,
+            SZA=SZA,
+            KG_climate=KG_climate,
+            geometry=geometry
+        )
+
+        # extract FLiES outputs
+        Rg = FLiES_results["Rg"]
+        VISdiff = FLiES_results["VISdiff"]
+        VISdir = FLiES_results["VISdir"]
+        NIRdiff = FLiES_results["NIRdiff"]
+        NIRdir = FLiES_results["NIRdir"]
+        UV = FLiES_results["UV"]
+        albedo_visible = FLiES_results["VIS"]
+        albedo_NIR = FLiES_results["NIR"]
+
+    # load koppen geiger climate classification if not provided
+    if KG_climate is None:
+        KG_climate = load_koppen_geiger(geometry=geometry)
+
+    # load canopy height in meters if not provided
+    if canopy_height_meters is None:
+        canopy_height_meters = load_canopy_height(geometry=geometry, resampling=resampling)
+
+    # load CO2 concentration in ppm if not provided
+    if Ca is None:
+        Ca = GEOS5FP_connection.Ca(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+
+    # load wind speed in meters per second if not provided
+    if wind_speed_mps is None:
+        wind_speed_mps = GEOS5FP_connection.wind_speed(time_UTC=time_UTC, geometry=geometry, resampling=resampling)    
+
     # canopy temperature defaults to surface temperature
-    if canopy_temperature_K is None:
-        canopy_temperature_K = ST_K
+    if canopy_temperature_C is None:
+        canopy_temperature_C = ST_C
 
     # soil temperature defaults to surface temperature
-    if soil_temperature_K is None:
-        soil_temperature_K = ST_K
+    if soil_temperature_C is None:
+        soil_temperature_C = ST_C
 
     # visible albedo defaults to surface albedo
     if albedo_visible is None:
@@ -66,6 +194,9 @@ def process_BESS_latlon(
     if albedo_NIR is None:
         albedo_NIR = albedo
 
+
+
+    # calculate solar zenith angle if not provided
     if SZA is None:
         SZA = calculate_SZA_from_DOY_and_hour(lat, lon, day_of_year, hour_of_day)
 
@@ -75,6 +206,7 @@ def process_BESS_latlon(
     canopy_height_meters = np.where(np.isnan(canopy_height_meters), 0, canopy_height_meters)
 
     # calculate saturation vapor pressure in Pascal from air temperature in Kelvin
+    Ta_K = Ta_C + 273.15
     SVP_Pa = SVP_Pa_from_Ta_K(Ta_K)
 
     # calculate actual vapor pressure in Pascal from relative humidity and saturation vapor pressure
@@ -82,6 +214,8 @@ def process_BESS_latlon(
 
     # convert elevation to meters
     elevation_m = elevation_km * 1000
+
+    latitude = geometry.lat
 
     Ps_Pa, VPD_Pa, RH, desTa, ddesTa, gamma, Cp, rhoa, epsa, R, Rc, Rs, SFd, SFd2, DL, Ra, fStress = meteorology(
         day_of_year=day_of_year,
@@ -123,6 +257,9 @@ def process_BESS_latlon(
         albedo_visible=albedo_visible,  # surface albedo in visible wavelengths
         albedo_NIR=albedo_NIR  # surface albedo in near-infrared wavelengths
     )
+
+    canopy_temperature_K = canopy_temperature_C + 273.15
+    soil_temperature_K = soil_temperature_C + 273.15
 
     GPP_C3, LE_C3, LE_soil_C3, LE_canopy_C3, Rn_C3, Rn_soil_C3, Rn_canopy_C3 = carbon_water_fluxes(
         canopy_temperature_K=canopy_temperature_K,  # canopy temperature in Kelvin
@@ -193,6 +330,7 @@ def process_BESS_latlon(
     )
 
     # interpolate C3 and C4 GPP
+    ST_K = ST_C + 273.15
     GPP = np.clip(interpolate_C3_C4(GPP_C3, GPP_C4, C4_fraction), 0, 50)
     GPP = np.where(np.isnan(ST_K), np.nan, GPP)
 
