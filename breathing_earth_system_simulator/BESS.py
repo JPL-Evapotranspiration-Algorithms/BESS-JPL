@@ -82,11 +82,11 @@ def BESS(
 
     # load air temperature in Celsius if not provided
     if Ta_C is None:
-        Ta_C = GEOS5FP_connection.Ta_C(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+        Ta_C = GEOS5FP_connection.Ta_C(time_UTC=datetime_UTC, geometry=geometry, resampling=resampling)
 
     # load relative humidity if not provided
     if RH is None:
-        RH = GEOS5FP_connection.RH(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+        RH = GEOS5FP_connection.RH(time_UTC=datetime_UTC, geometry=geometry, resampling=resampling)
 
     # load minimum NDVI if not provided
     if NDVI_minimum is None and geometry is not None:
