@@ -132,11 +132,11 @@ def BESS(
     if None in (Rg, VISdiff, VISdir, NIRdiff, NIRdir, UV, albedo_visible, albedo_NIR):
         # load cloud optical thickness if not provided
         if COT is None:
-            COT = GEOS5FP_connection.COT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+            COT = GEOS5FP_connection.COT(time_UTC=datetime_UTC, geometry=geometry, resampling=resampling)
 
         # load aerosol optical thickness if not provided
         if AOT is None:
-            AOT = GEOS5FP_connection.AOT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+            AOT = GEOS5FP_connection.AOT(time_UTC=datetime_UTC, geometry=geometry, resampling=resampling)
 
         # run FLiES radiative transfer model
         FLiES_results = process_FLiES_ANN(
@@ -172,11 +172,11 @@ def BESS(
 
     # load CO2 concentration in ppm if not provided
     if Ca is None:
-        Ca = GEOS5FP_connection.Ca(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+        Ca = GEOS5FP_connection.Ca(time_UTC=datetime_UTC, geometry=geometry, resampling=resampling)
 
     # load wind speed in meters per second if not provided
     if wind_speed_mps is None:
-        wind_speed_mps = GEOS5FP_connection.wind_speed(time_UTC=time_UTC, geometry=geometry, resampling=resampling)    
+        wind_speed_mps = GEOS5FP_connection.wind_speed(time_UTC=datetime_UTC, geometry=geometry, resampling=resampling)    
 
     # canopy temperature defaults to surface temperature
     if canopy_temperature_C is None:
