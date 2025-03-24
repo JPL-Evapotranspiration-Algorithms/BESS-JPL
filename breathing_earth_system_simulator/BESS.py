@@ -138,9 +138,12 @@ def BESS(
         if AOT is None:
             AOT = GEOS5FP_connection.AOT(time_UTC=datetime_UTC, geometry=geometry, resampling=resampling)
 
+        ## FIXME fix FLiES interface
+
         # run FLiES radiative transfer model
         FLiES_results = process_FLiES_ANN(
-            doy=day_of_year,
+            day_of_year=day_of_year,
+            hour_of_day=hour_of_day,
             albedo=albedo,
             COT=COT,
             AOT=AOT,
@@ -149,7 +152,8 @@ def BESS(
             elevation_km=elevation_km,
             SZA=SZA,
             KG_climate=KG_climate,
-            geometry=geometry
+            geometry=geometry,
+            GEOS5FP_connection=GEOS5FP_connection
         )
 
         # extract FLiES outputs
