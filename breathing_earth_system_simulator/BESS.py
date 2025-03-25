@@ -32,15 +32,17 @@ from .load_ball_berry_slope_C4 import load_ball_berry_slope_C4
 
 GEOS5FP_DOWNLOAD_DIRECTORY = "~/data/GEOS5FP_download"
 
+## TODO automatic acquisition of SRTM for default elevation
+
 def BESS(
-        hour_of_day: np.ndarray,  # hour of day
-        day_of_year: np.ndarray,  # day of year
-        elevation_km: Union[Raster, np.ndarray],  # elevation in kilometers
         ST_C: Union[Raster, np.ndarray],  # surface temperature in Celsius
         NDVI: Union[Raster, np.ndarray],  # NDVI
         albedo: Union[Raster, np.ndarray],  # surface albedo
+        elevation_km: Union[Raster, np.ndarray],  # elevation in kilometers
         geometry: RasterGeometry = None,
-        datetime_UTC: datetime = None,
+        time_UTC: datetime = None,
+        hour_of_day: np.ndarray = None,
+        day_of_year: np.ndarray = None,
         GEOS5FP_connection: GEOS5FP = None,
         Ta_C: Union[Raster, np.ndarray] = None,  # air temperature in Celsius
         RH: Union[Raster, np.ndarray] = None,  # relative humidity as a proportion
@@ -80,13 +82,20 @@ def BESS(
     if geometry is None and isinstance(ST_C, Raster):
         geometry = ST_C.geometry
 
+    if (day_of_year is None or hour_of_day is None) and time_UTC is not None and geometry is not None:
+        day_of_year = solar_day_of_year_for_area(time_UTC=time_UTC, geometry=geometry)
+        hour_of_day = solar_hour_of_day_for_area(time_UTC=time_UTC, geometry=geometry)
+
+    if time_UTC is None and day_of_year is None and hour_of_day is None:
+        raise ValueError("no time given between time_UTC, day_of_year, and hour_of_day")
+
     # load air temperature in Celsius if not provided
     if Ta_C is None:
-        Ta_C = GEOS5FP_connection.Ta_C(time_UTC=datetime_UTC, geometry=geometry, resampling=resampling)
+        Ta_C = GEOS5FP_connection.Ta_C(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
 
     # load relative humidity if not provided
     if RH is None:
-        RH = GEOS5FP_connection.RH(time_UTC=datetime_UTC, geometry=geometry, resampling=resampling)
+        RH = GEOS5FP_connection.RH(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
 
     # load minimum NDVI if not provided
     if NDVI_minimum is None and geometry is not None:
@@ -132,11 +141,11 @@ def BESS(
     if None in (Rg, VISdiff, VISdir, NIRdiff, NIRdir, UV, albedo_visible, albedo_NIR):
         # load cloud optical thickness if not provided
         if COT is None:
-            COT = GEOS5FP_connection.COT(time_UTC=datetime_UTC, geometry=geometry, resampling=resampling)
+            COT = GEOS5FP_connection.COT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
 
         # load aerosol optical thickness if not provided
         if AOT is None:
-            AOT = GEOS5FP_connection.AOT(time_UTC=datetime_UTC, geometry=geometry, resampling=resampling)
+            AOT = GEOS5FP_connection.AOT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
 
         ## FIXME fix FLiES interface
 
@@ -176,11 +185,11 @@ def BESS(
 
     # load CO2 concentration in ppm if not provided
     if Ca is None:
-        Ca = GEOS5FP_connection.Ca(time_UTC=datetime_UTC, geometry=geometry, resampling=resampling)
+        Ca = GEOS5FP_connection.Ca(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
 
     # load wind speed in meters per second if not provided
     if wind_speed_mps is None:
-        wind_speed_mps = GEOS5FP_connection.wind_speed(time_UTC=datetime_UTC, geometry=geometry, resampling=resampling)    
+        wind_speed_mps = GEOS5FP_connection.wind_speed(time_UTC=time_UTC, geometry=geometry, resampling=resampling)    
 
     # canopy temperature defaults to surface temperature
     if canopy_temperature_C is None:
