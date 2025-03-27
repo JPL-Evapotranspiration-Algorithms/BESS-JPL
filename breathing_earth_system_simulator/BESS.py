@@ -9,7 +9,7 @@ from sun_angles import calculate_SZA_from_DOY_and_hour
 
 from koppengeiger import load_koppen_geiger
 from gedi_canopy_height import load_canopy_height
-from FLiESANN import process_FLiES_ANN
+from FLiESANN import FLiESANN
 from geos5fp import GEOS5FP
 
 from .constants import *
@@ -150,7 +150,7 @@ def BESS(
         ## FIXME fix FLiES interface
 
         # run FLiES radiative transfer model
-        FLiES_results = process_FLiES_ANN(
+        FLiES_results = FLiESANN(
             day_of_year=day_of_year,
             hour_of_day=hour_of_day,
             albedo=albedo,
