@@ -11,7 +11,7 @@ from koppengeiger import load_koppen_geiger
 from gedi_canopy_height import load_canopy_height
 from FLiESANN import FLiESANN
 from GEOS5FP import GEOS5FP
-from modisci import MODISCI
+from MODISCI import MODISCI
 
 from .constants import *
 from .vegetation_conversion import LAI_from_NDVI
