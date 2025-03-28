@@ -207,13 +207,9 @@ def BESS(
     if albedo_NIR is None:
         albedo_NIR = albedo
 
-
-
     # calculate solar zenith angle if not provided
     if SZA is None:
         SZA = calculate_SZA_from_DOY_and_hour(lat, lon, day_of_year, hour_of_day)
-
-    geometry = rt.CoordinateArray(longitude, latitude)
 
     # canopy height defaults to zero
     canopy_height_meters = np.where(np.isnan(canopy_height_meters), 0, canopy_height_meters)
