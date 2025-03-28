@@ -10,7 +10,7 @@ from sun_angles import calculate_SZA_from_DOY_and_hour
 from koppengeiger import load_koppen_geiger
 from gedi_canopy_height import load_canopy_height
 from FLiESANN import FLiESANN
-from geos5fp import GEOS5FP
+from GEOS5FP import GEOS5FP
 
 from .constants import *
 from .vegetation_conversion import LAI_from_NDVI
