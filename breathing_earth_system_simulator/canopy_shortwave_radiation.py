@@ -61,6 +61,25 @@ def canopy_shortwave_radiation(
     # Extinction coefficient for diffuse and scattered diffuse PAR
     kk_Pd = 0.72  # Table A1
 
+    # Check for None parameters
+    parameters = {
+        "PARDiff": PARDiff,
+        "PARDir": PARDir,
+        "NIRDiff": NIRDiff,
+        "NIRDir": NIRDir,
+        "UV": UV,
+        "SZA": SZA,
+        "LAI": LAI,
+        "CI": CI,
+        "albedo_visible": albedo_visible,
+        "albedo_NIR": albedo_NIR
+    }
+    
+    for param_name, param_value in parameters.items():
+        if param_value is None:
+            raise ValueError(f"The parameter '{param_name}' cannot be None.")
+
+
     # self.diagnostic(PARDiff, "PARDiff", date_UTC, target)
     # self.diagnostic(PARDir, "PARDir", date_UTC, target)
     # self.diagnostic(NIRDiff, "NIRDiff", date_UTC, target)
