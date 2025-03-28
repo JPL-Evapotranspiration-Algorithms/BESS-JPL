@@ -11,6 +11,7 @@ from koppengeiger import load_koppen_geiger
 from gedi_canopy_height import load_canopy_height
 from FLiESANN import FLiESANN
 from GEOS5FP import GEOS5FP
+from modisci import MODISCI
 
 from .constants import *
 from .vegetation_conversion import LAI_from_NDVI
@@ -210,6 +211,10 @@ def BESS(
     # calculate solar zenith angle if not provided
     if SZA is None:
         SZA = calculate_SZA_from_DOY_and_hour(lat, lon, day_of_year, hour_of_day)
+
+    if CI is None and geometry is not None:
+        modisci = MODISCI()
+        CI = modisci.CI(geometry=geometry, resampling=resampling)
 
     # canopy height defaults to zero
     canopy_height_meters = np.where(np.isnan(canopy_height_meters), 0, canopy_height_meters)
