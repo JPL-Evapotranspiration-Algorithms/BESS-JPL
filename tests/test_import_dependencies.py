@@ -5,7 +5,7 @@ dependencies = [
     "FLiESANN",
     "gedi_canopy_height",
     "GEOS5FP",
-    "modisci",
+    "MODISCI",
     "numpy",
     "rasters"
 ]
