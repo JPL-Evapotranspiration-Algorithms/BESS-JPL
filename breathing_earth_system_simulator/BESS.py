@@ -185,7 +185,7 @@ def BESS(
 
     # load CO2 concentration in ppm if not provided
     if Ca is None:
-        Ca = GEOS5FP_connection.Ca(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+        Ca = GEOS5FP_connection.CO2SC(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
 
     # load wind speed in meters per second if not provided
     if wind_speed_mps is None:
