@@ -13,15 +13,16 @@ class BlankOutputError(Exception):
 def check_distribution(
         image: Union[Raster, np.ndarray],
         variable: str,
-        date_UTC: Union[date, str],
+        date_UTC: Union[date, str] = None,
         target: str = None):
     unique = np.unique(image)
     nan_proportion = np.count_nonzero(np.isnan(image)) / np.size(image)
 
     target_message = f" at {cl.place(target)}" if target else ""
+    date_message = f" on {cl.time(f'{date_UTC:%Y-%m-%d}')}" if date_UTC else ""
 
     if len(unique) < 10:
-        logger.info(f"variable {cl.name(variable)} ({image.dtype}) on {cl.time(f'{date_UTC:%Y-%m-%d}')}{target_message} with {cl.val(unique)} unique values")
+        logger.info(f"variable {cl.name(variable)} ({image.dtype}){date_message}{target_message} with {cl.val(unique)} unique values")
 
         for value in unique:
             if np.isnan(value):
@@ -56,12 +57,12 @@ def check_distribution(
             nan_proportion_string = cl.val(f"{(nan_proportion * 100):0.2f}%")
 
         if isinstance(image, Raster):
-          nan_value = image.nodata
+            nan_value = image.nodata
         else:
-          nan_value = np.nan
+            nan_value = np.nan
 
         message = "variable " + cl.name(variable) + \
-            " on " + cl.time(f"{date_UTC:%Y-%m-%d}") + \
+            date_message + \
             target_message + \
             " min: " + minimum_string + \
             " mean: " + cl.val(f"{np.nanmean(image):0.3f}") + \
@@ -75,4 +76,4 @@ def check_distribution(
             logger.info(message)
 
     if nan_proportion == 1:
-        raise BlankOutputError(f"variable {variable} on {date_UTC:%Y-%m-%d}{target_message} is a blank image")
+        raise BlankOutputError(f"variable {variable}{date_message}{target_message} is a blank image")
