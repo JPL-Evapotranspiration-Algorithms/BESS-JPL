@@ -78,19 +78,9 @@ def canopy_shortwave_radiation(
     }
 
     for param_name, param_value in parameters.items():
+        check_distribution(param_value, param_name)
         if param_value is None:
             raise ValueError(f"The parameter '{param_name}' cannot be None.")
-
-    # self.diagnostic(PARDiff, "PARDiff", date_UTC, target)
-    # self.diagnostic(PARDir, "PARDir", date_UTC, target)
-    # self.diagnostic(NIRDiff, "NIRDiff", date_UTC, target)
-    # self.diagnostic(NIRDir, "NIRDir", date_UTC, target)
-    # self.diagnostic(UV, "UV", date_UTC, target)
-    # self.diagnostic(SZA, "SZA", date_UTC, target)
-    # self.diagnostic(LAI, "LAI", date_UTC, target)
-    # self.diagnostic(CI, "CI", date_UTC, target)
-    # self.diagnostic(RVIS, "RVIS", date_UTC, target)
-    # self.diagnostic(RNIR, "RNIR", date_UTC, target)
 
     # Beam radiation extinction coefficient of canopy
     kb = np.where(SZA > 89, 50.0, 0.5 / np.cos(np.radians(SZA)))  # Table A1
@@ -111,11 +101,15 @@ def canopy_shortwave_radiation(
     # Sunlit fraction
     fSun = np.clip(1.0 / kb * (1.0 - np.exp(-kb * LAI * CI)) / LAI, 0, 1)  # Integration of Eq. (1)
     fSun = np.where(LAI == 0, 0, fSun)  # Eq. (1)
+    check_distribution(fSun, "fSun")
 
     # For simplicity
     L_CI = LAI * CI
+    check_distribution(L_CI, "L_CI")
     exp_kk_Pd_L_CI = np.exp(-kk_Pd * L_CI)
+    check_distribution(exp_kk_Pd_L_CI, "exp_kk_Pd_L_CI")
     exp_kk_Nd_L_CI = np.exp(-kk_Nd * L_CI)
+    check_distribution(exp_kk_Nd_L_CI, "exp_kk_Nd_L_CI")
 
     # Total absorbed incoming PAR
     Q_PDn = (1.0 - albedo_visible) * PARDir * (1.0 - np.exp(-kk_Pb * L_CI)) + (1.0 - albedo_visible) * PARDiff * (
