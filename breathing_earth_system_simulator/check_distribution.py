@@ -11,7 +11,7 @@ class BlankOutputError(Exception):
     pass
 
 def check_distribution(
-        image: Raster,
+        image: Union[Raster, np.ndarray],
         variable: str,
         date_UTC: Union[date, str],
         target: str = None):
@@ -55,13 +55,18 @@ def check_distribution(
         else:
             nan_proportion_string = cl.val(f"{(nan_proportion * 100):0.2f}%")
 
+        if isinstance(image, Raster):
+          nan_value = image.nodata
+        else:
+          nan_value = np.nan
+
         message = "variable " + cl.name(variable) + \
             " on " + cl.time(f"{date_UTC:%Y-%m-%d}") + \
             target_message + \
             " min: " + minimum_string + \
             " mean: " + cl.val(f"{np.nanmean(image):0.3f}") + \
             " max: " + maximum_string + \
-            " nan: " + nan_proportion_string + f" ({cl.val(image.nodata)})"
+            " nan: " + nan_proportion_string + f" ({cl.val(nan_value)})"
 
         if np.all(image == 0):
             message += " all zeros"
