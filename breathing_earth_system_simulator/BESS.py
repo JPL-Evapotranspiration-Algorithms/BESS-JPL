@@ -31,9 +31,7 @@ from .load_ball_berry_intercept_C3 import load_ball_berry_intercept_C3
 from .load_ball_berry_slope_C3 import load_ball_berry_slope_C3
 from .load_ball_berry_slope_C4 import load_ball_berry_slope_C4
 
-GEOS5FP_DOWNLOAD_DIRECTORY = "~/data/GEOS5FP_download"
-
-## TODO automatic acquisition of SRTM for default elevation
+from .check_distribution import check_distribution
 
 def BESS(
         ST_C: Union[Raster, np.ndarray],  # surface temperature in Celsius
@@ -78,7 +76,6 @@ def BESS(
         peakVCmax_C3: np.ndarray = None,  # peak maximum carboxylation rate for C3 plants
         peakVCmax_C4: np.ndarray = None,  # peak maximum carboxylation rate for C4 plants
         CI: Union[Raster, np.ndarray] = None,
-        GEOS5FP_download_directory: str = GEOS5FP_DOWNLOAD_DIRECTORY,
         resampling: str = RESAMPLING):  # clumping index
     if geometry is None and isinstance(ST_C, Raster):
         geometry = ST_C.geometry
@@ -244,6 +241,30 @@ def BESS(
         canopy_height_meters=canopy_height_meters
     )
 
+    meteorology_outputs = {
+        "Ps_Pa": Ps_Pa,
+        "VPD_Pa": VPD_Pa,
+        "RH": RH,
+        "desTa": desTa,
+        "ddesTa": ddesTa,
+        "gamma": gamma,
+        "Cp": Cp,
+        "rhoa": rhoa,
+        "epsa": epsa,
+        "R": R,
+        "Rc": Rc,
+        "Rs": Rs,
+        "SFd": SFd,
+        "SFd2": SFd2,
+        "DL": DL,
+        "Ra": Ra,
+        "fStress": fStress
+    }
+
+    # Check the distribution for each variable
+    for var_name, var_value in meteorology_outputs.items():
+        check_distribution(var_value, var_name, time_UTC)
+
     # convert NDVI to LAI
     LAI = LAI_from_NDVI(NDVI)
     LAI_minimum = LAI_from_NDVI(NDVI_minimum)
@@ -259,6 +280,18 @@ def BESS(
         kn=kn
     )
 
+    # List of variable names and their corresponding values
+    VCmax_outputs = {
+        "VCmax_C3_sunlit": VCmax_C3_sunlit,
+        "VCmax_C4_sunlit": VCmax_C4_sunlit,
+        "VCmax_C3_shaded": VCmax_C3_shaded,
+        "VCmax_C4_shaded": VCmax_C4_shaded
+    }
+
+    # Check the distribution for each variable
+    for var_name, var_value in VCmax_outputs.items():
+        check_distribution(var_value, var_name, time_UTC)
+
     sunlit_fraction, APAR_sunlit, APAR_shaded, ASW_sunlit, ASW_shaded, ASW_soil, G = canopy_shortwave_radiation(
         PARDiff=VISdiff,  # diffuse photosynthetically active radiation in W/m^2
         PARDir=VISdir,  # direct photosynthetically active radiation in W/m^2
@@ -271,6 +304,22 @@ def BESS(
         albedo_visible=albedo_visible,  # surface albedo in visible wavelengths
         albedo_NIR=albedo_NIR  # surface albedo in near-infrared wavelengths
     )
+
+    # List of variable names and their corresponding values
+    canopy_radiation_outputs = {
+        "sunlit_fraction": sunlit_fraction,
+        "APAR_sunlit": APAR_sunlit,
+        "APAR_shaded": APAR_shaded,
+        "ASW_sunlit": ASW_sunlit,
+        "ASW_shaded": ASW_shaded,
+        "ASW_soil": ASW_soil,
+        "G": G
+    }
+
+    # Check the distribution for each variable
+    for var_name, var_value in canopy_radiation_outputs.items():
+        check_distribution(var_value, var_name, time_UTC)
+
 
     canopy_temperature_K = canopy_temperature_C + 273.15
     soil_temperature_K = soil_temperature_C + 273.15
@@ -309,6 +358,22 @@ def BESS(
         C4_photosynthesis=False  # C3 or C4 photosynthesis
     )
 
+    # List of variable names and their corresponding values
+    carbon_water_fluxes_outputs = {
+        "GPP_C3": GPP_C3,
+        "LE_C3": LE_C3,
+        "LE_soil_C3": LE_soil_C3,
+        "LE_canopy_C3": LE_canopy_C3,
+        "Rn_C3": Rn_C3,
+        "Rn_soil_C3": Rn_soil_C3,
+        "Rn_canopy_C3": Rn_canopy_C3
+    }
+
+    # Check the distribution for each variable
+    for var_name, var_value in carbon_water_fluxes_outputs.items():
+        check_distribution(var_value, var_name, time_UTC)
+
+
     GPP_C4, LE_C4, LE_soil_C4, LE_canopy_C4, Rn_C4, Rn_soil_C4, Rn_canopy_C4 = carbon_water_fluxes(
         canopy_temperature_K=canopy_temperature_K,  # canopy temperature in Kelvin
         soil_temperature_K=soil_temperature_K,  # soil temperature in Kelvin
@@ -342,6 +407,21 @@ def BESS(
         fStress=fStress,
         C4_photosynthesis=True  # C3 or C4 photosynthesis
     )
+
+    # List of variable names and their corresponding values
+    carbon_water_fluxes_C4_outputs = {
+        "GPP_C4": GPP_C4,
+        "LE_C4": LE_C4,
+        "LE_soil_C4": LE_soil_C4,
+        "LE_canopy_C4": LE_canopy_C4,
+        "Rn_C4": Rn_C4,
+        "Rn_soil_C4": Rn_soil_C4,
+        "Rn_canopy_C4": Rn_canopy_C4
+    }
+
+    # Check the distribution for each variable
+    for var_name, var_value in carbon_water_fluxes_C4_outputs.items():
+        check_distribution(var_value, var_name, time_UTC)
 
     # interpolate C3 and C4 GPP
     ST_K = ST_C + 273.15
