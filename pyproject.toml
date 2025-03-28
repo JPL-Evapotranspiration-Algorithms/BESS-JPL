@@ -3,7 +3,7 @@ requires = ["setuptools>=60", "setuptools-scm>=8.0", "wheel"]
 
 [project]
 name = "breathing-earth-system-simulator"
-version = "1.4.2"
+version = "1.4.3"
 description = "Breathing Earth System Simulator (BESS) Gross Primary Production (GPP) and Evapotranspiration (ET) Model Python"
 readme = "README.md"
 authors = [
@@ -16,7 +16,7 @@ classifiers = [
 dependencies = [
     "FLiESANN>=1.4.1",
     "gedi-canopy-height>=1.1.0",
-    "geos5fp",
+    "GEOS5FP>=1.1.1",
     "koppengeiger>=1.0.4",
     "modisci",
     "numpy",

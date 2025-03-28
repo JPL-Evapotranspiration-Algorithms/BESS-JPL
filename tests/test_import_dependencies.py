@@ -4,7 +4,7 @@ import pytest
 dependencies = [
     "FLiESANN",
     "gedi_canopy_height",
-    "geos5fp",
+    "GEOS5FP",
     "modisci",
     "numpy",
     "rasters"
