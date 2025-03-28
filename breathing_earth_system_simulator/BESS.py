@@ -373,4 +373,13 @@ def BESS(
     # interpolate C3 and C4 canopy latent heat flux
     LE_canopy = np.clip(interpolate_C3_C4(LE_canopy_C3, LE_canopy_C4, C4_fraction), 0, 1000)
 
-    return GPP, GPP_daily, Rn, Rn_soil, Rn_canopy, LE, LE_soil, LE_canopy
+    return {
+        "GPP": GPP,
+        "GPP_daily": GPP_daily,
+        "Rn": Rn,
+        "Rn_soil": Rn_soil,
+        "Rn_canopy": Rn_canopy,
+        "LE": LE,
+        "LE_soil": LE_soil,
+        "LE_canopy": LE_canopy
+    }
