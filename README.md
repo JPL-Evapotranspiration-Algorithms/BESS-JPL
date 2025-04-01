@@ -51,3 +51,17 @@ Use the pip package manager to install this package
 ```
 pip install breathing-earth-system-simulator
 ```
+
+## References
+
+The following scientific references provide detailed information about the BESS model and its underlying algorithms:
+
+1. Ryu, Y., Baldocchi, D. D., Kobayashi, H., van Ingen, C., Li, J., Black, T. A., ... & Ueyama, M. (2011). Integration of MODIS land and atmosphere products with a coupled-process model to estimate gross primary productivity and evapotranspiration from 1 km to global scales. *Remote Sensing of Environment, 115*(8), 1865-1874. https://doi.org/10.1016/j.rse.2011.03.009
+
+2. Kobayashi, H., Ryu, Y., Baldocchi, D. D., Welles, J. M., & Norman, J. M. (2012). On the correct estimation of gap fraction: How to remove scattered radiation in gap fraction measurements? *Agricultural and Forest Meteorology, 160*, 14-25. https://doi.org/10.1016/j.agrformet.2012.03.001
+
+3. Fisher, J. B., Lee, B., Purdy, A. J., Halverson, G. H., Dohlen, M. B., & Tu, K. P. (2020). ECOSTRESS: NASA's next generation mission to measure evapotranspiration from the International Space Station. *Water Resources Research, 56*(4), e2019WR026058. https://doi.org/10.1029/2019WR026058
+
+4. Ryu, Y., Jiang, C., Kobayashi, H., & Detto, M. (2018). Modis-derived global land products of shortwave radiation and diffuse and total photosynthetically active radiation at 5 km resolution from 2000. *Remote Sensing of Environment, 204*, 812-825. https://doi.org/10.1016/j.rse.2017.09.021
+
+5. Kobayashi, H., & Iwabuchi, H. (2008). A coupled 1-D atmosphere and canopy radiative transfer model for an atmosphere with a nonlambertian surface. *Journal of Quantitative Spectroscopy and Radiative Transfer, 109*(17-18), 2955-2970. https://doi.org/10.1016/j.jqsrt.2008.07.008

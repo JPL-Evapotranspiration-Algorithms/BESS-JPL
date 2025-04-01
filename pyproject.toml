@@ -2,8 +2,8 @@
 requires = ["setuptools>=60", "setuptools-scm>=8.0", "wheel"]
 
 [project]
-name = "breathing-earth-system-simulator"
-version = "1.5.4"
+name = "BESS-JPL"
+version = "1.6.0"
 description = "Breathing Earth System Simulator (BESS) Gross Primary Production (GPP) and Evapotranspiration (ET) Model Python"
 readme = "README.md"
 authors = [
@@ -14,6 +14,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "check-distribution",
     "FLiESANN>=1.4.1",
     "gedi-canopy-height>=1.1.0",
     "GEOS5FP>=1.1.1",
@@ -36,7 +37,7 @@ dev = [
 ]
 
 [tool.setuptools.package-data]
-breathing_earth_system_simulator = ["*.txt", ".tif", "*.jpeg", "*.h5"]
+BESS_JPL = ["*.txt", ".tif", "*.jpeg", "*.h5"]
 
 [project.urls]
-"Homepage" = "https://github.com/JPL-Evapotranspiration-Algorithms/breathing-earth-system-simulator"
+"Homepage" = "https://github.com/JPL-Evapotranspiration-Algorithms/BESS-JPL"
