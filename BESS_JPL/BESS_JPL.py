@@ -48,12 +48,12 @@ def BESS_JPL(
         ST_C: Union[Raster, np.ndarray],  # surface temperature in Celsius
         NDVI: Union[Raster, np.ndarray],  # NDVI
         albedo: Union[Raster, np.ndarray],  # surface albedo
-        elevation_km: Union[Raster, np.ndarray] = None,  # elevation in kilometers
         geometry: RasterGeometry = None,
         time_UTC: datetime = None,
         hour_of_day: np.ndarray = None,
         day_of_year: np.ndarray = None,
         GEOS5FP_connection: GEOS5FP = None,
+        elevation_km: Union[Raster, np.ndarray] = None,  # elevation in kilometers
         Ta_C: Union[Raster, np.ndarray] = None,  # air temperature in Celsius
         RH: Union[Raster, np.ndarray] = None,  # relative humidity as a proportion
         NDVI_minimum: Union[Raster, np.ndarray] = None,  # minimum NDVI
