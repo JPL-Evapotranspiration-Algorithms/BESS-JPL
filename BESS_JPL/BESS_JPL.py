@@ -514,6 +514,7 @@ def BESS_JPL(
         "Rn": Rn,
         "Rn_soil": Rn_soil,
         "Rn_canopy": Rn_canopy,
+        "G": G,
         "LE": LE,
         "LE_soil": LE_soil,
         "LE_canopy": LE_canopy
