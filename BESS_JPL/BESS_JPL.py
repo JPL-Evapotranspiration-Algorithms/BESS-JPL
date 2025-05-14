@@ -166,19 +166,34 @@ def BESS_JPL(
 
     # Check for None values and size mismatches
     reference_size = None
+    missing_radiative_transfer_variables = []
+    need_radiative_transfer = False
+
     for name, var in variables_to_check.items():
         if var is None:
+            logger.info(f"{name}: None")
+        else:
+            logger.info(f"{name}: {var.shape}")
+
+        if var is None:
             logger.warning(f"Variable '{name}' is None.")
+            missing_radiative_transfer_variables = missing_radiative_transfer_variables.append(name)
         else:
             # Get the size of the variable if it's a numpy array
             size = var.shape if isinstance(var, np.ndarray) else None
+
             if reference_size is None:
                 reference_size = size  # Set the first non-None size as the reference
             elif size != reference_size:
                 logger.warning(f"Variable '{name}' has a different size: {size} (expected: {reference_size}).")
+                missing_radiative_transfer_variables = missing_radiative_transfer_variables.append(name)
+
+    if len(missing_radiative_transfer_variables) > 0:
+        need_radiative_transfer = True
 
     # check if any of the FLiES outputs are not given
-    if None in (Rg, VISdiff, VISdir, NIRdiff, NIRdir, UV, albedo_visible, albedo_NIR):
+    if need_radiative_transfer:
+        logger.info(f"running FLiES for missing variables: {', '.join(missing_radiative_transfer_variables)}")
         # load cloud optical thickness if not provided
         if COT is None:
             COT = GEOS5FP_connection.COT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
