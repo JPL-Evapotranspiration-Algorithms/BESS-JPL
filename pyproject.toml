@@ -15,7 +15,7 @@ classifiers = [
 ]
 dependencies = [
     "check-distribution",
-    "FLiESANN>=1.4.2",
+    "FLiESANN>=1.5.0",
     "gedi-canopy-height>=1.1.0",
     "GEOS5FP>=1.1.1",
     "koppengeiger>=1.0.4",
