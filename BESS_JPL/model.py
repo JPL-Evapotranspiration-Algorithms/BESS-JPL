@@ -231,6 +231,8 @@ def BESS_JPL(
     if KG_climate is None:
         KG_climate = load_koppen_geiger(geometry=geometry)
 
+    # FIXME need to pass in `source_directory` to `load_canopy_height`
+
     # load canopy height in meters if not provided
     if canopy_height_meters is None:
         canopy_height_meters = load_canopy_height(geometry=geometry, resampling=resampling)
