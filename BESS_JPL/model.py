@@ -12,7 +12,7 @@ from sun_angles import calculate_SZA_from_DOY_and_hour
 from solar_apparent_time import solar_day_of_year_for_area, solar_hour_of_day_for_area
 
 from koppengeiger import load_koppen_geiger
-from gedi_canopy_height import load_canopy_height
+from gedi_canopy_height import load_canopy_height, GEDI_DOWNLOAD_DIRECTORY
 from FLiESANN import FLiESANN
 from GEOS5FP import GEOS5FP
 from MODISCI import MODISCI
@@ -88,7 +88,7 @@ def BESS_JPL(
         peakVCmax_C4: np.ndarray = None,  # peak maximum carboxylation rate for C4 plants
         CI: Union[Raster, np.ndarray] = None,
         resampling: str = RESAMPLING,
-        GEDI_download_directory: str = None):  # clumping index
+        GEDI_download_directory: str = GEDI_DOWNLOAD_DIRECTORY):  # clumping index
     if geometry is None and isinstance(ST_C, Raster):
         geometry = ST_C.geometry
 
