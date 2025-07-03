@@ -87,7 +87,8 @@ def BESS_JPL(
         peakVCmax_C3: np.ndarray = None,  # peak maximum carboxylation rate for C3 plants
         peakVCmax_C4: np.ndarray = None,  # peak maximum carboxylation rate for C4 plants
         CI: Union[Raster, np.ndarray] = None,
-        resampling: str = RESAMPLING):  # clumping index
+        resampling: str = RESAMPLING,
+        GEDI_download_directory: str = None):  # clumping index
     if geometry is None and isinstance(ST_C, Raster):
         geometry = ST_C.geometry
 
@@ -235,7 +236,11 @@ def BESS_JPL(
 
     # load canopy height in meters if not provided
     if canopy_height_meters is None:
-        canopy_height_meters = load_canopy_height(geometry=geometry, resampling=resampling)
+        canopy_height_meters = load_canopy_height(
+            geometry=geometry, 
+            resampling=resampling,
+            source_directory=GEDI_download_directory
+        )
 
     # load CO2 concentration in ppm if not provided
     if Ca is None:
