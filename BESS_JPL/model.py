@@ -87,6 +87,7 @@ def BESS_JPL(
         peakVCmax_C3: np.ndarray = None,  # peak maximum carboxylation rate for C3 plants
         peakVCmax_C4: np.ndarray = None,  # peak maximum carboxylation rate for C4 plants
         CI: Union[Raster, np.ndarray] = None,
+        MODISCI_connection: MODISCI = None,
         resampling: str = RESAMPLING,
         GEDI_download_directory: str = GEDI_DOWNLOAD_DIRECTORY):  # clumping index
     if geometry is None and isinstance(ST_C, Raster):
@@ -269,9 +270,11 @@ def BESS_JPL(
     if SZA is None:
         SZA = calculate_SZA_from_DOY_and_hour(geometry.lat, geometry.lon, day_of_year, hour_of_day)
 
+    if MODISCI_connection is None:
+        MODISCI_connection = MODISCI()
+
     if CI is None and geometry is not None:
-        modisci = MODISCI()
-        CI = modisci.CI(geometry=geometry, resampling=resampling)
+        CI = MODISCI_connection.CI(geometry=geometry, resampling=resampling)
 
     # canopy height defaults to zero
     canopy_height_meters = np.where(np.isnan(canopy_height_meters), 0, canopy_height_meters)
