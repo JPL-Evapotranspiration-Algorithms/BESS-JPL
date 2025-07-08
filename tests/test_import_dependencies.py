@@ -2,7 +2,6 @@ import pytest
 
 # List of dependencies
 dependencies = [
-    "check_distribution",
     "FLiESANN",
     "gedi_canopy_height",
     "GEOS5FP",

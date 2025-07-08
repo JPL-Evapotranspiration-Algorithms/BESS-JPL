@@ -1,6 +1,6 @@
 import numpy as np
 
-from check_distribution import check_distribution
+from .check_distribution import check_distribution
 
 
 def canopy_shortwave_radiation(
