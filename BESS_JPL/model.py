@@ -106,7 +106,8 @@ def BESS_JPL(
 
     if elevation_km is None and geometry is not None:
         if NASADEM_connection is None:
-            from NASADEM import NASADEM as NASADEM_connection
+            from NASADEM import NASADEMConnection
+            NASADEM_connection = NASADEMConnection()
 
         elevation_km = NASADEM_connection.elevation_km(geometry=geometry)
 
