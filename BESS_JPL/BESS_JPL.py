@@ -6,7 +6,7 @@ import numpy as np
 import rasters as rt
 from rasters import Raster, RasterGeometry
 
-from check_distribution import check_distribution
+from .check_distribution import check_distribution
 
 from sun_angles import calculate_SZA_from_DOY_and_hour
 from solar_apparent_time import solar_day_of_year_for_area, solar_hour_of_day_for_area
