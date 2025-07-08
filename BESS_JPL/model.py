@@ -16,7 +16,7 @@ from gedi_canopy_height import load_canopy_height, GEDI_DOWNLOAD_DIRECTORY
 from FLiESANN import FLiESANN
 from GEOS5FP import GEOS5FP
 from MODISCI import MODISCI
-from NASADEM import NASADEM
+from NASADEM import NASADEMConnection
 
 from .constants import *
 from .C3_photosynthesis import *
@@ -88,6 +88,7 @@ def BESS_JPL(
         peakVCmax_C4: np.ndarray = None,  # peak maximum carboxylation rate for C4 plants
         CI: Union[Raster, np.ndarray] = None,
         MODISCI_connection: MODISCI = None,
+        NASADEM_connection: NASADEMConnection = None,
         resampling: str = RESAMPLING,
         GEDI_download_directory: str = GEDI_DOWNLOAD_DIRECTORY):  # clumping index
     if geometry is None and isinstance(ST_C, Raster):
@@ -104,7 +105,11 @@ def BESS_JPL(
         raise ValueError("no time given between time_UTC, day_of_year, and hour_of_day")
 
     if elevation_km is None and geometry is not None:
-        elevation_km = NASADEM.elevation_km(geometry=geometry)
+        if NASADEM_connection is None:
+            from NASADEM import NASADEMConnection
+            NASADEM_connection = NASADEMConnection()
+
+        elevation_km = NASADEM_connection.elevation_km(geometry=geometry)
 
     # load air temperature in Celsius if not provided
     if Ta_C is None:
