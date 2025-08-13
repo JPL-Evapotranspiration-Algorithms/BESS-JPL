@@ -5,6 +5,6 @@ from rasters import Raster, RasterGeometry
 
 def load_ball_berry_slope_C4(geometry: RasterGeometry = None, resampling: str = "nearest") -> Raster:
     filename = join(abspath(dirname(__file__)), "ball_berry_slope_C4.tif")
-    image = Raster.open(filename, geometry=geometry, resampling="nearest")
+    image = Raster.open(filename, geometry=geometry, resampling=resampling)
 
     return image

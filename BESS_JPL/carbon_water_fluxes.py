@@ -12,25 +12,6 @@ from .soil_energy_balance import soil_energy_balance
 
 PASSES = 1
 
-
-def load_ball_berry_intercept_C3(self, geometry: RasterGeometry) -> Raster:
-    filename = join(abspath(dirname(__file__)), "ball_berry_intercept_C3.tif")
-    image = rt.Raster.open(filename, geometry=geometry, resampling=self.resampling)
-
-    return image
-
-def load_ball_berry_slope_C3(self, geometry: RasterGeometry) -> Raster:
-    filename = join(abspath(dirname(__file__)), "ball_berry_slope_C3.tif")
-    image = rt.Raster.open(filename, geometry=geometry, resampling=self.resampling)
-
-    return image
-
-def load_ball_berry_slope_C4(self, geometry: RasterGeometry) -> Raster:
-    filename = join(abspath(dirname(__file__)), "ball_berry_slope_C4.tif")
-    image = rt.Raster.open(filename, geometry=geometry, resampling=self.resampling)
-
-    return image
-
 def carbon_water_fluxes(
         canopy_temperature_K: np.ndarray,  # canopy temperature in Kelvin
         soil_temperature_K: np.ndarray,  # soil temperature in Kelvin
