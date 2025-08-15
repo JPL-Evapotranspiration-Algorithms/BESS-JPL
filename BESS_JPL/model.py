@@ -185,7 +185,12 @@ def BESS_JPL(
                 logger.warning(f"Variable '{name}' has a different size: {size} (expected: {reference_size}).")
 
     # check if any of the FLiES outputs are not given
-    if None in (Rg, VISdiff, VISdir, NIRdiff, NIRdir, UV, albedo_visible, albedo_NIR):
+    flies_variables = [Rg, VISdiff, VISdir, NIRdiff, NIRdir, UV, albedo_visible, albedo_NIR]
+    flies_variables_missing = False
+    for variable in flies_variables:
+        if variable is None:
+            flies_variables_missing = True
+    if flies_variables_missing:
         # load cloud optical thickness if not provided
         if COT is None:
             COT = GEOS5FP_connection.COT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)

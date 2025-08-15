@@ -23,7 +23,6 @@ def LAI_from_NDVI(
         Union[Raster, np.ndarray]: Converted LAI data.
     """
     fIPAR = rt.clip(NDVI - 0.05, min_fIPAR, max_fIPAR)
-    fIPAR = np.where(fIPAR == 0, np.nan, fIPAR)
     LAI = rt.clip(-np.log(1 - fIPAR) * (1 / KPAR), min_LAI, max_LAI)
 
     return LAI
