@@ -117,6 +117,16 @@ def process_BESS_table(
     else:
         wind_speed_mps = None
 
+    if "vapor_gccm" in input_df:
+        vapor_gccm = np.array(input_df.vapor_gccm).astype(np.float64)
+    else:
+        vapor_gccm = None
+    
+    if "ozone_cm" in input_df:
+        ozone_cm = np.array(input_df.ozone_cm).astype(np.float64)
+    else:
+        ozone_cm = None
+
     # --- Handle geometry and time columns ---
     import pandas as pd
     from rasters import MultiPoint, WGS84
@@ -190,8 +200,8 @@ def process_BESS_table(
         AOT=AOT,
         Ca=Ca,
         wind_speed_mps=wind_speed_mps,
-        vapor_gccm=0,
-        ozone_cm=0.3,
+        vapor_gccm=vapor_gccm,
+        ozone_cm=ozone_cm,
         C4_fraction_scale_factor=C4_fraction_scale_factor
     )
 
