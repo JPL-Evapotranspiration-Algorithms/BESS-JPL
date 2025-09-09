@@ -87,6 +87,16 @@ def process_BESS_table(
     else:
         KG_climate = None
 
+    if "CI" in input_df:
+        CI = np.array(input_df.CI).astype(np.float64)
+    else:
+        CI = None
+
+    if "canopy_height_meters" in input_df:
+        canopy_height_meters = np.array(input_df.canopy_height_meters).astype(np.float64)
+    else:
+        canopy_height_meters = None
+
     if "COT" in input_df:
         COT = np.array(input_df.COT).astype(np.float64)
     else:
@@ -96,6 +106,11 @@ def process_BESS_table(
         AOT = np.array(input_df.AOT).astype(np.float64)
     else:
         AOT = None
+
+    if "Ca" in input_df:
+        Ca = np.array(input_df.Ca).astype(np.float64)
+    else:
+        Ca = None
 
     # --- Handle geometry and time columns ---
     import pandas as pd
@@ -163,8 +178,12 @@ def process_BESS_table(
         ball_berry_slope_C3=ball_berry_slope_C3,
         ball_berry_slope_C4=ball_berry_slope_C4,
         ball_berry_intercept_C3=ball_berry_intercept_C3,
+        KG_climate=KG_climate,
+        CI=CI,
+        canopy_height_meters=canopy_height_meters,
         COT=COT,
         AOT=AOT,
+        Ca=Ca,
         C4_fraction_scale_factor=C4_fraction_scale_factor
     )
 
