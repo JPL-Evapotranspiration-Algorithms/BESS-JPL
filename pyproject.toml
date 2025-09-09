@@ -16,7 +16,7 @@ classifiers = [
 dependencies = [
     "check-distribution",
     "ECOv002-calval-tables>=1.6.0",
-    "FLiESANN>=1.5.0",
+    "FLiESANN>=1.6.1",
     "gedi-canopy-height>=1.1.0",
     "GEOS5FP>=1.1.1",
     "koppengeiger>=1.1.0",

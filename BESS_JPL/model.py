@@ -258,13 +258,21 @@ def BESS_JPL(
         UV = FLiES_results["UV"]
         # albedo_visible = FLiES_results["VIS"]
         # albedo_NIR = FLiES_results["NIR"]
-        albedo_NWP = GEOS5FP_connection.ALBEDO(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-        RVIS_NWP = GEOS5FP_connection.ALBVISDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-        albedo_visible = rt.clip(albedo * (RVIS_NWP / albedo_NWP), 0, 1)
+
+        if albedo_visible is None:
+            albedo_NWP = GEOS5FP_connection.ALBEDO(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+            RVIS_NWP = GEOS5FP_connection.ALBVISDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+            albedo_visible = rt.clip(albedo * (RVIS_NWP / albedo_NWP), 0, 1)
+
         check_distribution(albedo_visible, "RVIS")
-        RNIR_NWP = GEOS5FP_connection.ALBNIRDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-        albedo_NIR = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
+        
+        if albedo_NIR is None:
+            albedo_NWP = GEOS5FP_connection.ALBEDO(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+            RNIR_NWP = GEOS5FP_connection.ALBNIRDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+            albedo_NIR = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
+        
         check_distribution(albedo_NIR, "RNIR")
+        
         PARDir = VISdir
         check_distribution(PARDir, "PARDir")
     else:
@@ -374,7 +382,7 @@ def BESS_JPL(
 
     # Check the distribution for each variable
     for var_name, var_value in meteorology_outputs.items():
-        check_distribution(var_value, var_name, time_UTC)
+        check_distribution(var_value, var_name)
 
     # convert NDVI to LAI
     LAI = LAI_from_NDVI(NDVI)
@@ -401,7 +409,7 @@ def BESS_JPL(
 
     # Check the distribution for each variable
     for var_name, var_value in VCmax_outputs.items():
-        check_distribution(var_value, var_name, time_UTC)
+        check_distribution(var_value, var_name)
 
     sunlit_fraction, APAR_sunlit, APAR_shaded, ASW_sunlit, ASW_shaded, ASW_soil, G = canopy_shortwave_radiation(
         PARDiff=VISdiff,  # diffuse photosynthetically active radiation in W/m^2
@@ -429,7 +437,7 @@ def BESS_JPL(
 
     # Check the distribution for each variable
     for var_name, var_value in canopy_radiation_outputs.items():
-        check_distribution(var_value, var_name, time_UTC)
+        check_distribution(var_value, var_name)
 
     canopy_temperature_K = canopy_temperature_C + 273.15
     soil_temperature_K = soil_temperature_C + 273.15
@@ -481,7 +489,7 @@ def BESS_JPL(
 
     # Check the distribution for each variable
     for var_name, var_value in carbon_water_fluxes_outputs.items():
-        check_distribution(var_value, var_name, time_UTC)
+        check_distribution(var_value, var_name)
 
     GPP_C4, LE_C4, LE_soil_C4, LE_canopy_C4, Rn_C4, Rn_soil_C4, Rn_canopy_C4 = carbon_water_fluxes(
         canopy_temperature_K=canopy_temperature_K,  # canopy temperature in Kelvin
@@ -530,7 +538,7 @@ def BESS_JPL(
 
     # Check the distribution for each variable
     for var_name, var_value in carbon_water_fluxes_C4_outputs.items():
-        check_distribution(var_value, var_name, time_UTC)
+        check_distribution(var_value, var_name)
 
     # interpolate C3 and C4 GPP
     ST_K = ST_C + 273.15
