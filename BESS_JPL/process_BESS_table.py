@@ -112,6 +112,11 @@ def process_BESS_table(
     else:
         Ca = None
 
+    if "wind_speed_mps" in input_df:
+        wind_speed_mps = np.array(input_df.wind_speed_mps).astype(np.float64)
+    else:
+        wind_speed_mps = None
+
     # --- Handle geometry and time columns ---
     import pandas as pd
     from rasters import MultiPoint, WGS84
@@ -184,6 +189,7 @@ def process_BESS_table(
         COT=COT,
         AOT=AOT,
         Ca=Ca,
+        wind_speed_mps=wind_speed_mps,
         C4_fraction_scale_factor=C4_fraction_scale_factor
     )
 
