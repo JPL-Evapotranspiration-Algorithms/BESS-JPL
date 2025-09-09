@@ -274,6 +274,8 @@ def BESS_JPL(
     if KG_climate is None:
         KG_climate = load_koppen_geiger(geometry=geometry)
 
+    check_distribution(KG_climate, "KG_climate")
+
     # load canopy height in meters if not provided
     if canopy_height_meters is None:
         canopy_height_meters = load_canopy_height(
@@ -282,13 +284,19 @@ def BESS_JPL(
             source_directory=GEDI_download_directory
         )
 
+    check_distribution(canopy_height_meters, "canopy_height_meters")
+
     # load CO2 concentration in ppm if not provided
     if Ca is None:
         Ca = GEOS5FP_connection.CO2SC(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
 
+    check_distribution(Ca, "Ca")
+
     # load wind speed in meters per second if not provided
     if wind_speed_mps is None:
         wind_speed_mps = GEOS5FP_connection.wind_speed(time_UTC=time_UTC, geometry=geometry, resampling=resampling)    
+
+    check_distribution(wind_speed_mps, "wind_speed_mps")
 
     # canopy temperature defaults to surface temperature
     if canopy_temperature_C is None:
