@@ -32,6 +32,71 @@ def process_BESS_table(
     else:
         elevation_km = None
 
+    if "NDVI_minimum" in input_df:
+        NDVI_minimum = np.array(input_df.NDVI_minimum).astype(np.float64)
+    else:
+        NDVI_minimum = None
+
+    if "NDVI_maximum" in input_df:
+        NDVI_maximum = np.array(input_df.NDVI_maximum).astype(np.float64).astype(np.float64)
+    else:
+        NDVI_maximum = None
+    
+    if "C4_fraction" in input_df:
+        C4_fraction = np.array(input_df.C4_fraction).astype(np.float64)
+    else:
+        C4_fraction = None
+
+    if "carbon_uptake_efficiency" in input_df:
+        carbon_uptake_efficiency = np.array(input_df.carbon_uptake_efficiency).astype(np.float64)
+    else:
+        carbon_uptake_efficiency = None
+
+    if "kn" in input_df:
+        kn = np.array(input_df.kn).astype(np.float64)
+    else:
+        kn = None
+    
+    if "peakVCmax_C3" in input_df:
+        peakVCmax_C3 = np.array(input_df.peakVCmax_C3).astype(np.float64)
+    else:
+        peakVCmax_C3 = None
+
+    if "peakVCmax_C4" in input_df:
+        peakVCmax_C4 = np.array(input_df.peakVCmax_C4).astype(np.float64)
+    else:
+        peakVCmax_C4 = None
+    
+    if "ball_berry_slope_C3" in input_df:
+        ball_berry_slope_C3 = np.array(input_df.ball_berry_slope_C3).astype(np.float64)
+    else:
+        ball_berry_slope_C3 = None
+    
+    if "ball_berry_slope_C4" in input_df:
+        ball_berry_slope_C4 = np.array(input_df.ball_berry_slope_C4).astype(np.float64)
+    else:
+        ball_berry_slope_C4 = None
+
+    if "ball_berry_intercept_C3" in input_df:
+        ball_berry_intercept_C3 = np.array(input_df.ball_berry_intercept_C3).astype(np.float64)
+    else:
+        ball_berry_intercept_C3 = None
+
+    if "KG_climate" in input_df:
+        KG_climate = np.array(input_df.KG_climate)
+    else:
+        KG_climate = None
+
+    if "COT" in input_df:
+        COT = np.array(input_df.COT).astype(np.float64)
+    else:
+        COT = None
+
+    if "AOT" in input_df:
+        AOT = np.array(input_df.AOT).astype(np.float64)
+    else:
+        AOT = None
+
     # --- Handle geometry and time columns ---
     import pandas as pd
     from rasters import MultiPoint, WGS84
@@ -88,6 +153,18 @@ def process_BESS_table(
         Ta_C=Ta_C,
         RH=RH,
         elevation_km=elevation_km,
+        NDVI_minimum=NDVI_minimum,
+        NDVI_maximum=NDVI_maximum,
+        C4_fraction=C4_fraction,
+        carbon_uptake_efficiency=carbon_uptake_efficiency,
+        kn=kn,
+        peakVCmax_C3=peakVCmax_C3,
+        peakVCmax_C4=peakVCmax_C4,
+        ball_berry_slope_C3=ball_berry_slope_C3,
+        ball_berry_slope_C4=ball_berry_slope_C4,
+        ball_berry_intercept_C3=ball_berry_intercept_C3,
+        COT=COT,
+        AOT=AOT,
         C4_fraction_scale_factor=C4_fraction_scale_factor
     )
 

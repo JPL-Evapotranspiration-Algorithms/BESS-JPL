@@ -19,12 +19,12 @@ dependencies = [
     "FLiESANN>=1.5.0",
     "gedi-canopy-height>=1.1.0",
     "GEOS5FP>=1.1.1",
-    "koppengeiger>=1.0.4",
-    "MODISCI>=1.3.0",
+    "koppengeiger>=1.1.0",
+    "MODISCI>=1.4.0",
     "NASADEM>=1.3.0",
     "numpy",
     "rasters>=1.9.0",
-    "solar-apparent-time>=1.3.2"
+    "solar-apparent-time>=1.5.3"
 ]
 
 requires-python = ">=3.10"
