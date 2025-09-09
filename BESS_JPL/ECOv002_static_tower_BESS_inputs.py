@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 
-def load_ECOv002_static_tower_BESS_JPL_inputs() -> pd.DataFrame:
+def load_ECOv002_static_tower_BESS_inputs() -> pd.DataFrame:
     """
     Load the input data for the BESS-JPL model from the ECOSTRESS Collection 2 Cal-Val dataset.
 
