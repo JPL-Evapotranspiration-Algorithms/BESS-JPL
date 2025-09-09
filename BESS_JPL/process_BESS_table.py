@@ -190,6 +190,8 @@ def process_BESS_table(
         AOT=AOT,
         Ca=Ca,
         wind_speed_mps=wind_speed_mps,
+        vapor_gccm=0,
+        ozone_cm=0.3,
         C4_fraction_scale_factor=C4_fraction_scale_factor
     )
 
