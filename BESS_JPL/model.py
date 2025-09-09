@@ -9,7 +9,7 @@ from rasters import Raster, RasterGeometry
 from check_distribution import check_distribution
 
 from sun_angles import calculate_SZA_from_DOY_and_hour
-from solar_apparent_time import solar_day_of_year_for_area, solar_hour_of_day_for_area
+from solar_apparent_time import calculate_solar_day_of_year, calculate_solar_hour_of_day
 
 from koppengeiger import load_koppen_geiger
 from gedi_canopy_height import load_canopy_height, GEDI_DOWNLOAD_DIRECTORY
@@ -99,8 +99,8 @@ def BESS_JPL(
         GEOS5FP_connection = GEOS5FP()
 
     if (day_of_year is None or hour_of_day is None) and time_UTC is not None and geometry is not None:
-        day_of_year = solar_day_of_year_for_area(time_UTC=time_UTC, geometry=geometry)
-        hour_of_day = solar_hour_of_day_for_area(time_UTC=time_UTC, geometry=geometry)
+        day_of_year = calculate_solar_day_of_year(time_UTC=time_UTC, geometry=geometry)
+        hour_of_day = calculate_solar_hour_of_day(time_UTC=time_UTC, geometry=geometry)
 
     if time_UTC is None and day_of_year is None and hour_of_day is None:
         raise ValueError("no time given between time_UTC, day_of_year, and hour_of_day")
@@ -112,21 +112,31 @@ def BESS_JPL(
 
         elevation_km = NASADEM_connection.elevation_km(geometry=geometry)
 
+    check_distribution(elevation_km, "elevation_km")
+
     # load air temperature in Celsius if not provided
     if Ta_C is None:
         Ta_C = GEOS5FP_connection.Ta_C(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+
+    check_distribution(Ta_C, "Ta_C")
 
     # load relative humidity if not provided
     if RH is None:
         RH = GEOS5FP_connection.RH(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
 
+    check_distribution(RH, "RH")
+
     # load minimum NDVI if not provided
     if NDVI_minimum is None and geometry is not None:
         NDVI_minimum = load_NDVI_minimum(geometry=geometry, resampling=resampling)
 
+    check_distribution(NDVI_minimum, "NDVI_minimum")
+
     # load maximum NDVI if not provided
     if NDVI_maximum is None and geometry is not None:
         NDVI_maximum = load_NDVI_maximum(geometry=geometry, resampling=resampling)
+
+    check_distribution(NDVI_maximum, "NDVI_maximum")
 
     # load C4 fraction if not provided
     if C4_fraction is None:
@@ -136,33 +146,49 @@ def BESS_JPL(
             scale_factor=C4_fraction_scale_factor
         )
 
+    check_distribution(C4_fraction, "C4_fraction")
+
     # load carbon uptake efficiency if not provided
     if carbon_uptake_efficiency is None:
         carbon_uptake_efficiency = load_carbon_uptake_efficiency(geometry=geometry, resampling=resampling)
     
+    check_distribution(carbon_uptake_efficiency, "carbon_uptake_efficiency")
+
     # load kn if not provided
     if kn is None:
         kn = load_kn(geometry=geometry, resampling=resampling)
+
+    check_distribution(kn, "kn")
 
     # load peak VC max for C3 plants if not provided
     if peakVCmax_C3 is None:
         peakVCmax_C3 = load_peakVCmax_C3(geometry=geometry, resampling=resampling)
 
+    check_distribution(peakVCmax_C3, "peakVCmax_C3")
+
     # load peak VC max for C4 plants if not provided
     if peakVCmax_C4 is None:
         peakVCmax_C4 = load_peakVCmax_C4(geometry=geometry, resampling=resampling)
+
+    check_distribution(peakVCmax_C4, "peakVCmax_C4")
 
     # load Ball-Berry slope for C3 plants if not provided
     if ball_berry_slope_C3 is None:
         ball_berry_slope_C3 = load_ball_berry_slope_C3(geometry=geometry, resampling=resampling)
     
+    check_distribution(ball_berry_slope_C3, "ball_berry_slope_C3")
+
     # load Ball-Berry slope for C4 plants if not provided
     if ball_berry_slope_C4 is None:
         ball_berry_slope_C4 = load_ball_berry_slope_C4(geometry=geometry, resampling=resampling)
 
+    check_distribution(ball_berry_slope_C4, "ball_berry_slope_C4")
+
     # load Ball-Berry intercept for C3 plants if not provided
     if ball_berry_intercept_C3 is None:
         ball_berry_intercept_C3 = load_ball_berry_intercept_C3(geometry=geometry, resampling=resampling)
+
+    check_distribution(ball_berry_intercept_C3, "ball_berry_intercept_C3")
 
     # Create a dictionary of variables to check
     variables_to_check = {
