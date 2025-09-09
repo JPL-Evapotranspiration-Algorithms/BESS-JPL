@@ -5,11 +5,14 @@ import rasters as rt
 from dateutil import parser
 from pandas import DataFrame
 
+from .constants import *
 from .model import BESS_JPL
 
 logger = logging.getLogger(__name__)
 
-def process_BESS_table(input_df: DataFrame) -> DataFrame:
+def process_BESS_table(
+        input_df: DataFrame,
+        C4_fraction_scale_factor: float = C4_FRACTION_SCALE_FACTOR) -> DataFrame:
     ST_C = np.array(input_df.ST_C).astype(np.float64)
     NDVI = np.array(input_df.NDVI).astype(np.float64)
 
@@ -44,7 +47,8 @@ def process_BESS_table(input_df: DataFrame) -> DataFrame:
         albedo=albedo,
         NDVI=NDVI,
         Ta_C=Ta_C,
-        RH=RH
+        RH=RH,
+        C4_fraction_scale_factor=C4_fraction_scale_factor
     )
 
     output_df = input_df.copy()

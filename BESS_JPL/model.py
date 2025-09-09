@@ -87,6 +87,7 @@ def BESS_JPL(
         peakVCmax_C3: np.ndarray = None,  # peak maximum carboxylation rate for C3 plants
         peakVCmax_C4: np.ndarray = None,  # peak maximum carboxylation rate for C4 plants
         CI: Union[Raster, np.ndarray] = None,
+        C4_fraction_scale_factor: float = C4_FRACTION_SCALE_FACTOR,
         MODISCI_connection: MODISCI = None,
         NASADEM_connection: NASADEMConnection = None,
         resampling: str = RESAMPLING,
@@ -129,7 +130,11 @@ def BESS_JPL(
 
     # load C4 fraction if not provided
     if C4_fraction is None:
-        C4_fraction = load_C4_fraction(geometry=geometry, resampling=resampling)
+        C4_fraction = load_C4_fraction(
+            geometry=geometry, 
+            resampling=resampling,
+            scale_factor=C4_fraction_scale_factor
+        )
 
     # load carbon uptake efficiency if not provided
     if carbon_uptake_efficiency is None:

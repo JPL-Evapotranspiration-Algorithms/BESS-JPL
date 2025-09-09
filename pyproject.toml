@@ -39,7 +39,10 @@ dev = [
 ]
 
 [tool.setuptools.package-data]
-BESS_JPL = ["*.txt", ".tif", "*.jpeg", "*.h5"]
+BESS_JPL = [".tif", "*.jpeg"]
+
+[tool.setuptools.packages.find]
+exclude = ["notebooks*", "references*"]
 
 [project.urls]
 "Homepage" = "https://github.com/JPL-Evapotranspiration-Algorithms/BESS-JPL"
