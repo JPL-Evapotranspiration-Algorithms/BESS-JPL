@@ -282,7 +282,7 @@ def BESS_JPL(
     if KG_climate is None:
         KG_climate = load_koppen_geiger(geometry=geometry)
 
-    check_distribution(KG_climate, "KG_climate")
+    check_distribution(np.float32(KG_climate), "KG_climate")
 
     # load canopy height in meters if not provided
     if canopy_height_meters is None:
