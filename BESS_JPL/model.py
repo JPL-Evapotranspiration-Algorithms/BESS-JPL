@@ -258,13 +258,21 @@ def BESS_JPL(
         UV = FLiES_results["UV"]
         # albedo_visible = FLiES_results["VIS"]
         # albedo_NIR = FLiES_results["NIR"]
-        albedo_NWP = GEOS5FP_connection.ALBEDO(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-        RVIS_NWP = GEOS5FP_connection.ALBVISDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-        albedo_visible = rt.clip(albedo * (RVIS_NWP / albedo_NWP), 0, 1)
+
+        if albedo_visible is None:
+            albedo_NWP = GEOS5FP_connection.ALBEDO(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+            RVIS_NWP = GEOS5FP_connection.ALBVISDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+            albedo_visible = rt.clip(albedo * (RVIS_NWP / albedo_NWP), 0, 1)
+
         check_distribution(albedo_visible, "RVIS")
-        RNIR_NWP = GEOS5FP_connection.ALBNIRDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-        albedo_NIR = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
+        
+        if albedo_NIR is None:
+            albedo_NWP = GEOS5FP_connection.ALBEDO(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+            RNIR_NWP = GEOS5FP_connection.ALBNIRDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+            albedo_NIR = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
+        
         check_distribution(albedo_NIR, "RNIR")
+        
         PARDir = VISdir
         check_distribution(PARDir, "PARDir")
     else:
@@ -274,7 +282,7 @@ def BESS_JPL(
     if KG_climate is None:
         KG_climate = load_koppen_geiger(geometry=geometry)
 
-    check_distribution(KG_climate, "KG_climate")
+    check_distribution(np.float32(KG_climate), "KG_climate")
 
     # load canopy height in meters if not provided
     if canopy_height_meters is None:
@@ -374,7 +382,7 @@ def BESS_JPL(
 
     # Check the distribution for each variable
     for var_name, var_value in meteorology_outputs.items():
-        check_distribution(var_value, var_name, time_UTC)
+        check_distribution(var_value, var_name)
 
     # convert NDVI to LAI
     LAI = LAI_from_NDVI(NDVI)
@@ -401,9 +409,9 @@ def BESS_JPL(
 
     # Check the distribution for each variable
     for var_name, var_value in VCmax_outputs.items():
-        check_distribution(var_value, var_name, time_UTC)
+        check_distribution(var_value, var_name)
 
-    sunlit_fraction, APAR_sunlit, APAR_shaded, ASW_sunlit, ASW_shaded, ASW_soil, G = canopy_shortwave_radiation(
+    sunlit_fraction, APAR_sunlit, APAR_shaded, ASW_sunlit, ASW_shaded, ASW_soil, G_Wm2 = canopy_shortwave_radiation(
         PARDiff=VISdiff,  # diffuse photosynthetically active radiation in W/m^2
         PARDir=VISdir,  # direct photosynthetically active radiation in W/m^2
         NIRDiff=NIRdiff,  # diffuse near-infrared radiation in W/m^2
@@ -424,12 +432,12 @@ def BESS_JPL(
         "ASW_sunlit": ASW_sunlit,
         "ASW_shaded": ASW_shaded,
         "ASW_soil": ASW_soil,
-        "G": G
+        "G": G_Wm2
     }
 
     # Check the distribution for each variable
     for var_name, var_value in canopy_radiation_outputs.items():
-        check_distribution(var_value, var_name, time_UTC)
+        check_distribution(var_value, var_name)
 
     canopy_temperature_K = canopy_temperature_C + 273.15
     soil_temperature_K = soil_temperature_C + 273.15
@@ -449,7 +457,7 @@ def BESS_JPL(
         ball_berry_slope=ball_berry_slope_C3,  # Ball-Berry slope for C3 photosynthesis
         ball_berry_intercept=ball_berry_intercept_C3,  # Ball-Berry intercept for C3 photosynthesis
         sunlit_fraction=sunlit_fraction,  # fraction of sunlit leaves
-        G=G,  # soil heat flux
+        G=G_Wm2,  # soil heat flux
         SZA=SZA,  # solar zenith angle
         Ca=Ca,  # atmospheric CO2 concentration
         Ps_Pa=Ps_Pa,  # surface pressure in Pascal
@@ -481,7 +489,7 @@ def BESS_JPL(
 
     # Check the distribution for each variable
     for var_name, var_value in carbon_water_fluxes_outputs.items():
-        check_distribution(var_value, var_name, time_UTC)
+        check_distribution(var_value, var_name)
 
     GPP_C4, LE_C4, LE_soil_C4, LE_canopy_C4, Rn_C4, Rn_soil_C4, Rn_canopy_C4 = carbon_water_fluxes(
         canopy_temperature_K=canopy_temperature_K,  # canopy temperature in Kelvin
@@ -498,7 +506,7 @@ def BESS_JPL(
         ball_berry_slope=ball_berry_slope_C4,  # Ball-Berry slope for C4 photosynthesis
         ball_berry_intercept=ball_berry_intercept_C4,  # Ball-Berry intercept for C4 photosynthesis
         sunlit_fraction=sunlit_fraction,  # fraction of sunlit leaves
-        G=G,  # soil heat flux
+        G=G_Wm2,  # soil heat flux
         SZA=SZA,  # solar zenith angle
         Ca=Ca,  # atmospheric CO2 concentration
         Ps_Pa=Ps_Pa,  # surface pressure in Pascal
@@ -530,7 +538,7 @@ def BESS_JPL(
 
     # Check the distribution for each variable
     for var_name, var_value in carbon_water_fluxes_C4_outputs.items():
-        check_distribution(var_value, var_name, time_UTC)
+        check_distribution(var_value, var_name)
 
     # interpolate C3 and C4 GPP
     ST_K = ST_C + 273.15
@@ -548,31 +556,31 @@ def BESS_JPL(
     GPP_daily = np.where(SZA >= 90, 0, GPP_daily)
 
     # interpolate C3 and C4 net radiation
-    Rn = np.clip(interpolate_C3_C4(Rn_C3, Rn_C4, C4_fraction), 0, 1000)
+    Rn_Wm2 = np.clip(interpolate_C3_C4(Rn_C3, Rn_C4, C4_fraction), 0, 1000)
 
     # interpolate C3 and C4 soil net radiation
-    Rn_soil = np.clip(interpolate_C3_C4(Rn_soil_C3, Rn_soil_C4, C4_fraction), 0, 1000)
+    Rn_soil_Wm2 = np.clip(interpolate_C3_C4(Rn_soil_C3, Rn_soil_C4, C4_fraction), 0, 1000)
 
     # interpolate C3 and C4 canopy net radiation
-    Rn_canopy = np.clip(interpolate_C3_C4(Rn_canopy_C3, Rn_canopy_C4, C4_fraction), 0, 1000)
+    Rn_canopy_Wm2 = np.clip(interpolate_C3_C4(Rn_canopy_C3, Rn_canopy_C4, C4_fraction), 0, 1000)
 
     # interpolate C3 and C4 latent heat flux
-    LE = np.clip(interpolate_C3_C4(LE_C3, LE_C4, C4_fraction), 0, 1000)
+    LE_Wm2 = np.clip(interpolate_C3_C4(LE_C3, LE_C4, C4_fraction), 0, 1000)
 
     # interpolate C3 and C4 soil latent heat flux
-    LE_soil = np.clip(interpolate_C3_C4(LE_soil_C3, LE_soil_C4, C4_fraction), 0, 1000)
+    LE_soil_Wm2 = np.clip(interpolate_C3_C4(LE_soil_C3, LE_soil_C4, C4_fraction), 0, 1000)
 
     # interpolate C3 and C4 canopy latent heat flux
-    LE_canopy = np.clip(interpolate_C3_C4(LE_canopy_C3, LE_canopy_C4, C4_fraction), 0, 1000)
+    LE_canopy_Wm2 = np.clip(interpolate_C3_C4(LE_canopy_C3, LE_canopy_C4, C4_fraction), 0, 1000)
 
     return {
         "GPP": GPP,
         "GPP_daily": GPP_daily,
-        "Rn": Rn,
-        "Rn_soil": Rn_soil,
-        "Rn_canopy": Rn_canopy,
-        "LE": LE,
-        "LE_soil": LE_soil,
-        "LE_canopy": LE_canopy,
-        "G": G
+        "Rn_Wm2": Rn_Wm2,
+        "Rn_soil_Wm2": Rn_soil_Wm2,
+        "Rn_canopy_Wm2": Rn_canopy_Wm2,
+        "LE_Wm2": LE_Wm2,
+        "LE_soil_Wm2": LE_soil_Wm2,
+        "LE_canopy_Wm2": LE_canopy_Wm2,
+        "G_Wm2": G_Wm2
     }
