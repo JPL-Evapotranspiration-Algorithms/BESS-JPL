@@ -173,7 +173,7 @@ def process_BESS_table(
     logger.info("started extracting time from PT-JPL-SM input table")
     time_UTC = pd.to_datetime(input_df.time_UTC).tolist()
     logger.info("completed extracting time from PT-JPL-SM input table")
-    
+
     results = BESS_JPL(
         geometry=geometry,
         time_UTC=time_UTC,
