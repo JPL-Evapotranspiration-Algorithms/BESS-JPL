@@ -157,12 +157,12 @@ def canopy_shortwave_radiation(
     check_distribution(Q_PShUp, "Q_PShUp")
 
     # Total absorbed PAR by sunlit leaves
-    APAR_Sun = Q_PSunDn + Q_PSunUp  # Eq. (10)
-    check_distribution(APAR_Sun, "APAR_Sun")
+    APAR_Sun_Wm2 = Q_PSunDn + Q_PSunUp  # Eq. (10)
+    check_distribution(APAR_Sun_Wm2, "APAR_Sun")
 
     # Total absorbed PAR by shade leaves
-    APAR_Sh = Q_PShDn + Q_PShUp  # Eq. (11)
-    check_distribution(APAR_Sh, "APAR_Sh")
+    APAR_Sh_Wm2 = Q_PShDn + Q_PShUp  # Eq. (11)
+    check_distribution(APAR_Sh_Wm2, "APAR_Sh")
 
     # Absorbed incoming NIR by sunlit leaves
     Q_NSunDn = NIRDir * (1.0 - SIGMA_N) * (1.0 - np.exp(-kb * L_CI)) + NIRDiff * (1 - albedo_NIR) * (
@@ -215,20 +215,47 @@ def canopy_shortwave_radiation(
     AUV_Soil = (1.0 - 0.05) * UV - Q_U
 
     # Ground heat storage
-    G = APAR_Soil * 0.28
-    check_distribution(G, "G")
+    G_Wm2 = APAR_Soil * 0.28
+    check_distribution(G_Wm2, "G")
 
     # Summary
-    ASW_Sun = APAR_Sun + ANIR_Sun + AUV_Sun
-    ASW_Sun = np.where(LAI == 0, 0, ASW_Sun)
-    ASW_Sh = APAR_Sh + ANIR_Sh + AUV_Sh
-    ASW_Sh = np.where(LAI == 0, 0, ASW_Sh)
-    ASW_Soil = APAR_Soil + ANIR_Soil + AUV_Soil
-    APAR_Sun = np.where(LAI == 0, 0, APAR_Sun)
-    APAR_Sun = APAR_Sun * 4.56
-    APAR_Sh = np.where(LAI == 0, 0, APAR_Sh)
-    APAR_Sh = APAR_Sh * 4.56
+    # Total absorbed shortwave radiation by sunlit leaves (ASW_Sun_Wm2) [W/m^2].
+    # Calculated as the sum of absorbed PAR, NIR, and UV radiation by sunlit leaves.
+    ASW_Sun_Wm2 = APAR_Sun_Wm2 + ANIR_Sun + AUV_Sun
+    ASW_Sun_Wm2 = np.where(LAI == 0, 0, ASW_Sun_Wm2)
+    check_distribution(ASW_Sun_Wm2, "ASW_Sun_Wm2")
+
+    # Total absorbed shortwave radiation by shaded leaves (ASW_Sh_Wm2) [W/m^2].
+    # Calculated as the sum of absorbed PAR, NIR, and UV radiation by shaded leaves.
+    ASW_Sh_Wm2 = APAR_Sh_Wm2 + ANIR_Sh + AUV_Sh
+    ASW_Sh_Wm2 = np.where(LAI == 0, 0, ASW_Sh_Wm2)
+    check_distribution(ASW_Sh_Wm2, "ASW_Sh_Wm2")
+
+    # Total absorbed shortwave radiation by soil (ASW_Soil_Wm2) [W/m^2].
+    # Calculated as the sum of absorbed PAR, NIR, and UV radiation by the soil.
+    ASW_Soil_Wm2 = APAR_Soil + ANIR_Soil + AUV_Soil
+    check_distribution(ASW_Soil_Wm2, "ASW_Soil_Wm2")
+
+    # Total absorbed PAR by sunlit leaves (APAR_Sun_Wm2) [W/m^2].
+    # Adjusted to zero where LAI is zero.
+    APAR_Sun_Wm2 = np.where(LAI == 0, 0, APAR_Sun_Wm2)
+    check_distribution(APAR_Sun_Wm2, "APAR_Sun_Wm2")
+
+    # Total absorbed PAR by sunlit leaves (APAR_Sun_umolm2s1) [μmol/m^2/s].
+    # Converted from APAR_Sun_Wm2 using a factor of 4.56.
+    APAR_Sun_umolm2s1 = APAR_Sun_Wm2 * 4.56
+    check_distribution(APAR_Sun_umolm2s1, "APAR_Sun_umolm2s1")
+
+    # Total absorbed PAR by shaded leaves (APAR_Sh_Wm2) [W/m^2].
+    # Adjusted to zero where LAI is zero.
+    APAR_Sh_Wm2 = np.where(LAI == 0, 0, APAR_Sh_Wm2)
+    check_distribution(APAR_Sh_Wm2, "APAR_Sh_Wm2")
+
+    # Total absorbed PAR by shaded leaves (APAR_Sh_umolm2s1) [μmol/m^2/s].
+    # Converted from APAR_Sh_Wm2 using a factor of 4.56.
+    APAR_Sh_umolm2s1 = APAR_Sh_Wm2 * 4.56
+    check_distribution(APAR_Sh_umolm2s1, "APAR_Sh_umolm2s1")
 
     # TODO not sure about these variables: Vcmax25_C3Sun, Vcmax25_C3Sh, Vcmax25_C4Sun, Vcmax25_C4Sh
 
-    return fSun, APAR_Sun, APAR_Sh, ASW_Sun, ASW_Sh, ASW_Soil, G
+    return fSun, APAR_Sun_umolm2s1, APAR_Sh_umolm2s1, ASW_Sun_Wm2, ASW_Sh_Wm2, ASW_Soil_Wm2, G_Wm2

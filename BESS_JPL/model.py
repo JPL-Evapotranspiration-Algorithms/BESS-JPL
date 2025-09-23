@@ -449,7 +449,7 @@ def BESS_JPL(
         Ta_K=Ta_K,  # air temperature in Kelvin
         APAR_sunlit=APAR_sunlit,  # sunlit leaf absorptance of photosynthetically active radiation
         APAR_shaded=APAR_shaded,  # shaded leaf absorptance of photosynthetically active radiation
-        ASW_sunlit=ASW_sunlit,  # sunlit absorbed shortwave radiation
+        ASW_sunlit_Wm2=ASW_sunlit,  # sunlit absorbed shortwave radiation
         ASW_shaded=ASW_shaded,  # shaded absorbed shortwave radiation
         ASW_soil=ASW_soil,  # absorbed shortwave radiation of soil
         Vcmax25_sunlit=VCmax_C3_sunlit,  # sunlit maximum carboxylation rate at 25 degrees C
@@ -498,7 +498,7 @@ def BESS_JPL(
         Ta_K=Ta_K,  # air temperature in Kelvin
         APAR_sunlit=APAR_sunlit,  # sunlit leaf absorptance of photosynthetically active radiation
         APAR_shaded=APAR_shaded,  # shaded leaf absorptance of photosynthetically active radiation
-        ASW_sunlit=ASW_sunlit,  # sunlit absorbed shortwave radiation
+        ASW_sunlit_Wm2=ASW_sunlit,  # sunlit absorbed shortwave radiation
         ASW_shaded=ASW_shaded,  # shaded absorbed shortwave radiation
         ASW_soil=ASW_soil,  # absorbed shortwave radiation of soil
         Vcmax25_sunlit=VCmax_C4_sunlit,  # sunlit maximum carboxylation rate at 25 degrees C

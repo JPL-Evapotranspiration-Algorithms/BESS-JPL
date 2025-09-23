@@ -19,7 +19,7 @@ def carbon_water_fluxes(
         Ta_K: np.ndarray,  # air temperature in Kelvin
         APAR_sunlit: np.ndarray,  # sunlit leaf absorptance to photosynthetically active radiation [umol m-2 s-1]
         APAR_shaded: np.ndarray,  # shaded leaf absorptance to photosynthetically active radiation [umol m-2 s-1]
-        ASW_sunlit: np.ndarray,  # sunlit absorbed shortwave radiation [W m-2]
+        ASW_sunlit_Wm2: np.ndarray,  # sunlit absorbed shortwave radiation [W m-2]
         ASW_shaded: np.ndarray,  # shaded absorbed shortwave radiation [W m-2]
         ASW_soil: np.ndarray,  # absorbed shortwave radiation in soil
         Vcmax25_sunlit: np.ndarray,  # sunlit maximum carboxylation rate at 25C
@@ -105,7 +105,7 @@ def carbon_water_fluxes(
 
         # Longwave radiation
         # CLR:[ALW_Sun, ALW_shaded, ALW_Soil, Ls, La]
-        ALW_sunlit, ALW_shaded, ALW_soil, Ls, La, Lf = canopy_longwave_radiation(
+        ALW_sunlit_Wm2, ALW_shaded, ALW_soil, Ls, La, Lf = canopy_longwave_radiation(
             LAI=LAI,  # leaf area index (LAI) [-]
             SZA=SZA,  # solar zenith angle (degrees)
             Ts_K=Ts_K,  # soil temperature (Ts) [K]
@@ -139,8 +139,8 @@ def carbon_water_fluxes(
         # calculate sunlit energy balance
         Rn_sunlit_new, LE_sunlit_new, H_sunlit_new, Tf_K_sunlit_new, gs2_sunlit_new, Ci_sunlit_new = canopy_energy_balance(
             An=An_sunlit,  # net assimulation (An) [umol m-2 s-1]
-            ASW=ASW_sunlit,  # total absorbed shortwave radiation by sunlit canopy (ASW) [W/m^2]
-            ALW=ALW_sunlit,  # total absorbed longwave radiation by sunlit canopy (ALW) [W/m^2]
+            ASW_Wm2=ASW_sunlit_Wm2,  # total absorbed shortwave radiation by sunlit canopy (ASW) [W/m^2]
+            ALW_Wm2=ALW_sunlit_Wm2,  # total absorbed longwave radiation by sunlit canopy (ALW) [W/m^2]
             Tf_K=Tf_K_sunlit,  # sunlit leaf temperature (Tf) [K]
             Ps_Pa=Ps_Pa,  # surface pressure (Ps) [Pa]
             Ca=Ca,  # ambient CO2 concentration (Ca) [umol mol-1]
@@ -186,8 +186,8 @@ def carbon_water_fluxes(
         # calculated shaded energy balance
         Rn_shaded_new, LE_shaded_new, H_shaded_new, Tf_K_shaded_new, gs2_shaded_new, Ci_shaded_new = canopy_energy_balance(
             An=An_shaded,  # net assimulation (An) [umol m-2 s-1]
-            ASW=ASW_shaded,  # total absorbed shortwave radiation by shaded canopy (ASW) [umol m-2 s-1]
-            ALW=ALW_shaded,  # total absorbed longwave radiation by shaded canopy (ALW) [umol m-2 s-1]
+            ASW_Wm2=ASW_shaded,  # total absorbed shortwave radiation by shaded canopy (ASW) [umol m-2 s-1]
+            ALW_Wm2=ALW_shaded,  # total absorbed longwave radiation by shaded canopy (ALW) [umol m-2 s-1]
             Tf_K=Tf_K_shaded,  # shaded leaf temperature (Tf) [K]
             Ps_Pa=Ps_Pa,  # surface pressure (Ps) [Pa]
             Ca=Ca,  # ambient CO2 concentration (Ca) [umol mol-1]
