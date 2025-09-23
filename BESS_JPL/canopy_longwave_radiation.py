@@ -73,11 +73,13 @@ def canopy_longwave_radiation(
 
     # Difference in longwave radiation flux densities between soil and foliage
     soil_leaf_difference = Ls - Lf
+    
     if intermediate_min is not None:
         soil_leaf_difference = np.clip(soil_leaf_difference, intermediate_min, None)
 
     # Difference in longwave radiation flux densities between air and foliage
     air_leaf_difference = La - Lf
+
     if intermediate_min is not None:
         air_leaf_difference = np.clip(air_leaf_difference, intermediate_min, intermediate_max)
 
@@ -94,18 +96,21 @@ def canopy_longwave_radiation(
 
     # Combined longwave radiation flux densities from soil, air, and foliage
     soil_air_leaf = Ls + La - 2 * Lf
+
     if intermediate_min is not None or intermediate_max is not None:
         soil_air_leaf = np.clip(soil_air_leaf, intermediate_min, intermediate_max)
 
     # Absorbed longwave radiation by shaded leaves
     # Derived from Eq. (45) in Wang et al. (2006)
     ALW_shaded = (1.0 - np.exp(-kd_LAI)) * soil_air_leaf - ALW_sunlit
+
     if ALW_min is not None:
         ALW_shaded = np.clip(ALW_shaded, ALW_min, None)
 
     # Absorbed longwave radiation by soil
     # Derived from Eq. (41) in Wang et al. (2006)
     ALW_soil = (1.0 - np.exp(-kd_LAI)) * Lf + np.exp(-kd_LAI) * La
+
     if ALW_min is not None:
         ALW_soil = np.clip(ALW_soil, ALW_min, None)
 
