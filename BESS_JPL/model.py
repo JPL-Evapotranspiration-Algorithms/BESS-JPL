@@ -412,12 +412,12 @@ def BESS_JPL(
         check_distribution(var_value, var_name)
 
     sunlit_fraction, APAR_sunlit, APAR_shaded, ASW_sunlit, ASW_shaded, ASW_soil, G_Wm2 = canopy_shortwave_radiation(
-        PARDiff=VISdiff,  # diffuse photosynthetically active radiation in W/m^2
-        PARDir=VISdir,  # direct photosynthetically active radiation in W/m^2
-        NIRDiff=NIRdiff,  # diffuse near-infrared radiation in W/m^2
-        NIRDir=NIRdir,  # direct near-infrared radiation in W/m^2
-        UV=UV,  # incoming ultraviolet radiation in W/m^2
-        SZA=SZA,  # solar zenith angle in degrees
+        PAR_diffuse_Wm2=VISdiff,  # diffuse photosynthetically active radiation in W/m^2
+        PAR_direct_Wm2=VISdir,  # direct photosynthetically active radiation in W/m^2
+        NIR_diffuse_Wm2=NIRdiff,  # diffuse near-infrared radiation in W/m^2
+        NIR_direct_Wm2=NIRdir,  # direct near-infrared radiation in W/m^2
+        UV_Wm2=UV,  # incoming ultraviolet radiation in W/m^2
+        SZA_deg=SZA,  # solar zenith angle in degrees
         LAI=LAI,  # leaf area index
         CI=CI,  # clumping index
         albedo_visible=albedo_visible,  # surface albedo in visible wavelengths
