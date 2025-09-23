@@ -59,11 +59,11 @@ def BESS_JPL(
         NDVI_minimum: Union[Raster, np.ndarray] = None,  # minimum NDVI
         NDVI_maximum: Union[Raster, np.ndarray] = None,  # maximum NDVI
         Rg: Union[Raster, np.ndarray] = None,  # incoming shortwave radiation in W/m^2
-        VISdiff: Union[Raster, np.ndarray] = None,  # diffuse visible radiation in W/m^2
-        VISdir: Union[Raster, np.ndarray] = None,  # direct visible radiation in W/m^2
-        NIRdiff: Union[Raster, np.ndarray] = None,  # diffuse near-infrared radiation in W/m^2
-        NIRdir: Union[Raster, np.ndarray] = None,  # direct near-infrared radiation in W/m^2
-        UV: Union[Raster, np.ndarray] = None,  # incoming ultraviolet radiation in W/m^2
+        PAR_diffuse_Wm2: Union[Raster, np.ndarray] = None,  # diffuse visible radiation in W/m^2
+        PAR_direct_Wm2: Union[Raster, np.ndarray] = None,  # direct visible radiation in W/m^2
+        NIR_diffuse_Wm2: Union[Raster, np.ndarray] = None,  # diffuse near-infrared radiation in W/m^2
+        NIR_direct_Wm2: Union[Raster, np.ndarray] = None,  # direct near-infrared radiation in W/m^2
+        UV_Wm2: Union[Raster, np.ndarray] = None,  # incoming ultraviolet radiation in W/m^2
         albedo_visible: Union[Raster, np.ndarray] = None, # surface albedo in visible wavelengths (initialized to surface albedo if left as None)
         albedo_NIR: Union[Raster, np.ndarray] = None, # surface albedo in near-infrared wavelengths (initialized to surface albedo if left as None)
         COT: Union[Raster, np.ndarray] = None,  # cloud optical thickness
@@ -74,7 +74,7 @@ def BESS_JPL(
         canopy_height_meters: Union[Raster, np.ndarray] = None,  # canopy height in meters
         Ca: Union[Raster, np.ndarray] = None,  # atmospheric CO2 concentration in ppm
         wind_speed_mps: Union[Raster, np.ndarray] = None,  # wind speed in meters per second
-        SZA: Union[Raster, np.ndarray] = None,  # solar zenith angle in degrees
+        SZA_deg: Union[Raster, np.ndarray] = None,  # solar zenith angle in degrees
         canopy_temperature_C: Union[Raster, np.ndarray] = None, # canopy temperature in Celsius (initialized to surface temperature if left as None)
         soil_temperature_C: Union[Raster, np.ndarray] = None, # soil temperature in Celsius (initialized to surface temperature if left as None)
         C4_fraction: Union[Raster, np.ndarray] = None,  # fraction of C4 plants
@@ -193,11 +193,11 @@ def BESS_JPL(
     # Create a dictionary of variables to check
     variables_to_check = {
         "Rg": Rg,
-        "VISdiff": VISdiff,
-        "VISdir": VISdir,
-        "NIRdiff": NIRdiff,
-        "NIRdir": NIRdir,
-        "UV": UV,
+        "VISdiff": PAR_diffuse_Wm2,
+        "VISdir": PAR_direct_Wm2,
+        "NIRdiff": NIR_diffuse_Wm2,
+        "NIRdir": NIR_direct_Wm2,
+        "UV": UV_Wm2,
         "albedo_visible": albedo_visible,
         "albedo_NIR": albedo_NIR
     }
@@ -216,7 +216,7 @@ def BESS_JPL(
                 logger.warning(f"Variable '{name}' has a different size: {size} (expected: {reference_size}).")
 
     # check if any of the FLiES outputs are not given
-    flies_variables = [Rg, VISdiff, VISdir, NIRdiff, NIRdir, UV, albedo_visible, albedo_NIR]
+    flies_variables = [Rg, PAR_diffuse_Wm2, PAR_direct_Wm2, NIR_diffuse_Wm2, NIR_direct_Wm2, UV_Wm2, albedo_visible, albedo_NIR]
     flies_variables_missing = False
     for variable in flies_variables:
         if variable is None:
@@ -244,18 +244,18 @@ def BESS_JPL(
             vapor_gccm=vapor_gccm,
             ozone_cm=ozone_cm,
             elevation_km=elevation_km,
-            SZA=SZA,
+            SZA=SZA_deg,
             KG_climate=KG_climate,
             GEOS5FP_connection=GEOS5FP_connection
         )
 
         # extract FLiES outputs
         Rg = FLiES_results["Rg"]
-        VISdiff = FLiES_results["VISdiff"]
-        VISdir = FLiES_results["VISdir"]
-        NIRdiff = FLiES_results["NIRdiff"]
-        NIRdir = FLiES_results["NIRdir"]
-        UV = FLiES_results["UV"]
+        PAR_diffuse_Wm2 = FLiES_results["VISdiff"]
+        PAR_direct_Wm2 = FLiES_results["VISdir"]
+        NIR_diffuse_Wm2 = FLiES_results["NIRdiff"]
+        NIR_direct_Wm2 = FLiES_results["NIRdir"]
+        UV_Wm2 = FLiES_results["UV"]
         # albedo_visible = FLiES_results["VIS"]
         # albedo_NIR = FLiES_results["NIR"]
 
@@ -273,7 +273,7 @@ def BESS_JPL(
         
         check_distribution(albedo_NIR, "RNIR")
         
-        PARDir = VISdir
+        PARDir = PAR_direct_Wm2
         check_distribution(PARDir, "PARDir")
     else:
         logger.info("using given FLiES output as BESS parameters")
@@ -323,8 +323,8 @@ def BESS_JPL(
         albedo_NIR = albedo
 
     # calculate solar zenith angle if not provided
-    if SZA is None:
-        SZA = calculate_SZA_from_DOY_and_hour(geometry.lat, geometry.lon, day_of_year, hour_of_day)
+    if SZA_deg is None:
+        SZA_deg = calculate_SZA_from_DOY_and_hour(geometry.lat, geometry.lon, day_of_year, hour_of_day)
 
     if MODISCI_connection is None:
         MODISCI_connection = MODISCI()
@@ -352,7 +352,7 @@ def BESS_JPL(
         hour_of_day=hour_of_day,
         latitude=latitude,
         elevation_m=elevation_m,
-        SZA=SZA,
+        SZA=SZA_deg,
         Ta_K=Ta_K,
         Ea_Pa=Ea_Pa,
         Rg=Rg,
@@ -395,7 +395,7 @@ def BESS_JPL(
         LAI_maximum=LAI_maximum,
         peakVCmax_C3=peakVCmax_C3,
         peakVCmax_C4=peakVCmax_C4,
-        SZA=SZA,
+        SZA=SZA_deg,
         kn=kn
     )
 
@@ -411,33 +411,31 @@ def BESS_JPL(
     for var_name, var_value in VCmax_outputs.items():
         check_distribution(var_value, var_name)
 
-    sunlit_fraction, APAR_sunlit, APAR_shaded, ASW_sunlit, ASW_shaded, ASW_soil, G_Wm2 = canopy_shortwave_radiation(
-        PAR_diffuse_Wm2=VISdiff,  # diffuse photosynthetically active radiation in W/m^2
-        PAR_direct_Wm2=VISdir,  # direct photosynthetically active radiation in W/m^2
-        NIR_diffuse_Wm2=NIRdiff,  # diffuse near-infrared radiation in W/m^2
-        NIR_direct_Wm2=NIRdir,  # direct near-infrared radiation in W/m^2
-        UV_Wm2=UV,  # incoming ultraviolet radiation in W/m^2
-        SZA_deg=SZA,  # solar zenith angle in degrees
+    canopy_shortwave_radiation_results = canopy_shortwave_radiation(
+        PAR_diffuse_Wm2=PAR_diffuse_Wm2,  # diffuse photosynthetically active radiation in W/m^2
+        PAR_direct_Wm2=PAR_direct_Wm2,  # direct photosynthetically active radiation in W/m^2
+        NIR_diffuse_Wm2=NIR_diffuse_Wm2,  # diffuse near-infrared radiation in W/m^2
+        NIR_direct_Wm2=NIR_direct_Wm2,  # direct near-infrared radiation in W/m^2
+        UV_Wm2=UV_Wm2,  # incoming ultraviolet radiation in W/m^2
+        SZA_deg=SZA_deg,  # solar zenith angle in degrees
         LAI=LAI,  # leaf area index
         CI=CI,  # clumping index
         albedo_visible=albedo_visible,  # surface albedo in visible wavelengths
         albedo_NIR=albedo_NIR  # surface albedo in near-infrared wavelengths
     )
 
-    # List of variable names and their corresponding values
-    canopy_radiation_outputs = {
-        "sunlit_fraction": sunlit_fraction,
-        "APAR_sunlit": APAR_sunlit,
-        "APAR_shaded": APAR_shaded,
-        "ASW_sunlit": ASW_sunlit,
-        "ASW_shaded": ASW_shaded,
-        "ASW_soil": ASW_soil,
-        "G": G_Wm2
-    }
-
     # Check the distribution for each variable
-    for var_name, var_value in canopy_radiation_outputs.items():
+    for var_name, var_value in canopy_shortwave_radiation_results.items():
         check_distribution(var_value, var_name)
+
+    # Extract values from the dictionary
+    sunlit_fraction = canopy_shortwave_radiation_results["fSun"]
+    APAR_sunlit_μmolm2s1 = canopy_shortwave_radiation_results["APAR_sunlit_μmolm2s1"]
+    APAR_shade_μmolm2s1 = canopy_shortwave_radiation_results["APAR_shade_μmolm2s1"]
+    ASW_sunlit_Wm2 = canopy_shortwave_radiation_results["ASW_sunlit_Wm2"]
+    ASW_shade_Wm2 = canopy_shortwave_radiation_results["ASW_shade_Wm2"]
+    ASW_soil_Wm2 = canopy_shortwave_radiation_results["ASW_soil_Wm2"]
+    G_Wm2 = canopy_shortwave_radiation_results["G_Wm2"]
 
     canopy_temperature_K = canopy_temperature_C + 273.15
     soil_temperature_K = soil_temperature_C + 273.15
@@ -447,18 +445,18 @@ def BESS_JPL(
         soil_temperature_K=soil_temperature_K,  # soil temperature in Kelvin
         LAI=LAI,  # leaf area index
         Ta_K=Ta_K,  # air temperature in Kelvin
-        APAR_sunlit=APAR_sunlit,  # sunlit leaf absorptance of photosynthetically active radiation
-        APAR_shaded=APAR_shaded,  # shaded leaf absorptance of photosynthetically active radiation
-        ASW_sunlit_Wm2=ASW_sunlit,  # sunlit absorbed shortwave radiation
-        ASW_shaded=ASW_shaded,  # shaded absorbed shortwave radiation
-        ASW_soil=ASW_soil,  # absorbed shortwave radiation of soil
+        APAR_sunlit=APAR_sunlit_μmolm2s1,  # sunlit leaf absorptance of photosynthetically active radiation
+        APAR_shaded=APAR_shade_μmolm2s1,  # shaded leaf absorptance of photosynthetically active radiation
+        ASW_sunlit_Wm2=ASW_sunlit_Wm2,  # sunlit absorbed shortwave radiation
+        ASW_shaded=ASW_shade_Wm2,  # shaded absorbed shortwave radiation
+        ASW_soil_Wm2=ASW_soil_Wm2,  # absorbed shortwave radiation of soil
         Vcmax25_sunlit=VCmax_C3_sunlit,  # sunlit maximum carboxylation rate at 25 degrees C
         Vcmax25_shaded=VCmax_C3_shaded,  # shaded maximum carboxylation rate at 25 degrees C
         ball_berry_slope=ball_berry_slope_C3,  # Ball-Berry slope for C3 photosynthesis
         ball_berry_intercept=ball_berry_intercept_C3,  # Ball-Berry intercept for C3 photosynthesis
         sunlit_fraction=sunlit_fraction,  # fraction of sunlit leaves
-        G=G_Wm2,  # soil heat flux
-        SZA=SZA,  # solar zenith angle
+        G_Wm2=G_Wm2,  # soil heat flux
+        SZA_deg=SZA_deg,  # solar zenith angle
         Ca=Ca,  # atmospheric CO2 concentration
         Ps_Pa=Ps_Pa,  # surface pressure in Pascal
         gamma=gamma,  # psychrometric constant
@@ -496,18 +494,18 @@ def BESS_JPL(
         soil_temperature_K=soil_temperature_K,  # soil temperature in Kelvin
         LAI=LAI,  # leaf area index
         Ta_K=Ta_K,  # air temperature in Kelvin
-        APAR_sunlit=APAR_sunlit,  # sunlit leaf absorptance of photosynthetically active radiation
-        APAR_shaded=APAR_shaded,  # shaded leaf absorptance of photosynthetically active radiation
-        ASW_sunlit_Wm2=ASW_sunlit,  # sunlit absorbed shortwave radiation
-        ASW_shaded=ASW_shaded,  # shaded absorbed shortwave radiation
-        ASW_soil=ASW_soil,  # absorbed shortwave radiation of soil
+        APAR_sunlit=APAR_sunlit_μmolm2s1,  # sunlit leaf absorptance of photosynthetically active radiation
+        APAR_shaded=APAR_shade_μmolm2s1,  # shaded leaf absorptance of photosynthetically active radiation
+        ASW_sunlit_Wm2=ASW_sunlit_Wm2,  # sunlit absorbed shortwave radiation
+        ASW_shaded=ASW_shade_Wm2,  # shaded absorbed shortwave radiation
+        ASW_soil_Wm2=ASW_soil_Wm2,  # absorbed shortwave radiation of soil
         Vcmax25_sunlit=VCmax_C4_sunlit,  # sunlit maximum carboxylation rate at 25 degrees C
         Vcmax25_shaded=VCmax_C4_shaded,  # shaded maximum carboxylation rate at 25 degrees C
         ball_berry_slope=ball_berry_slope_C4,  # Ball-Berry slope for C4 photosynthesis
         ball_berry_intercept=ball_berry_intercept_C4,  # Ball-Berry intercept for C4 photosynthesis
         sunlit_fraction=sunlit_fraction,  # fraction of sunlit leaves
-        G=G_Wm2,  # soil heat flux
-        SZA=SZA,  # solar zenith angle
+        G_Wm2=G_Wm2,  # soil heat flux
+        SZA_deg=SZA_deg,  # solar zenith angle
         Ca=Ca,  # atmospheric CO2 concentration
         Ps_Pa=Ps_Pa,  # surface pressure in Pascal
         gamma=gamma,  # psychrometric constant
@@ -553,7 +551,7 @@ def BESS_JPL(
     # upscale GPP to daily
     GPP_daily = 1800 * GPP / SFd * 1e-6 * 12  # Eq. (3) in Ryu et al 2008
     GPP_daily = np.where(SFd < 0.01, 0, GPP_daily)
-    GPP_daily = np.where(SZA >= 90, 0, GPP_daily)
+    GPP_daily = np.where(SZA_deg >= 90, 0, GPP_daily)
 
     # interpolate C3 and C4 net radiation
     Rn_Wm2 = np.clip(interpolate_C3_C4(Rn_C3, Rn_C4, C4_fraction), 0, 1000)
