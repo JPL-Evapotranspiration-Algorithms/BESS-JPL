@@ -139,8 +139,8 @@ def carbon_water_fluxes(
         # calculate sunlit energy balance
         Rn_sunlit_new, LE_sunlit_new, H_sunlit_new, Tf_K_sunlit_new, gs2_sunlit_new, Ci_sunlit_new = canopy_energy_balance(
             An=An_sunlit,  # net assimulation (An) [umol m-2 s-1]
-            ASW=ASW_sunlit,  # total absorbed shortwave radiation by sunlit canopy (ASW) [umol m-2 s-1]
-            ALW=ALW_sunlit,  # total absorbed longwave radiation by sunlit canopy (ALW) [umol m-2 s-1]
+            ASW=ASW_sunlit,  # total absorbed shortwave radiation by sunlit canopy (ASW) [W/m^2]
+            ALW=ALW_sunlit,  # total absorbed longwave radiation by sunlit canopy (ALW) [W/m^2]
             Tf_K=Tf_K_sunlit,  # sunlit leaf temperature (Tf) [K]
             Ps_Pa=Ps_Pa,  # surface pressure (Ps) [Pa]
             Ca=Ca,  # ambient CO2 concentration (Ca) [umol mol-1]

@@ -32,15 +32,15 @@ def canopy_shortwave_radiation(
                : leaf maximum carboxylation rate at 25C for C4 plant (Vcmax25_C4Leaf) [umol m-2 s-1].
     Output     : total absorbed PAR by sunlit leaves (APAR_Sun) [umol m-2 s-1],
                : total absorbed PAR by shade leaves (APAR_Sh) [umol m-2 s-1],
-               : total absorbed SW by sunlit leaves (ASW_Sun) [W m-2],
-               : total absorbed SW by shade leaves (ASW_Sh) [W m-2],
+               : total absorbed SW by sunlit leaves (ASW_Sun) [W/m^2],
+               : total absorbed SW by shade leaves (ASW_Sh) [W/m^2],
                : sunlit canopy maximum carboxylation rate at 25C for C3 plant (Vcmax25_C3Sun) [umol m-2 s-1],
                : shade canopy maximum carboxylation rate at 25C for C3 plant (Vcmax25_C3Sh) [umol m-2 s-1],
                : sunlit canopy maximum carboxylation rate at 25C for C4 plant (Vcmax25_C4Sun) [umol m-2 s-1],
                : shade canopy maximum carboxylation rate at 25C for C4 plant (Vcmax25_C4Sh) [umol m-2 s-1],
                : fraction of sunlit canopy (fSun) [-],
-               : ground heat storage (G) [W m-2],
-               : total absorbed SW by soil (ASW_Soil) [W m-2].
+               : ground heat storage (G) [W/m^2],
+               : total absorbed SW by soil (ASW_Soil) [W/m^2].
     References : Ryu, Y., Baldocchi, D. D., Kobayashi, H., Van Ingen, C., Li, J., Black, T. A., Beringer, J.,
                  Van Gorsel, E., Knohl, A., Law, B. E., & Roupsard, O. (2011).
 
