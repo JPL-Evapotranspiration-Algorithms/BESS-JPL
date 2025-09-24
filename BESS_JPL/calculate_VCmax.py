@@ -43,10 +43,10 @@ def calculate_VCmax(
     sf = np.where(np.isnan(sf), 0, sf)
 
     # Calculate maximum carboxylation rate at 25°C for C3 plants
-    VCmax_C3 = A * peakVCmax_C3_μmolm2s1 + (1 - A) * peakVCmax_C3_μmolm2s1 * sf
+    VCmax_C3_μmolm2s1 = A * peakVCmax_C3_μmolm2s1 + (1 - A) * peakVCmax_C3_μmolm2s1 * sf
 
     # Calculate maximum carboxylation rate at 25°C for C4 plants
-    VCmax_C4 = A * peakVCmax_C4_μmolm2s1 + (1 - A) * peakVCmax_C4_μmolm2s1 * sf
+    VCmax_C4_μmolm2s1 = A * peakVCmax_C4_μmolm2s1 + (1 - A) * peakVCmax_C4_μmolm2s1 * sf
 
     # Calculate the beam extinction coefficient (kb)
     kb = np.where(SZA_deg > 89, 50.0, 0.5 / np.cos(np.radians(SZA_deg)))
@@ -59,7 +59,7 @@ def calculate_VCmax(
     exp_neg_kn = np.exp(-kn)
 
     # Scale VCmax by LAI for C3 plants
-    LAI_VCmax_C3 = LAI * VCmax_C3
+    LAI_VCmax_C3 = LAI * VCmax_C3_μmolm2s1
 
     # Calculate total maximum carboxylation rate at 25°C for C3 plants
     VCmax_C3_total_μmolm2s1 = LAI_VCmax_C3 * (1 - exp_neg_kn) / kn
@@ -71,7 +71,7 @@ def calculate_VCmax(
     VCmax_C3_shaded_μmolm2s1 = VCmax_C3_total_μmolm2s1 - VCmax_C3_sunlit_μmolm2s1
 
     # Scale VCmax by LAI for C4 plants
-    LAI_VCmax_C4 = LAI * VCmax_C4
+    LAI_VCmax_C4 = LAI * VCmax_C4_μmolm2s1
 
     # Calculate total maximum carboxylation rate at 25°C for C4 plants
     VCmax_C4_total_μmolm2s1 = LAI_VCmax_C4 * (1 - exp_neg_kn) / kn
