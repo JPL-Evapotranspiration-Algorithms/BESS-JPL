@@ -32,41 +32,14 @@ def meteorology(
         SZA: np.ndarray,  # solar zenith angle in degrees
         Ta_K: np.ndarray,  # air temperature in Kelvin
         Ea_Pa: np.ndarray,  # vapor pressure in Pascal
-        Rg: np.ndarray,  # shortwave radiation in W/m2
+        Rg_Wm2: np.ndarray,  # shortwave radiation in W/m2
         wind_speed_mps: np.ndarray,  # wind speed in meters per second
         canopy_height_meters: np.ndarray):  # canopy height in meters
     """
     Meteorological calculations for Breathing Earth System Simulator
     Adapted from Youngryel Ryu's MATLAB code by Gregory Halverson and Robert Freepartner
-    :param day_of_year: day of year
-    :param hour_of_day: hour of day
-    :param latitude: latitude
-    :param elevation_m: elevation in meters
-    :param SZA: solar zenith angle in degrees
-    :param Ta_K: air temperature in Kelvin
-    :param Ea_Pa: vapor pressure in Pascal
-    :param Rg: shortwave radiation in W/m2
-    :param wind_speed_mps: wind speed in meters per second
-    :param canopy_height_meters: canopy height in meters
-    :return: 
-    Ps_Pa surface pressure in Pascal
-    VPD_Pa water vapor deficit in Pascal
-    RH relative humidity as a fraction
-    desTa 1st derivative of saturated vapor pressure
-    ddesTa 2nd derivative of saturated vapor pressure
-    gamma psychrometric constant in Pa K-1
-    Cp specific heat of air in J kg-1 K-1
-    rhoa air density in kg m-3
-    epsa all-sky emissivity
-    R
-    Rc
-    Rs
-    SFd
-    SFd2
-    DL
-    Ra
-    fStress
-    """""
+    :return: Dictionary of meteorological outputs with keys identical to variable names
+    """
     # Allen et al., 1998 (FAO)
 
     # surface pressure
@@ -157,7 +130,7 @@ def meteorology(
     # Choi et al., 2008: The Crawford and Duchon’s cloudiness factor with Brunt equation is recommended.
 
     # cloudy index
-    cloudy = 1.0 - Rg / Rgo  # [-]
+    cloudy = 1.0 - Rg_Wm2 / Rgo  # [-]
     # cloudy[cloudy < 0] = 0
     # cloudy[cloudy > 1] = 1
     cloudy = np.clip(cloudy, 0, 1)
@@ -201,4 +174,22 @@ def meteorology(
 
     fStress = RH ** (VPD_Pa / 1000.0)
 
-    return Ps_Pa, VPD_Pa, RH, desTa, ddesTa, gamma, Cp, rhoa, epsa, R, Rc, Rs, SFd, SFd2, DL, Ra, fStress
+    return {
+        "Ps_Pa": Ps_Pa,
+        "VPD_Pa": VPD_Pa,
+        "RH": RH,
+        "desTa": desTa,
+        "ddesTa": ddesTa,
+        "gamma": gamma,
+        "Cp": Cp,
+        "rhoa": rhoa,
+        "epsa": epsa,
+        "R": R,
+        "Rc": Rc,
+        "Rs": Rs,
+        "SFd": SFd,
+        "SFd2": SFd2,
+        "DL": DL,
+        "Ra": Ra,
+        "fStress": fStress
+    }

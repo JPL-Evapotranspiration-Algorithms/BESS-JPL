@@ -346,7 +346,7 @@ def BESS_JPL(
 
     latitude = geometry.lat
 
-    Ps_Pa, VPD_Pa, RH, desTa, ddesTa, gamma, Cp, rhoa, epsa, R, Rc, Rs, SFd, SFd2, DL, Ra, fStress = meteorology(
+    meteorology_results = meteorology(
         day_of_year=day_of_year,
         hour_of_day=hour_of_day,
         latitude=latitude,
@@ -354,33 +354,13 @@ def BESS_JPL(
         SZA=SZA_deg,
         Ta_K=Ta_K,
         Ea_Pa=Ea_Pa,
-        Rg=Rg_Wm2,
+        Rg_Wm2=Rg_Wm2,
         wind_speed_mps=wind_speed_mps,
         canopy_height_meters=canopy_height_meters
     )
 
-    meteorology_outputs = {
-        "Ps_Pa": Ps_Pa,
-        "VPD_Pa": VPD_Pa,
-        "RH": RH,
-        "desTa": desTa,
-        "ddesTa": ddesTa,
-        "gamma": gamma,
-        "Cp": Cp,
-        "rhoa": rhoa,
-        "epsa": epsa,
-        "R": R,
-        "Rc": Rc,
-        "Rs": Rs,
-        "SFd": SFd,
-        "SFd2": SFd2,
-        "DL": DL,
-        "Ra": Ra,
-        "fStress": fStress
-    }
-
     # Check the distribution for each variable
-    for var_name, var_value in meteorology_outputs.items():
+    for var_name, var_value in meteorology_results.items():
         check_distribution(var_value, var_name)
 
     # convert NDVI to LAI
