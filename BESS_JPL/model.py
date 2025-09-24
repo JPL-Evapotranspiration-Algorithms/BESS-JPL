@@ -359,6 +359,25 @@ def BESS_JPL(
         canopy_height_meters=canopy_height_meters
     )
 
+    # Extract all variables from the dictionary returned by meteorology
+    Ps_Pa = meteorology_results["Ps_Pa"]
+    VPD_Pa = meteorology_results["VPD_Pa"]
+    RH = meteorology_results["RH"]
+    desTa = meteorology_results["desTa"]
+    ddesTa = meteorology_results["ddesTa"]
+    gamma = meteorology_results["gamma"]
+    Cp = meteorology_results["Cp"]
+    rhoa = meteorology_results["rhoa"]
+    epsa = meteorology_results["epsa"]
+    R = meteorology_results["R"]
+    Rc = meteorology_results["Rc"]
+    Rs = meteorology_results["Rs"]
+    SFd = meteorology_results["SFd"]
+    SFd2 = meteorology_results["SFd2"]
+    DL = meteorology_results["DL"]
+    Ra = meteorology_results["Ra"]
+    fStress = meteorology_results["fStress"]
+
     # Check the distribution for each variable
     for var_name, var_value in meteorology_results.items():
         check_distribution(var_value, var_name)
