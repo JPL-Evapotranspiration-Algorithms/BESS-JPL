@@ -58,7 +58,7 @@ def BESS_JPL(
         RH: Union[Raster, np.ndarray] = None,  # relative humidity as a proportion
         NDVI_minimum: Union[Raster, np.ndarray] = None,  # minimum NDVI
         NDVI_maximum: Union[Raster, np.ndarray] = None,  # maximum NDVI
-        Rg: Union[Raster, np.ndarray] = None,  # incoming shortwave radiation in W/m^2
+        Rg_Wm2: Union[Raster, np.ndarray] = None,  # incoming shortwave radiation in W/m^2
         PAR_diffuse_Wm2: Union[Raster, np.ndarray] = None,  # diffuse visible radiation in W/m^2
         PAR_direct_Wm2: Union[Raster, np.ndarray] = None,  # direct visible radiation in W/m^2
         NIR_diffuse_Wm2: Union[Raster, np.ndarray] = None,  # diffuse near-infrared radiation in W/m^2
@@ -192,7 +192,7 @@ def BESS_JPL(
 
     # Create a dictionary of variables to check
     variables_to_check = {
-        "Rg": Rg,
+        "Rg": Rg_Wm2,
         "VISdiff": PAR_diffuse_Wm2,
         "VISdir": PAR_direct_Wm2,
         "NIRdiff": NIR_diffuse_Wm2,
@@ -216,7 +216,7 @@ def BESS_JPL(
                 logger.warning(f"Variable '{name}' has a different size: {size} (expected: {reference_size}).")
 
     # check if any of the FLiES outputs are not given
-    flies_variables = [Rg, PAR_diffuse_Wm2, PAR_direct_Wm2, NIR_diffuse_Wm2, NIR_direct_Wm2, UV_Wm2, albedo_visible, albedo_NIR]
+    flies_variables = [Rg_Wm2, PAR_diffuse_Wm2, PAR_direct_Wm2, NIR_diffuse_Wm2, NIR_direct_Wm2, UV_Wm2, albedo_visible, albedo_NIR]
     flies_variables_missing = False
     for variable in flies_variables:
         if variable is None:
@@ -250,7 +250,7 @@ def BESS_JPL(
         )
 
         # extract FLiES outputs
-        Rg = FLiES_results["Rg"]
+        Rg_Wm2 = FLiES_results["Rg"]
         PAR_diffuse_Wm2 = FLiES_results["VISdiff"]
         PAR_direct_Wm2 = FLiES_results["VISdir"]
         NIR_diffuse_Wm2 = FLiES_results["NIRdiff"]
@@ -273,8 +273,7 @@ def BESS_JPL(
         
         check_distribution(albedo_NIR, "RNIR")
         
-        PARDir = PAR_direct_Wm2
-        check_distribution(PARDir, "PARDir")
+        check_distribution(PAR_direct_Wm2, "PAR_direct_Wm2")
     else:
         logger.info("using given FLiES output as BESS parameters")
 
@@ -355,7 +354,7 @@ def BESS_JPL(
         SZA=SZA_deg,
         Ta_K=Ta_K,
         Ea_Pa=Ea_Pa,
-        Rg=Rg,
+        Rg=Rg_Wm2,
         wind_speed_mps=wind_speed_mps,
         canopy_height_meters=canopy_height_meters
     )
