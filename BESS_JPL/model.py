@@ -448,7 +448,7 @@ def BESS_JPL(
         APAR_sunlit=APAR_sunlit_μmolm2s1,  # sunlit leaf absorptance of photosynthetically active radiation
         APAR_shaded=APAR_shade_μmolm2s1,  # shaded leaf absorptance of photosynthetically active radiation
         ASW_sunlit_Wm2=ASW_sunlit_Wm2,  # sunlit absorbed shortwave radiation
-        ASW_shaded=ASW_shade_Wm2,  # shaded absorbed shortwave radiation
+        ASW_shaded_Wm2=ASW_shade_Wm2,  # shaded absorbed shortwave radiation
         ASW_soil_Wm2=ASW_soil_Wm2,  # absorbed shortwave radiation of soil
         Vcmax25_sunlit=VCmax_C3_sunlit,  # sunlit maximum carboxylation rate at 25 degrees C
         Vcmax25_shaded=VCmax_C3_shaded,  # shaded maximum carboxylation rate at 25 degrees C
@@ -497,7 +497,7 @@ def BESS_JPL(
         APAR_sunlit=APAR_sunlit_μmolm2s1,  # sunlit leaf absorptance of photosynthetically active radiation
         APAR_shaded=APAR_shade_μmolm2s1,  # shaded leaf absorptance of photosynthetically active radiation
         ASW_sunlit_Wm2=ASW_sunlit_Wm2,  # sunlit absorbed shortwave radiation
-        ASW_shaded=ASW_shade_Wm2,  # shaded absorbed shortwave radiation
+        ASW_shaded_Wm2=ASW_shade_Wm2,  # shaded absorbed shortwave radiation
         ASW_soil_Wm2=ASW_soil_Wm2,  # absorbed shortwave radiation of soil
         Vcmax25_sunlit=VCmax_C4_sunlit,  # sunlit maximum carboxylation rate at 25 degrees C
         Vcmax25_shaded=VCmax_C4_shaded,  # shaded maximum carboxylation rate at 25 degrees C

@@ -1,7 +1,11 @@
 import numpy as np
 
 
-def calculate_C4_photosynthesis(Tf_K: np.ndarray, Ci: np.ndarray, APAR: np.ndarray, Vcmax25: np.ndarray) -> np.ndarray:
+def calculate_C4_photosynthesis(
+        Tf_K: np.ndarray, 
+        Ci_μmol_per_mol: np.ndarray, 
+        APAR_μmolm2s1: np.ndarray, 
+        Vcmax25_μmolm2s1: np.ndarray) -> np.ndarray:
     """
     =============================================================================
     Collatz et al., 1992
@@ -40,18 +44,18 @@ def calculate_C4_photosynthesis(Tf_K: np.ndarray, Ci: np.ndarray, APAR: np.ndarr
     """
     # Calculate the temperature deviation from 25°C (298.15 K)
     # `item` represents the temperature difference normalized to 10°C intervals
-    item = (Tf_K - 298.15) / 10.0
+    temperature_deviation = (Tf_K - 298.15) / 10.0
 
     # Define the Q10 coefficient, which describes the rate increase for every 10°C rise
     Q10 = 2.0  # Reaction rate doubles for every 10°C increase
 
     # Calculate the temperature-dependent rate constant for CO2 fixation
     # `k` is the rate constant for CO2 fixation, adjusted for temperature
-    k = 0.7 * pow(Q10, item)  # [mol m-2 s-1]
+    k = 0.7 * pow(Q10, temperature_deviation)  # [mol m-2 s-1]
 
     # Calculate the temperature-corrected maximum carboxylation rate
     # `Vcmax_o` is the base maximum carboxylation rate adjusted for temperature
-    Vcmax_o = Vcmax25 * pow(Q10, item)  # [umol m-2 s-1]
+    Vcmax_o = Vcmax25_μmolm2s1 * pow(Q10, temperature_deviation)  # [umol m-2 s-1]
 
     # Further adjust `Vcmax_o` for enzyme deactivation at extreme temperatures
     # `Vcmax` is the effective maximum carboxylation rate after accounting for temperature sensitivity
@@ -61,10 +65,10 @@ def calculate_C4_photosynthesis(Tf_K: np.ndarray, Ci: np.ndarray, APAR: np.ndarr
 
     # Calculate the temperature-corrected dark respiration rate
     # `Rd_o` is the base dark respiration rate adjusted for temperature
-    Rd_o = 0.8 * pow(Q10, item)  # [umol m-2 s-1]
+    Rd_o_μmolm2s1 = 0.8 * pow(Q10, temperature_deviation)  # [umol m-2 s-1]
 
     # `Rd` is the effective dark respiration rate after accounting for temperature sensitivity
-    Rd = Rd_o / (1.0 + np.exp(1.3 * (Tf_K - 328.15)))  # [umol m-2 s-1]
+    Rd_μmolm2s1 = Rd_o_μmolm2s1 / (1.0 + np.exp(1.3 * (Tf_K - 328.15)))  # [umol m-2 s-1]
 
     # Define the three limiting states of photosynthesis
     # `Je` is the electron transport-limited rate, assumed to equal `Vcmax`
@@ -72,14 +76,14 @@ def calculate_C4_photosynthesis(Tf_K: np.ndarray, Ci: np.ndarray, APAR: np.ndarr
 
     # Calculate the light-limited rate
     # `alf` is the quantum yield (mol CO2 fixed per mol photons absorbed)
-    alf = 0.067  # Quantum yield
+    quantum_yield = 0.067  # Quantum yield
 
     # `Ji` is the light-limited rate, determined by absorbed light energy
-    Ji = alf * APAR  # [umol m-2 s-1]
+    Ji_μmolm2s1 = quantum_yield * APAR_μmolm2s1  # [umol m-2 s-1]
 
     # Calculate the CO2-limited rate
     # `ci` is the intercellular CO2 concentration converted to mol/mol
-    ci = Ci * 1e-6  # Convert [umol mol-1] to [mol mol-1]
+    ci = Ci_μmol_per_mol * 1e-6  # Convert [umol mol-1] to [mol mol-1]
 
     # `Jc` is the CO2-limited rate, based on `ci` and the rate constant `k`
     Jc = ci * k * 1e6  # [umol m-2 s-1]
@@ -88,8 +92,8 @@ def calculate_C4_photosynthesis(Tf_K: np.ndarray, Ci: np.ndarray, APAR: np.ndarr
     # Step 1: Colimitation between `Je` and `Ji`
     # `a`, `b`, and `c` are coefficients for the quadratic equation
     a = 0.83  # Empirical coefficient for colimitation
-    b = -(Je + Ji)
-    c = Je * Ji
+    b = -(Je + Ji_μmolm2s1)
+    c = Je * Ji_μmolm2s1
 
     # `Jei` is the intermediate colimited rate between `Je` and `Ji`
     Jei = (-b + np.sign(b) * np.sqrt(b * b - 4.0 * a * c)) / (2.0 * a)
@@ -102,11 +106,11 @@ def calculate_C4_photosynthesis(Tf_K: np.ndarray, Ci: np.ndarray, APAR: np.ndarr
     c = Jei * Jc
 
     # `Jeic` is the final colimited rate between `Jei` and `Jc`
-    Jeic = (-b + np.sign(b) * np.sqrt(b * b - 4.0 * a * c)) / (2.0 * a)
-    Jeic = np.real(Jeic)  # Ensure real values
+    Jeic_μmolm2s1 = (-b + np.sign(b) * np.sqrt(b * b - 4.0 * a * c)) / (2.0 * a)
+    Jeic_μmolm2s1 = np.real(Jeic_μmolm2s1)  # Ensure real values
 
     # Calculate the net assimilation rate
     # `An` is the net assimilation rate, clipped to ensure non-negative values
-    An = np.clip(Jeic - Rd, 0, None)  # [umol m-2 s-1]
+    An_μmolm2s1 = np.clip(Jeic_μmolm2s1 - Rd_μmolm2s1, 0, None)  # [umol m-2 s-1]
 
-    return An
+    return An_μmolm2s1
