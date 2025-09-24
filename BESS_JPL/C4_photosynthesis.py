@@ -5,7 +5,7 @@ def calculate_C4_photosynthesis(
         Tf_K: np.ndarray, 
         Ci_μmol_per_mol: np.ndarray, 
         APAR_μmolm2s1: np.ndarray, 
-        Vcmax25_μmolm2s1: np.ndarray) -> np.ndarray:
+        Vcmax25_μmolm2s1: np.ndarray) -> dict:
     """
     =============================================================================
     Collatz et al., 1992
@@ -28,11 +28,10 @@ def calculate_C4_photosynthesis(
                                        micromoles per square meter per second. Reflects the activity of the enzyme Rubisco.
 
     Returns:
-        np.ndarray: Net assimilation rate (An) in micromoles per square meter per second. 
-                    Represents the rate of CO2 uptake by the plant after accounting for 
-                    both photosynthesis and respiration. This is a measure of the net 
-                    carbon gain by the plant, which is critical for growth and biomass 
-                    production.
+        dict: A dictionary containing the following keys:
+            - 'net_assimilation_C4_μmolm2s1' (np.ndarray): Net assimilation rate (An) in micromoles per square meter per second.
+            - 'photosynthesis_C4_μmolm2s1' (np.ndarray): Photosynthesis rate in micromoles per square meter per second.
+            - 'respiration_C4_μmolm2s1' (np.ndarray): Respiration rate in micromoles per square meter per second.
 
     Explanation:
         The net assimilation rate (An) is the balance between the carbon dioxide fixed 
@@ -100,7 +99,7 @@ def calculate_C4_photosynthesis(
     # `Jc` is the CO2-limited rate, based on `ci` and the rate constant `k`
     Jc = ci * k * 1e6  # [umol m-2 s-1]
 
-    # Colimitation between the three limiting states
+    # Colimitation between the three limiting states of photosynthesis
     # Step 1: Colimitation between `Je` and `Ji`
     # `a`, `b`, and `c` are coefficients for the quadratic equation
     a = 0.83  # Empirical coefficient for colimitation
@@ -126,4 +125,9 @@ def calculate_C4_photosynthesis(
     # It represents the net carbon gain by the plant, accounting for photosynthesis and respiration
     net_assimilation_C4_μmolm2s1 = np.clip(photosynthesis_C4_μmolm2s1 - respiration_C4_μmolm2s1, 0, None)  # [umol m-2 s-1]
 
-    return net_assimilation_C4_μmolm2s1
+    # Return results as a dictionary
+    return {
+        'net_assimilation_C4_μmolm2s1': net_assimilation_C4_μmolm2s1,
+        'photosynthesis_C4_μmolm2s1': photosynthesis_C4_μmolm2s1,
+        'respiration_C4_μmolm2s1': respiration_C4_μmolm2s1
+    }
