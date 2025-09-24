@@ -4,7 +4,7 @@ import numpy as np
 def calculate_C3_photosynthesis(
         Tf_K: np.ndarray,  # leaf temperature in Kelvin (K)
         Ci: np.ndarray,  # intercellular CO2 concentration in micromoles per mole (μmol mol⁻¹)
-        APAR: np.ndarray,  # absorbed photosynthetically active radiation in micromoles per square meter per second (μmol m⁻² s⁻¹)
+        APAR_μmolm2s1: np.ndarray,  # absorbed photosynthetically active radiation in micromoles per square meter per second (μmol m⁻² s⁻¹)
         Vcmax25: np.ndarray,  # maximum carboxylation rate at 25°C in micromoles per square meter per second (μmol m⁻² s⁻¹)
         Ps_Pa: np.ndarray,  # surface pressure in Pascals (Pa)
         carbon_uptake_efficiency: np.ndarray) -> dict:  # intrinsic quantum efficiency for carbon uptake (unitless)
@@ -108,7 +108,7 @@ def calculate_C3_photosynthesis(
 
     # Light-limited rate, dependent on light energy and CO2 availability
     # Units: micromoles per square meter per second (μmol m⁻² s⁻¹)
-    JE = carbon_uptake_efficiency * APAR * (Pi - GammaS) / (Pi + 2.0 * GammaS)
+    JE = carbon_uptake_efficiency * APAR_μmolm2s1 * (Pi - GammaS) / (Pi + 2.0 * GammaS)
 
     # Export-limited rate, dependent on the capacity to export photosynthetic products
     # Units: micromoles per square meter per second (μmol m⁻² s⁻¹)

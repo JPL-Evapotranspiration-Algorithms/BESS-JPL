@@ -84,8 +84,8 @@ def BESS_JPL(
         ball_berry_intercept_C4: Union[np.ndarray, float] = BALL_BERRY_INTERCEPT_C4, # Ball-Berry intercept for C4 plants
         ball_berry_slope_C3: np.ndarray = None,  # Ball-Berry slope for C3 plants
         ball_berry_slope_C4: np.ndarray = None,  # Ball-Berry slope for C4 plants
-        peakVCmax_C3: np.ndarray = None,  # peak maximum carboxylation rate for C3 plants
-        peakVCmax_C4: np.ndarray = None,  # peak maximum carboxylation rate for C4 plants
+        peakVCmax_C3_μmolm2s1: np.ndarray = None,  # peak maximum carboxylation rate for C3 plants
+        peakVCmax_C4_μmolm2s1: np.ndarray = None,  # peak maximum carboxylation rate for C4 plants
         CI: Union[Raster, np.ndarray] = None,
         C4_fraction_scale_factor: float = C4_FRACTION_SCALE_FACTOR,
         MODISCI_connection: MODISCI = None,
@@ -161,16 +161,16 @@ def BESS_JPL(
     check_distribution(kn, "kn")
 
     # load peak VC max for C3 plants if not provided
-    if peakVCmax_C3 is None:
-        peakVCmax_C3 = load_peakVCmax_C3(geometry=geometry, resampling=resampling)
+    if peakVCmax_C3_μmolm2s1 is None:
+        peakVCmax_C3_μmolm2s1 = load_peakVCmax_C3(geometry=geometry, resampling=resampling)
 
-    check_distribution(peakVCmax_C3, "peakVCmax_C3")
+    check_distribution(peakVCmax_C3_μmolm2s1, "peakVCmax_C3")
 
     # load peak VC max for C4 plants if not provided
-    if peakVCmax_C4 is None:
-        peakVCmax_C4 = load_peakVCmax_C4(geometry=geometry, resampling=resampling)
+    if peakVCmax_C4_μmolm2s1 is None:
+        peakVCmax_C4_μmolm2s1 = load_peakVCmax_C4(geometry=geometry, resampling=resampling)
 
-    check_distribution(peakVCmax_C4, "peakVCmax_C4")
+    check_distribution(peakVCmax_C4_μmolm2s1, "peakVCmax_C4")
 
     # load Ball-Berry slope for C3 plants if not provided
     if ball_berry_slope_C3 is None:
@@ -389,26 +389,23 @@ def BESS_JPL(
     LAI_minimum = LAI_from_NDVI(NDVI_minimum)
     LAI_maximum = LAI_from_NDVI(NDVI_maximum)
 
-    VCmax_C3_sunlit, VCmax_C4_sunlit, VCmax_C3_shaded, VCmax_C4_shaded = calculate_VCmax(
+    VCmax_results = calculate_VCmax(
         LAI=LAI,
         LAI_minimum=LAI_minimum,
         LAI_maximum=LAI_maximum,
-        peakVCmax_C3=peakVCmax_C3,
-        peakVCmax_C4=peakVCmax_C4,
-        SZA=SZA_deg,
+        peakVCmax_C3_μmolm2s1=peakVCmax_C3_μmolm2s1,
+        peakVCmax_C4_μmolm2s1=peakVCmax_C4_μmolm2s1,
+        SZA_deg=SZA_deg,
         kn=kn
     )
 
-    # List of variable names and their corresponding values
-    VCmax_outputs = {
-        "VCmax_C3_sunlit": VCmax_C3_sunlit,
-        "VCmax_C4_sunlit": VCmax_C4_sunlit,
-        "VCmax_C3_shaded": VCmax_C3_shaded,
-        "VCmax_C4_shaded": VCmax_C4_shaded
-    }
+    VCmax_C3_sunlit_μmolm2s1 = VCmax_results["VCmax_C3_sunlit_μmolm2s1"]
+    VCmax_C4_sunlit_μmolm2s1 = VCmax_results["VCmax_C4_sunlit_μmolm2s1"]
+    VCmax_C3_shaded_μmolm2s1 = VCmax_results["VCmax_C3_shaded_μmolm2s1"]
+    VCmax_C4_shaded_μmolm2s1 = VCmax_results["VCmax_C4_shaded_μmolm2s1"]
 
     # Check the distribution for each variable
-    for var_name, var_value in VCmax_outputs.items():
+    for var_name, var_value in VCmax_results.items():
         check_distribution(var_value, var_name)
 
     canopy_shortwave_radiation_results = canopy_shortwave_radiation(
@@ -445,13 +442,13 @@ def BESS_JPL(
         soil_temperature_K=soil_temperature_K,  # soil temperature in Kelvin
         LAI=LAI,  # leaf area index
         Ta_K=Ta_K,  # air temperature in Kelvin
-        APAR_sunlit=APAR_sunlit_μmolm2s1,  # sunlit leaf absorptance of photosynthetically active radiation
-        APAR_shaded=APAR_shade_μmolm2s1,  # shaded leaf absorptance of photosynthetically active radiation
+        APAR_sunlit_μmolm2s1=APAR_sunlit_μmolm2s1,  # sunlit leaf absorptance of photosynthetically active radiation
+        APAR_shaded_μmolm2s1=APAR_shade_μmolm2s1,  # shaded leaf absorptance of photosynthetically active radiation
         ASW_sunlit_Wm2=ASW_sunlit_Wm2,  # sunlit absorbed shortwave radiation
         ASW_shaded_Wm2=ASW_shade_Wm2,  # shaded absorbed shortwave radiation
         ASW_soil_Wm2=ASW_soil_Wm2,  # absorbed shortwave radiation of soil
-        Vcmax25_sunlit=VCmax_C3_sunlit,  # sunlit maximum carboxylation rate at 25 degrees C
-        Vcmax25_shaded=VCmax_C3_shaded,  # shaded maximum carboxylation rate at 25 degrees C
+        Vcmax25_sunlit=VCmax_C3_sunlit_μmolm2s1,  # sunlit maximum carboxylation rate at 25 degrees C
+        Vcmax25_shaded=VCmax_C3_shaded_μmolm2s1,  # shaded maximum carboxylation rate at 25 degrees C
         ball_berry_slope=ball_berry_slope_C3,  # Ball-Berry slope for C3 photosynthesis
         ball_berry_intercept=ball_berry_intercept_C3,  # Ball-Berry intercept for C3 photosynthesis
         sunlit_fraction=sunlit_fraction,  # fraction of sunlit leaves
@@ -494,13 +491,13 @@ def BESS_JPL(
         soil_temperature_K=soil_temperature_K,  # soil temperature in Kelvin
         LAI=LAI,  # leaf area index
         Ta_K=Ta_K,  # air temperature in Kelvin
-        APAR_sunlit=APAR_sunlit_μmolm2s1,  # sunlit leaf absorptance of photosynthetically active radiation
-        APAR_shaded=APAR_shade_μmolm2s1,  # shaded leaf absorptance of photosynthetically active radiation
+        APAR_sunlit_μmolm2s1=APAR_sunlit_μmolm2s1,  # sunlit leaf absorptance of photosynthetically active radiation
+        APAR_shaded_μmolm2s1=APAR_shade_μmolm2s1,  # shaded leaf absorptance of photosynthetically active radiation
         ASW_sunlit_Wm2=ASW_sunlit_Wm2,  # sunlit absorbed shortwave radiation
         ASW_shaded_Wm2=ASW_shade_Wm2,  # shaded absorbed shortwave radiation
         ASW_soil_Wm2=ASW_soil_Wm2,  # absorbed shortwave radiation of soil
-        Vcmax25_sunlit=VCmax_C4_sunlit,  # sunlit maximum carboxylation rate at 25 degrees C
-        Vcmax25_shaded=VCmax_C4_shaded,  # shaded maximum carboxylation rate at 25 degrees C
+        Vcmax25_sunlit=VCmax_C4_sunlit_μmolm2s1,  # sunlit maximum carboxylation rate at 25 degrees C
+        Vcmax25_shaded=VCmax_C4_shaded_μmolm2s1,  # shaded maximum carboxylation rate at 25 degrees C
         ball_berry_slope=ball_berry_slope_C4,  # Ball-Berry slope for C4 photosynthesis
         ball_berry_intercept=ball_berry_intercept_C4,  # Ball-Berry intercept for C4 photosynthesis
         sunlit_fraction=sunlit_fraction,  # fraction of sunlit leaves

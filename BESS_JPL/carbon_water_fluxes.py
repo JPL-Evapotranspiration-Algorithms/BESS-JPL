@@ -17,8 +17,8 @@ def carbon_water_fluxes(
         soil_temperature_K: np.ndarray,  # soil temperature in Kelvin
         LAI: np.ndarray,  # leaf area index
         Ta_K: np.ndarray,  # air temperature in Kelvin
-        APAR_sunlit: np.ndarray,  # sunlit leaf absorptance to photosynthetically active radiation [μmol m⁻² s⁻¹]
-        APAR_shaded: np.ndarray,  # shaded leaf absorptance to photosynthetically active radiation [μmol m⁻² s⁻¹]
+        APAR_sunlit_μmolm2s1: np.ndarray,  # sunlit leaf absorptance to photosynthetically active radiation [μmol m⁻² s⁻¹]
+        APAR_shaded_μmolm2s1: np.ndarray,  # shaded leaf absorptance to photosynthetically active radiation [μmol m⁻² s⁻¹]
         ASW_sunlit_Wm2: np.ndarray,  # sunlit absorbed shortwave radiation [W m⁻²]
         ASW_shaded_Wm2: np.ndarray,  # shaded absorbed shortwave radiation [W m⁻²]
         ASW_soil_Wm2: np.ndarray,  # absorbed shortwave radiation in soil [W m⁻²]
@@ -97,7 +97,7 @@ def carbon_water_fluxes(
 
     # this model originally initialized soil and canopy temperature to air temperature
     Tf_sunlit_K = canopy_temperature_K
-    Tf_K_shaded = canopy_temperature_K
+    Tf_shaded_K = canopy_temperature_K
     Tf_K = canopy_temperature_K
     Ts_K = soil_temperature_K
 
@@ -128,16 +128,16 @@ def carbon_water_fluxes(
     # initialize shaded partition (overwritten when iterations process)
 
     # initialize shaded net assimilation rate to zero
-    net_assimilation_shade_μmolm2s1 = Tf_K_shaded * 0
+    net_assimilation_shade_μmolm2s1 = Tf_shaded_K * 0
 
     # initialize shaded net radiation to zero
-    Rn_shaded_Wm2 = Tf_K_shaded * 0
+    Rn_shaded_Wm2 = Tf_shaded_K * 0
 
     # initialize shaded latent heat flux to zero
-    LE_shaded_Wm2 = Tf_K_shaded * 0
+    LE_shaded_Wm2 = Tf_shaded_K * 0
 
     # initialize shaded sensible heat flux to zero
-    H_shaded_Wm2 = Tf_K_shaded * 0
+    H_shaded_Wm2 = Tf_shaded_K * 0
 
     # initialize soil partition (overwritten when iterations process)
 
@@ -169,7 +169,7 @@ def carbon_water_fluxes(
             photosynthesis_sunlit_C4_results = calculate_C4_photosynthesis(
                 Tf_K=Tf_sunlit_K,  # sunlit leaf temperature (Tf) [K]
                 Ci_μmol_per_mol=Ci_sunlit,  # sunlit intercellular CO2 concentration (Ci) [umol mol-1]
-                APAR_μmolm2s1=APAR_sunlit,  # sunlit leaf absorptance to photosynthetically active radiation [umol m-2 s-1]
+                APAR_μmolm2s1=APAR_sunlit_μmolm2s1,  # sunlit leaf absorptance to photosynthetically active radiation [umol m-2 s-1]
                 Vcmax25_μmolm2s1=Vcmax25_sunlit  # sunlit maximum carboxylation rate at 25C (Vcmax25) [umol m-2 s-1]
             )
 
@@ -179,7 +179,7 @@ def carbon_water_fluxes(
             photosynthesis_sunlit_C3_results = calculate_C3_photosynthesis(
                 Tf_K=Tf_sunlit_K,  # sunlit leaf temperature (Tf) [K]
                 Ci=Ci_sunlit,  # sunlit intercellular CO2 concentration (Ci) [umol mol-1]
-                APAR=APAR_sunlit,  # sunlit leaf absorptance to photosynthetically active radiation [umol m-2 s-1]
+                APAR_μmolm2s1=APAR_sunlit_μmolm2s1,  # sunlit leaf absorptance to photosynthetically active radiation [umol m-2 s-1]
                 Vcmax25=Vcmax25_sunlit,  # sunlit maximum carboxylation rate at 25C (Vcmax25) [umol m-2 s-1]
                 Ps_Pa=Ps_Pa,  # surface pressure (Ps) [Pa]
                 carbon_uptake_efficiency=carbon_uptake_efficiency  # intrinsic quantum efficiency for carbon uptake
@@ -219,18 +219,18 @@ def carbon_water_fluxes(
         # Photosynthesis (shade)
         if C4_photosynthesis:
             photosynthesis_shade_C4_results = calculate_C4_photosynthesis(
-                Tf_K=Tf_K_shaded,  # shaded leaf temperature (Tf) [K]
+                Tf_K=Tf_shaded_K,  # shaded leaf temperature (Tf) [K]
                 Ci_μmol_per_mol=Ci_shaded,  # shaded intercellular CO2 concentration (Ci) [umol mol-1]
-                APAR_μmolm2s1=APAR_shaded,  # shaded absorbed photosynthetically active radiation (APAR) [umol m-2 s-1]
+                APAR_μmolm2s1=APAR_shaded_μmolm2s1,  # shaded absorbed photosynthetically active radiation (APAR) [umol m-2 s-1]
                 Vcmax25_μmolm2s1=Vcmax25_shaded  # shaded maximum carboxylation rate at 25C (Vcmax25) [umol m-2 s-1]
             )
 
             net_assimilation_shade_μmolm2s1 = photosynthesis_shade_C4_results['net_assimilation_C4_μmolm2s1']
         else:
             photosynthesis_shade_C3_results = calculate_C3_photosynthesis(
-                Tf_K=Tf_K_shaded,  # shaded leaf temperature (Tf) [K]
+                Tf_K=Tf_shaded_K,  # shaded leaf temperature (Tf) [K]
                 Ci=Ci_shaded,  # shaed intercellular CO2 concentration (Ci) [umol mol-1]
-                APAR=APAR_shaded,  # shaded absorbed photosynthetically active radiation (APAR) [umol m-2 s-1]
+                APAR_μmolm2s1=APAR_shaded_μmolm2s1,  # shaded absorbed photosynthetically active radiation (APAR) [umol m-2 s-1]
                 Vcmax25=Vcmax25_shaded,  # shaded maximum carboxylation rate at 25C (Vcmax25) [umol m-2 s-1]
                 Ps_Pa=Ps_Pa,  # surface pressure (Ps) [Pa]
                 carbon_uptake_efficiency=carbon_uptake_efficiency  # intrinsic quantum efficiency for carbon uptake
@@ -243,7 +243,7 @@ def carbon_water_fluxes(
             An=net_assimilation_shade_μmolm2s1,  # net assimulation (An) [umol m-2 s-1]
             ASW_Wm2=ASW_shaded_Wm2,  # total absorbed shortwave radiation by shaded canopy (ASW) [umol m-2 s-1]
             ALW_Wm2=ALW_shaded_Wm2,  # total absorbed longwave radiation by shaded canopy (ALW) [umol m-2 s-1]
-            Tf_K=Tf_K_shaded,  # shaded leaf temperature (Tf) [K]
+            Tf_K=Tf_shaded_K,  # shaded leaf temperature (Tf) [K]
             Ps_Pa=Ps_Pa,  # surface pressure (Ps) [Pa]
             Ca=Ca,  # ambient CO2 concentration (Ca) [umol mol-1]
             Ta_K=Ta_K,  # air temperature (Ta) [K]
@@ -264,7 +264,7 @@ def carbon_water_fluxes(
         Rn_shaded_Wm2 = np.where(np.isnan(Rn_shaded_new), Rn_shaded_Wm2, Rn_shaded_new)
         LE_shaded_Wm2 = np.where(np.isnan(LE_shaded_new), LE_shaded_Wm2, LE_shaded_new)
         H_shaded_Wm2 = np.where(np.isnan(H_shaded_new), H_shaded_Wm2, H_shaded_new)
-        Tf_K_shaded = np.where(np.isnan(Tf_K_shaded_new), Tf_K_shaded, Tf_K_shaded_new)
+        Tf_shaded_K = np.where(np.isnan(Tf_K_shaded_new), Tf_shaded_K, Tf_K_shaded_new)
         Ci_shaded = np.where(np.isnan(Ci_shaded_new), Ci_shaded, Ci_shaded_new)
 
         # calculate soil energy balance
@@ -292,7 +292,7 @@ def carbon_water_fluxes(
         Ts_K = np.where(np.isnan(Ts_K_soil_new), Ts_K, Ts_K_soil_new)
 
         # combine sunlit and shaded foliage temperatures
-        Tf_K_new = (((Tf_sunlit_K ** 4) * sunlit_fraction + (Tf_K_shaded ** 4) * (1 - sunlit_fraction)) ** 0.25)
+        Tf_K_new = (((Tf_sunlit_K ** 4) * sunlit_fraction + (Tf_shaded_K ** 4) * (1 - sunlit_fraction)) ** 0.25)
         Tf_K = np.where(np.isnan(Tf_K_new), Tf_K, Tf_K_new)
 
     # calculate canopy latent heat flux
