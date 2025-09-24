@@ -17,19 +17,30 @@ def calculate_C4_photosynthesis(
                  and CO2 availability to simulate photosynthetic rates under varying
                  environmental conditions.
 
-    Inputs:
-        Tf_K    : Leaf temperature (Tf) [K]. Temperature influences enzyme kinetics
-                  and the rates of photosynthetic reactions.
-        Ci      : Intercellular CO2 concentration (Ci) [umol mol-1]. Represents the
-                  CO2 available for fixation.
-        APAR    : Absorbed photosynthetically active radiation (APAR) [umol m-2 s-1].
-                  This is the light energy available for photosynthesis.
-        Vcmax25 : Maximum carboxylation rate at 25°C (Vcmax25) [umol m-2 s-1].
-                  Reflects the activity of the enzyme Rubisco.
+    Parameters:
+        Tf_K (np.ndarray): Leaf temperature (Tf) in Kelvin. Temperature influences 
+                           enzyme kinetics and the rates of photosynthetic reactions.
+        Ci_μmol_per_mol (np.ndarray): Intercellular CO2 concentration (Ci) in 
+                                      micromoles per mole. Represents the CO2 available for fixation.
+        APAR_μmolm2s1 (np.ndarray): Absorbed photosynthetically active radiation (APAR) 
+                                     in micromoles per square meter per second. This is the light energy available for photosynthesis.
+        Vcmax25_μmolm2s1 (np.ndarray): Maximum carboxylation rate at 25°C (Vcmax25) in 
+                                       micromoles per square meter per second. Reflects the activity of the enzyme Rubisco.
 
-    Outputs:
-        An      : Net assimilation rate (An) [umol m-2 s-1]. Represents the rate of
-                  CO2 uptake by the plant.
+    Returns:
+        np.ndarray: Net assimilation rate (An) in micromoles per square meter per second. 
+                    Represents the rate of CO2 uptake by the plant after accounting for 
+                    both photosynthesis and respiration. This is a measure of the net 
+                    carbon gain by the plant, which is critical for growth and biomass 
+                    production.
+
+    Explanation:
+        The net assimilation rate (An) is the balance between the carbon dioxide fixed 
+        during photosynthesis and the carbon dioxide released during respiration. It 
+        quantifies the net carbon gain by the plant under given environmental conditions. 
+        This function models the biochemical processes that limit photosynthesis, 
+        including light availability, CO2 concentration, and enzyme activity, while 
+        accounting for temperature-dependent effects on these processes.
 
     References:
         Collatz, G. J., Ball, J. T., Grivet, C., & Berry, J. A. (1992). Physiological
@@ -43,11 +54,12 @@ def calculate_C4_photosynthesis(
     =============================================================================
     """
     # Calculate the temperature deviation from 25°C (298.15 K)
-    # `item` represents the temperature difference normalized to 10°C intervals
+    # `temperature_deviation` represents the temperature difference normalized to 10°C intervals
     temperature_deviation = (Tf_K - 298.15) / 10.0
 
     # Define the Q10 coefficient, which describes the rate increase for every 10°C rise
-    Q10 = 2.0  # Reaction rate doubles for every 10°C increase
+    # A Q10 of 2.0 means the reaction rate doubles for every 10°C increase in temperature
+    Q10 = 2.0
 
     # Calculate the temperature-dependent rate constant for CO2 fixation
     # `k` is the rate constant for CO2 fixation, adjusted for temperature
@@ -68,14 +80,14 @@ def calculate_C4_photosynthesis(
     Rd_o_μmolm2s1 = 0.8 * pow(Q10, temperature_deviation)  # [umol m-2 s-1]
 
     # `Rd` is the effective dark respiration rate after accounting for temperature sensitivity
-    Rd_μmolm2s1 = Rd_o_μmolm2s1 / (1.0 + np.exp(1.3 * (Tf_K - 328.15)))  # [umol m-2 s-1]
+    respiration_C4_μmolm2s1 = Rd_o_μmolm2s1 / (1.0 + np.exp(1.3 * (Tf_K - 328.15)))  # [umol m-2 s-1]
 
     # Define the three limiting states of photosynthesis
     # `Je` is the electron transport-limited rate, assumed to equal `Vcmax`
     Je = Vcmax  # [umol m-2 s-1]
 
     # Calculate the light-limited rate
-    # `alf` is the quantum yield (mol CO2 fixed per mol photons absorbed)
+    # `quantum_yield` is the quantum yield (mol CO2 fixed per mol photons absorbed)
     quantum_yield = 0.067  # Quantum yield
 
     # `Ji` is the light-limited rate, determined by absorbed light energy
@@ -106,11 +118,12 @@ def calculate_C4_photosynthesis(
     c = Jei * Jc
 
     # `Jeic` is the final colimited rate between `Jei` and `Jc`
-    Jeic_μmolm2s1 = (-b + np.sign(b) * np.sqrt(b * b - 4.0 * a * c)) / (2.0 * a)
-    Jeic_μmolm2s1 = np.real(Jeic_μmolm2s1)  # Ensure real values
+    photosynthesis_C4_μmolm2s1 = (-b + np.sign(b) * np.sqrt(b * b - 4.0 * a * c)) / (2.0 * a)
+    photosynthesis_C4_μmolm2s1 = np.real(photosynthesis_C4_μmolm2s1)  # Ensure real values
 
     # Calculate the net assimilation rate
     # `An` is the net assimilation rate, clipped to ensure non-negative values
-    An_μmolm2s1 = np.clip(Jeic_μmolm2s1 - Rd_μmolm2s1, 0, None)  # [umol m-2 s-1]
+    # It represents the net carbon gain by the plant, accounting for photosynthesis and respiration
+    net_assimilation_C4_μmolm2s1 = np.clip(photosynthesis_C4_μmolm2s1 - respiration_C4_μmolm2s1, 0, None)  # [umol m-2 s-1]
 
-    return An_μmolm2s1
+    return net_assimilation_C4_μmolm2s1
