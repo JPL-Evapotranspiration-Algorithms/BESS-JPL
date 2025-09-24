@@ -166,13 +166,6 @@ def carbon_water_fluxes(
         # calculate sunlit photosynthesis
         if C4_photosynthesis:
             # calculate sunlit photosynthesis for C4 plants
-            # An_sunlit = calculate_C4_photosynthesis(
-            #     Tf_K=Tf_sunlit_K,  # sunlit leaf temperature (Tf) [K]
-            #     Ci_μmol_per_mol=Ci_sunlit,  # sunlit intercellular CO2 concentration (Ci) [umol mol-1]
-            #     APAR_μmolm2s1=APAR_sunlit,  # sunlit leaf absorptance to photosynthetically active radiation [umol m-2 s-1]
-            #     Vcmax25_μmolm2s1=Vcmax25_sunlit  # sunlit maximum carboxylation rate at 25C (Vcmax25) [umol m-2 s-1]
-            # )
-
             photosynthesis_sunlit_C4_results = calculate_C4_photosynthesis(
                 Tf_K=Tf_sunlit_K,  # sunlit leaf temperature (Tf) [K]
                 Ci_μmol_per_mol=Ci_sunlit,  # sunlit intercellular CO2 concentration (Ci) [umol mol-1]
@@ -183,7 +176,7 @@ def carbon_water_fluxes(
             net_assimilation_sunlit_μmolm2s1 = photosynthesis_sunlit_C4_results['net_assimilation_C4_μmolm2s1']
         else:
             # calculate sunlit photosynthesis for C3 plants
-            net_assimilation_sunlit_μmolm2s1 = calculate_C3_photosynthesis(
+            photosynthesis_sunlit_C3_results = calculate_C3_photosynthesis(
                 Tf_K=Tf_sunlit_K,  # sunlit leaf temperature (Tf) [K]
                 Ci=Ci_sunlit,  # sunlit intercellular CO2 concentration (Ci) [umol mol-1]
                 APAR=APAR_sunlit,  # sunlit leaf absorptance to photosynthetically active radiation [umol m-2 s-1]
@@ -191,6 +184,8 @@ def carbon_water_fluxes(
                 Ps_Pa=Ps_Pa,  # surface pressure (Ps) [Pa]
                 carbon_uptake_efficiency=carbon_uptake_efficiency  # intrinsic quantum efficiency for carbon uptake
             )
+
+            net_assimilation_sunlit_μmolm2s1 = photosynthesis_sunlit_C3_results['net_assimilation_C3_μmolm2s1']
 
         # calculate sunlit energy balance
         Rn_sunlit_new_Wm2, LE_sunlit_new_Wm2, H_sunlit_new_Wm2, Tf_sunlit_new_K, gs2_sunlit_new, Ci_sunlit_new = canopy_energy_balance(
@@ -223,12 +218,6 @@ def carbon_water_fluxes(
 
         # Photosynthesis (shade)
         if C4_photosynthesis:
-            # An_shaded = calculate_C4_photosynthesis(
-            #     Tf_K=Tf_K_shaded,  # shaded leaf temperature (Tf) [K]
-            #     Ci_μmol_per_mol=Ci_shaded,  # shaded intercellular CO2 concentration (Ci) [umol mol-1]
-            #     APAR_μmolm2s1=APAR_shaded,  # shaded absorbed photosynthetically active radiation (APAR) [umol m-2 s-1]
-            #     Vcmax25_μmolm2s1=Vcmax25_shaded  # shaded maximum carboxylation rate at 25C (Vcmax25) [umol m-2 s-1]
-            # )
             photosynthesis_shade_C4_results = calculate_C4_photosynthesis(
                 Tf_K=Tf_K_shaded,  # shaded leaf temperature (Tf) [K]
                 Ci_μmol_per_mol=Ci_shaded,  # shaded intercellular CO2 concentration (Ci) [umol mol-1]
@@ -238,7 +227,7 @@ def carbon_water_fluxes(
 
             net_assimilation_shade_μmolm2s1 = photosynthesis_shade_C4_results['net_assimilation_C4_μmolm2s1']
         else:
-            net_assimilation_shade_μmolm2s1 = calculate_C3_photosynthesis(
+            photosynthesis_shade_C3_results = calculate_C3_photosynthesis(
                 Tf_K=Tf_K_shaded,  # shaded leaf temperature (Tf) [K]
                 Ci=Ci_shaded,  # shaed intercellular CO2 concentration (Ci) [umol mol-1]
                 APAR=APAR_shaded,  # shaded absorbed photosynthetically active radiation (APAR) [umol m-2 s-1]
@@ -246,6 +235,8 @@ def carbon_water_fluxes(
                 Ps_Pa=Ps_Pa,  # surface pressure (Ps) [Pa]
                 carbon_uptake_efficiency=carbon_uptake_efficiency  # intrinsic quantum efficiency for carbon uptake
             )
+
+            net_assimilation_shade_μmolm2s1 = photosynthesis_shade_C3_results['net_assimilation_C3_μmolm2s1']
 
         # calculated shaded energy balance
         Rn_shaded_new, LE_shaded_new, H_shaded_new, Tf_K_shaded_new, gs2_shaded_new, Ci_shaded_new = canopy_energy_balance(

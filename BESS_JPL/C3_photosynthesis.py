@@ -7,7 +7,7 @@ def calculate_C3_photosynthesis(
         APAR: np.ndarray,  # absorbed photosynthetically active radiation in micromoles per square meter per second (μmol m⁻² s⁻¹)
         Vcmax25: np.ndarray,  # maximum carboxylation rate at 25°C in micromoles per square meter per second (μmol m⁻² s⁻¹)
         Ps_Pa: np.ndarray,  # surface pressure in Pascals (Pa)
-        carbon_uptake_efficiency: np.ndarray) -> np.ndarray:  # intrinsic quantum efficiency for carbon uptake (unitless)
+        carbon_uptake_efficiency: np.ndarray) -> dict:  # intrinsic quantum efficiency for carbon uptake (unitless)
     """
     photosynthesis for C3 plants
     Collatz et al., 1991
@@ -19,7 +19,7 @@ def calculate_C3_photosynthesis(
     :param Vcmax25: maximum carboxylation rate at 25C [umol m-2 s-1]
     :param Ps_Pa: surface pressure in Pascal
     :param carbon_uptake_efficiency: intrinsic quantum efficiency for carbon uptake
-    :return: net assimilation [umol m-2 s-1]
+    :return: dictionary containing photosynthesis, respiration, and net assimilation rates
     """
 
     # Universal gas constant used in temperature corrections
@@ -100,7 +100,7 @@ def calculate_C3_photosynthesis(
 
     # Adjusted dark respiration rate at the given temperature
     # Units: micromoles per square meter per second (μmol m⁻² s⁻¹)
-    Rd = Rd_o * 1.0 / (1.0 + np.exp(1.3 * (Tf_K - 273.15 - 55.0)))
+    respiration_C3_μmolm2s1 = Rd_o * 1.0 / (1.0 + np.exp(1.3 * (Tf_K - 273.15 - 55.0)))
 
     # Rubisco-limited rate, dependent on CO2 availability and RuBisCO activity
     # Units: micromoles per square meter per second (μmol m⁻² s⁻¹)
@@ -148,14 +148,18 @@ def calculate_C3_photosynthesis(
 
     # Combined Rubisco-light-export limitation
     # Units: micromoles per square meter per second (μmol m⁻² s⁻¹)
-    JCES = (-b + np.sign(b) * np.sqrt(b * b - 4.0 * a * c)) / (2.0 * a)
+    photosynthesis_C3_μmolm2s1 = (-b + np.sign(b) * np.sqrt(b * b - 4.0 * a * c)) / (2.0 * a)
 
     # Ensure the result is real-valued for Rubisco-light-export limitation
     # Units: micromoles per square meter per second (μmol m⁻² s⁻¹)
-    JCES = np.real(JCES)
+    photosynthesis_C3_μmolm2s1 = np.real(photosynthesis_C3_μmolm2s1)
 
     # Net assimilation rate, ensuring non-negative values
     # Units: micromoles per square meter per second (μmol m⁻² s⁻¹)
-    An = np.clip(JCES - Rd, 0, None)
+    net_assimilation_C3_μmolm2s1 = np.clip(photosynthesis_C3_μmolm2s1 - respiration_C3_μmolm2s1, 0, None)
 
-    return An
+    return {
+        "photosynthesis_C3_μmolm2s1": photosynthesis_C3_μmolm2s1,
+        "respiration_C3_μmolm2s1": respiration_C3_μmolm2s1,
+        "net_assimilation_C3_μmolm2s1": net_assimilation_C3_μmolm2s1
+    }
