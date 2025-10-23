@@ -19,6 +19,7 @@ from MODISCI import MODISCI
 from NASADEM import NASADEMConnection
 
 from .constants import *
+from .colors import *
 from .C3_photosynthesis import *
 from .C4_photosynthesis import *
 from .canopy_energy_balance import *
@@ -684,6 +685,7 @@ def BESS_JPL(
 
     if isinstance(geometry, RasterGeometry):
         GPP = Raster(GPP, geometry=geometry)
+        GPP.cmap = GPP_COLORMAP
 
     # upscale from instantaneous to daily
 
@@ -692,23 +694,48 @@ def BESS_JPL(
     GPP_daily = np.where(SFd < 0.01, 0, GPP_daily)
     GPP_daily = np.where(SZA_deg >= 90, 0, GPP_daily)
 
+    if isinstance(geometry, RasterGeometry):
+        GPP_daily = Raster(GPP_daily, geometry=geometry)
+        GPP_daily.cmap = GPP_COLORMAP
+
     # interpolate C3 and C4 net radiation
-    Rn_Wm2 = np.clip(interpolate_C3_C4(Rn_C3, Rn_C4, C4_fraction), 0, 1000)
+    Rn_Wm2 = np.clip(interpolate_C3_C4(Rn_C3, Rn_C4, C4_fraction), 0, None)
+
+    if isinstance(geometry, RasterGeometry):
+        Rn_Wm2 = Raster(Rn_Wm2, geometry=geometry)
 
     # interpolate C3 and C4 soil net radiation
-    Rn_soil_Wm2 = np.clip(interpolate_C3_C4(Rn_soil_C3, Rn_soil_C4, C4_fraction), 0, 1000)
+    Rn_soil_Wm2 = np.clip(interpolate_C3_C4(Rn_soil_C3, Rn_soil_C4, C4_fraction), 0, Rn_Wm2)
+
+    if isinstance(geometry, RasterGeometry):
+        Rn_soil_Wm2 = Raster(Rn_soil_Wm2, geometry=geometry)
 
     # interpolate C3 and C4 canopy net radiation
-    Rn_canopy_Wm2 = np.clip(interpolate_C3_C4(Rn_canopy_C3, Rn_canopy_C4, C4_fraction), 0, 1000)
+    Rn_canopy_Wm2 = np.clip(interpolate_C3_C4(Rn_canopy_C3, Rn_canopy_C4, C4_fraction), 0, Rn_Wm2)
+
+    if isinstance(geometry, RasterGeometry):
+        Rn_canopy_Wm2 = Raster(Rn_canopy_Wm2, geometry=geometry)
 
     # interpolate C3 and C4 latent heat flux
-    LE_Wm2 = np.clip(interpolate_C3_C4(LE_C3, LE_C4, C4_fraction), 0, 1000)
+    LE_Wm2 = np.clip(interpolate_C3_C4(LE_C3, LE_C4, C4_fraction), 0, Rn_Wm2)
+
+    if isinstance(geometry, RasterGeometry):
+        LE_Wm2 = Raster(LE_Wm2, geometry=geometry)
+        LE_Wm2.cmap = ET_COLORMAP
 
     # interpolate C3 and C4 soil latent heat flux
-    LE_soil_Wm2 = np.clip(interpolate_C3_C4(LE_soil_C3, LE_soil_C4, C4_fraction), 0, 1000)
+    LE_soil_Wm2 = np.clip(interpolate_C3_C4(LE_soil_C3, LE_soil_C4, C4_fraction), 0, LE_Wm2)
+
+    if isinstance(geometry, RasterGeometry):
+        LE_soil_Wm2 = Raster(LE_soil_Wm2, geometry=geometry)
+        LE_soil_Wm2.cmap = ET_COLORMAP
 
     # interpolate C3 and C4 canopy latent heat flux
-    LE_canopy_Wm2 = np.clip(interpolate_C3_C4(LE_canopy_C3, LE_canopy_C4, C4_fraction), 0, 1000)
+    LE_canopy_Wm2 = np.clip(interpolate_C3_C4(LE_canopy_C3, LE_canopy_C4, C4_fraction), 0, LE_Wm2)
+
+    if isinstance(geometry, RasterGeometry):
+        LE_canopy_Wm2 = Raster(LE_canopy_Wm2, geometry=geometry)
+        LE_canopy_Wm2.cmap = ET_COLORMAP
 
     return {
         "GPP": GPP,
