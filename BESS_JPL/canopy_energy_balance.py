@@ -4,8 +4,8 @@ from .process_paw_and_gao_LE import process_paw_and_gao_LE
 
 def canopy_energy_balance(
         An: np.ndarray,  # net assimulation (An) [umol m-2 s-1],
-        ASW: np.ndarray,  # total absorbed shortwave radiation by sunlit/shade canopy (ASW) [umol m-2 s-1],
-        ALW: np.ndarray,  # total absorbed longwave radiation by sunlit/shade canopy (ALW) [umol m-2 s-1],
+        ASW_Wm2: np.ndarray,  # total absorbed shortwave radiation by sunlit/shade canopy (ASW) [umol m-2 s-1],
+        ALW_Wm2: np.ndarray,  # total absorbed longwave radiation by sunlit/shade canopy (ALW) [umol m-2 s-1],
         Tf_K: np.ndarray,  # leaf temperature in Kelvin
         Ps_Pa: np.ndarray,  # surface pressure in Pascal
         Ca: np.ndarray,  # ambient CO2 concentration [umol mol-1],
@@ -79,7 +79,7 @@ def canopy_energy_balance(
     gs2 = 1.0 / rs  # [m s-1]
 
     # Canopy net radiation
-    Rn = np.clip(ASW + ALW - 4.0 * 0.98 * sigma * (Ta_K ** 3) * (Tf_K - Ta_K), 0, None)
+    Rn = np.clip(ASW_Wm2 + ALW_Wm2 - 4.0 * 0.98 * sigma * (Ta_K ** 3) * (Tf_K - Ta_K), 0, None)
 
     # TODO explore options for alternate latent heat flux models in the BESS canopy energy balance calculation
 

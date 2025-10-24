@@ -11,7 +11,7 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 
 test:
-	pytest
+	pytest -vv
 
 build:
 	python -m build
