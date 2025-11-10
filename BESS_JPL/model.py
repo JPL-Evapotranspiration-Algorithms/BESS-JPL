@@ -2,6 +2,7 @@ from typing import Union
 from datetime import datetime
 import logging
 import numpy as np
+from pytictoc import TicToc
 
 import rasters as rt
 from rasters import Raster, RasterGeometry
@@ -17,6 +18,8 @@ from FLiESANN import FLiESANN
 from GEOS5FP import GEOS5FP
 from MODISCI import MODISCI
 from NASADEM import NASADEMConnection
+
+from daylight_evapotranspiration import daylight_ET_from_instantaneous_LE, daylight_ET_from_daylight_LE
 
 from .constants import *
 from .colors import *
@@ -91,6 +94,7 @@ def BESS_JPL(
         C4_fraction_scale_factor: float = C4_FRACTION_SCALE_FACTOR,
         MODISCI_connection: MODISCI = None,
         NASADEM_connection: NASADEMConnection = None,
+        upscale_to_daylight: bool = UPSCALE_TO_DAYLIGHT,
         resampling: str = RESAMPLING,
         GEDI_download_directory: str = GEDI_DOWNLOAD_DIRECTORY):  # clumping index
     """
@@ -737,7 +741,7 @@ def BESS_JPL(
         LE_canopy_Wm2 = Raster(LE_canopy_Wm2, geometry=geometry)
         LE_canopy_Wm2.cmap = ET_COLORMAP
 
-    return {
+    results = {
         "GPP": GPP,
         "GPP_daily": GPP_daily,
         "Rn_Wm2": Rn_Wm2,
@@ -748,3 +752,25 @@ def BESS_JPL(
         "LE_canopy_Wm2": LE_canopy_Wm2,
         "G_Wm2": G_Wm2
     }
+
+    if upscale_to_daylight and time_UTC is not None:
+        logger.info("started daylight ET upscaling")
+        t_et = TicToc()
+        t_et.tic()
+
+        # Use new upscaling function from daylight_evapotranspiration
+        daylight_results = daylight_ET_from_instantaneous_LE(
+            LE_instantaneous_Wm2=LE_Wm2,
+            Rn_instantaneous_Wm2=Rn_Wm2,
+            G_instantaneous_Wm2=G_Wm2,
+            day_of_year=day_of_year,
+            time_UTC=time_UTC,
+            geometry=geometry
+        )
+        # Add all returned daylight results to output
+        results.update(daylight_results)
+
+        elapsed_et = t_et.tocvalue()
+        logger.info(f"completed daylight ET upscaling (elapsed: {elapsed_et:.2f} seconds)")
+
+    return results
