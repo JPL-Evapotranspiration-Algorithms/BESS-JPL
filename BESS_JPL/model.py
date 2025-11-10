@@ -379,7 +379,8 @@ def BESS_JPL(
         if AOT is None:
             AOT = GEOS5FP_connection.AOT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
 
-        ## FIXME fix FLiES interface
+        # convert elevation to meters
+        elevation_m = elevation_km * 1000
 
         # run FLiES radiative transfer model
         FLiES_results = FLiESANN(
@@ -392,19 +393,19 @@ def BESS_JPL(
             AOT=AOT,
             vapor_gccm=vapor_gccm,
             ozone_cm=ozone_cm,
-            elevation_km=elevation_km,
-            SZA=SZA_deg,
+            elevation_m=elevation_m,
+            SZA_deg=SZA_deg,
             KG_climate=KG_climate,
             GEOS5FP_connection=GEOS5FP_connection
         )
 
         # extract FLiES outputs
-        SWin_Wm2 = FLiES_results["Rg"]
-        PAR_diffuse_Wm2 = FLiES_results["VISdiff"]
-        PAR_direct_Wm2 = FLiES_results["VISdir"]
-        NIR_diffuse_Wm2 = FLiES_results["NIRdiff"]
-        NIR_direct_Wm2 = FLiES_results["NIRdir"]
-        UV_Wm2 = FLiES_results["UV"]
+        SWin_Wm2 = FLiES_results["SWin_Wm2"]
+        PAR_diffuse_Wm2 = FLiES_results["PAR_diffuse_Wm2"]
+        PAR_direct_Wm2 = FLiES_results["PAR_direct_Wm2"]
+        NIR_diffuse_Wm2 = FLiES_results["NIR_diffuse_Wm2"]
+        NIR_direct_Wm2 = FLiES_results["NIR_direct_Wm2"]
+        UV_Wm2 = FLiES_results["UV_Wm2"]
         # albedo_visible = FLiES_results["VIS"]
         # albedo_NIR = FLiES_results["NIR"]
 
@@ -413,14 +414,14 @@ def BESS_JPL(
             RVIS_NWP = GEOS5FP_connection.ALBVISDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
             albedo_visible = rt.clip(albedo * (RVIS_NWP / albedo_NWP), 0, 1)
 
-        check_distribution(albedo_visible, "RVIS")
+        # check_distribution(albedo_visible, "RVIS")
         
         if albedo_NIR is None:
             albedo_NWP = GEOS5FP_connection.ALBEDO(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
             RNIR_NWP = GEOS5FP_connection.ALBNIRDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
             albedo_NIR = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
         
-        check_distribution(albedo_NIR, "RNIR")
+        # check_distribution(albedo_NIR, "RNIR")
         
         check_distribution(PAR_direct_Wm2, "PAR_direct_Wm2")
     else:
@@ -489,9 +490,6 @@ def BESS_JPL(
 
     # calculate actual vapor pressure in Pascal from relative humidity and saturation vapor pressure
     Ea_Pa = RH * SVP_Pa
-
-    # convert elevation to meters
-    elevation_m = elevation_km * 1000
 
     latitude = geometry.lat
 
