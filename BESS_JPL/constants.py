@@ -9,3 +9,5 @@ RESAMPLING = "cubic"
 
 # Default scale factor for C4 fraction
 C4_FRACTION_SCALE_FACTOR = 0.01
+
+UPSCALE_TO_DAYLIGHT = False
