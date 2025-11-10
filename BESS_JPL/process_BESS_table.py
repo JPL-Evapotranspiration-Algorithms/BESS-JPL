@@ -29,8 +29,10 @@ def process_BESS_table(
 
     if "elevation_km" in input_df:
         elevation_km = np.array(input_df.elevation_km).astype(np.float64)
+        elevation_m = elevation_km * 1000
     else:
         elevation_km = None
+        elevation_m = None
 
     if "NDVI_minimum" in input_df:
         NDVI_minimum = np.array(input_df.NDVI_minimum).astype(np.float64)
@@ -182,7 +184,7 @@ def process_BESS_table(
         NDVI=NDVI,
         Ta_C=Ta_C,
         RH=RH,
-        elevation_km=elevation_km,
+        elevation_m=elevation_m,
         NDVI_minimum=NDVI_minimum,
         NDVI_maximum=NDVI_maximum,
         C4_fraction=C4_fraction,
