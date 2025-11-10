@@ -1,1 +1,17 @@
-exclude *.tif
+include README.md
+include LICENSE
+include pyproject.toml
+
+# Include the main package with all its files
+recursive-include BESS_JPL *
+
+# Exclude specific directories  
+prune notebooks
+prune references
+prune examples
+prune tests
+
+# Exclude development files
+global-exclude .git*
+global-exclude __pycache__
+global-exclude *.pyc
