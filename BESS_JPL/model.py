@@ -11,7 +11,6 @@ from check_distribution import check_distribution
 
 from sun_angles import calculate_SZA_from_DOY_and_hour
 from solar_apparent_time import calculate_solar_day_of_year, calculate_solar_hour_of_day
-
 from koppengeiger import load_koppen_geiger
 from gedi_canopy_height import load_canopy_height, GEDI_DOWNLOAD_DIRECTORY
 from FLiESANN import FLiESANN
@@ -57,7 +56,7 @@ def BESS_JPL(
         hour_of_day: np.ndarray = None,
         day_of_year: np.ndarray = None,
         GEOS5FP_connection: GEOS5FP = None,
-        elevation_km: Union[Raster, np.ndarray] = None,  # elevation in kilometers
+        elevation_m: Union[Raster, np.ndarray] = None,  # elevation in meters
         Ta_C: Union[Raster, np.ndarray] = None,  # air temperature in Celsius
         RH: Union[Raster, np.ndarray] = None,  # relative humidity as a proportion
         NDVI_minimum: Union[Raster, np.ndarray] = None,  # minimum NDVI
@@ -127,8 +126,8 @@ def BESS_JPL(
         Day of year [days, 1-365/366]
     GEOS5FP_connection : GEOS5FP, optional
         Connection to GEOS-5 FP meteorological data
-    elevation_km : Union[Raster, np.ndarray], optional
-        Elevation above sea level [km]
+    elevation_m : Union[Raster, np.ndarray], optional
+        Elevation above sea level [m]
     Ta_C : Union[Raster, np.ndarray], optional
         Air temperature [°C]
     RH : Union[Raster, np.ndarray], optional
@@ -254,14 +253,13 @@ def BESS_JPL(
     if time_UTC is None and day_of_year is None and hour_of_day is None:
         raise ValueError("no time given between time_UTC, day_of_year, and hour_of_day")
 
-    if elevation_km is None and geometry is not None:
+    if elevation_m is None and geometry is not None:
         if NASADEM_connection is None:
-            from NASADEM import NASADEMConnection
             NASADEM_connection = NASADEMConnection()
 
-        elevation_km = NASADEM_connection.elevation_km(geometry=geometry)
+        elevation_m = NASADEM_connection.elevation_m(geometry=geometry)
 
-    check_distribution(elevation_km, "elevation_km")
+    check_distribution(elevation_m, "elevation_m")
 
     # load air temperature in Celsius if not provided
     if Ta_C is None:
@@ -341,12 +339,12 @@ def BESS_JPL(
 
     # Create a dictionary of variables to check
     variables_to_check = {
-        "Rg": SWin_Wm2,
-        "VISdiff": PAR_diffuse_Wm2,
-        "VISdir": PAR_direct_Wm2,
-        "NIRdiff": NIR_diffuse_Wm2,
-        "NIRdir": NIR_direct_Wm2,
-        "UV": UV_Wm2,
+        "SWin_Wm2": SWin_Wm2,
+        "PAR_diffuse_Wm2": PAR_diffuse_Wm2,
+        "PAR_direct_Wm2": PAR_direct_Wm2,
+        "NI_diffuse_Wm2": NIR_diffuse_Wm2,
+        "NI_direct_Wm2": NIR_direct_Wm2,
+        "UV_Wm2": UV_Wm2,
         "albedo_visible": albedo_visible,
         "albedo_NIR": albedo_NIR
     }
@@ -378,9 +376,6 @@ def BESS_JPL(
         # load aerosol optical thickness if not provided
         if AOT is None:
             AOT = GEOS5FP_connection.AOT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-
-        # convert elevation to meters
-        elevation_m = elevation_km * 1000
 
         # run FLiES radiative transfer model
         FLiES_results = FLiESANN(
