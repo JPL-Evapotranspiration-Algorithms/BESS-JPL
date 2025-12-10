@@ -44,6 +44,7 @@ from .load_ball_berry_slope_C4 import *
 from .calculate_VCmax import *
 from .meteorology import *
 from .soil_energy_balance import *
+from .retrieve_BESS_JPL_GEOS5FP_inputs import retrieve_BESS_JPL_GEOS5FP_inputs
 
 logger = logging.getLogger(__name__)
 
@@ -261,16 +262,34 @@ def BESS_JPL(
 
     check_distribution(elevation_m, "elevation_m")
 
-    # load air temperature in Celsius if not provided
-    if Ta_C is None:
-        Ta_C = GEOS5FP_connection.Ta_C(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
+    # Retrieve GEOS-5 FP inputs if not provided
+    GEOS5FP_inputs = retrieve_BESS_JPL_GEOS5FP_inputs(
+        time_UTC=time_UTC,
+        geometry=geometry,
+        albedo=albedo,
+        GEOS5FP_connection=GEOS5FP_connection,
+        Ta_C=Ta_C,
+        RH=RH,
+        COT=COT,
+        AOT=AOT,
+        albedo_visible=albedo_visible,
+        albedo_NIR=albedo_NIR,
+        Ca=Ca,
+        wind_speed_mps=wind_speed_mps,
+        resampling=resampling
+    )
+    
+    # Extract GEOS-5 FP inputs from dictionary
+    Ta_C = GEOS5FP_inputs["Ta_C"]
+    RH = GEOS5FP_inputs["RH"]
+    COT = GEOS5FP_inputs["COT"]
+    AOT = GEOS5FP_inputs["AOT"]
+    albedo_visible = GEOS5FP_inputs["albedo_visible"]
+    albedo_NIR = GEOS5FP_inputs["albedo_NIR"]
+    Ca = GEOS5FP_inputs["Ca"]
+    wind_speed_mps = GEOS5FP_inputs["wind_speed_mps"]
 
     check_distribution(Ta_C, "Ta_C")
-
-    # load relative humidity if not provided
-    if RH is None:
-        RH = GEOS5FP_connection.RH(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-
     check_distribution(RH, "RH")
 
     # load minimum NDVI if not provided
@@ -369,14 +388,6 @@ def BESS_JPL(
         if variable is None:
             flies_variables_missing = True
     if flies_variables_missing:
-        # load cloud optical thickness if not provided
-        if COT is None:
-            COT = GEOS5FP_connection.COT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-
-        # load aerosol optical thickness if not provided
-        if AOT is None:
-            AOT = GEOS5FP_connection.AOT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-
         # run FLiES radiative transfer model
         FLiES_results = FLiESANN(
             time_UTC=time_UTC,
@@ -403,20 +414,6 @@ def BESS_JPL(
         UV_Wm2 = FLiES_results["UV_Wm2"]
         # albedo_visible = FLiES_results["VIS"]
         # albedo_NIR = FLiES_results["NIR"]
-
-        if albedo_visible is None:
-            albedo_NWP = GEOS5FP_connection.ALBEDO(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-            RVIS_NWP = GEOS5FP_connection.ALBVISDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-            albedo_visible = rt.clip(albedo * (RVIS_NWP / albedo_NWP), 0, 1)
-
-        # check_distribution(albedo_visible, "RVIS")
-        
-        if albedo_NIR is None:
-            albedo_NWP = GEOS5FP_connection.ALBEDO(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-            RNIR_NWP = GEOS5FP_connection.ALBNIRDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-            albedo_NIR = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
-        
-        # check_distribution(albedo_NIR, "RNIR")
         
         check_distribution(PAR_direct_Wm2, "PAR_direct_Wm2")
     else:
@@ -437,17 +434,7 @@ def BESS_JPL(
         )
 
     check_distribution(canopy_height_meters, "canopy_height_meters")
-
-    # load CO2 concentration in ppm if not provided
-    if Ca is None:
-        Ca = GEOS5FP_connection.CO2SC(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-
     check_distribution(Ca, "Ca")
-
-    # load wind speed in meters per second if not provided
-    if wind_speed_mps is None:
-        wind_speed_mps = GEOS5FP_connection.wind_speed(time_UTC=time_UTC, geometry=geometry, resampling=resampling)    
-
     check_distribution(wind_speed_mps, "wind_speed_mps")
 
     # canopy temperature defaults to surface temperature
@@ -457,14 +444,6 @@ def BESS_JPL(
     # soil temperature defaults to surface temperature
     if soil_temperature_C is None:
         soil_temperature_C = ST_C
-
-    # visible albedo defaults to surface albedo
-    if albedo_visible is None:
-        albedo_visible = albedo
-
-    # near-infrared albedo defaults to surface albedo
-    if albedo_NIR is None:
-        albedo_NIR = albedo
 
     # calculate solar zenith angle if not provided
     if SZA_deg is None:
