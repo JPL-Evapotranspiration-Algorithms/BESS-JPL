@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, List
 from datetime import datetime
 import numpy as np
 
@@ -6,10 +6,11 @@ from rasters import Raster, RasterGeometry
 import rasters as rt
 
 from GEOS5FP import GEOS5FP
+from FLiESANN import retrieve_FLiESANN_GEOS5FP_inputs
 
 
 def retrieve_BESS_JPL_GEOS5FP_inputs(
-        time_UTC: datetime,
+        time_UTC: Union[datetime, List[datetime]],
         geometry: RasterGeometry,
         albedo: Union[Raster, np.ndarray],
         GEOS5FP_connection: GEOS5FP = None,
@@ -17,6 +18,8 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
         RH: Union[Raster, np.ndarray] = None,
         COT: Union[Raster, np.ndarray] = None,
         AOT: Union[Raster, np.ndarray] = None,
+        vapor_gccm: Union[Raster, np.ndarray] = None,
+        ozone_cm: Union[Raster, np.ndarray] = None,
         albedo_visible: Union[Raster, np.ndarray] = None,
         albedo_NIR: Union[Raster, np.ndarray] = None,
         Ca: Union[Raster, np.ndarray] = None,
@@ -27,12 +30,14 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
     
     This function retrieves meteorological variables from GEOS-5 FP data products
     when they are not provided as inputs. It handles all the GEOS-5 FP data
-    retrievals needed by the BESS-JPL model.
+    retrievals needed by the BESS-JPL model, utilizing the FLiESANN retrieval
+    function for atmospheric parameters (COT, AOT, vapor, ozone).
     
     Parameters
     ----------
-    time_UTC : datetime
-        UTC time for data retrieval
+    time_UTC : Union[datetime, List[datetime]]
+        UTC time for data retrieval. Can be a single datetime or list of datetimes
+        for point-by-point queries.
     geometry : RasterGeometry
         Raster geometry for spatial operations
     albedo : Union[Raster, np.ndarray]
@@ -47,6 +52,10 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
         Cloud optical thickness [-]. Retrieved from GEOS-5 FP if None.
     AOT : Union[Raster, np.ndarray], optional
         Aerosol optical thickness [-]. Retrieved from GEOS-5 FP if None.
+    vapor_gccm : Union[Raster, np.ndarray], optional
+        Water vapor [g cm⁻²]. Retrieved from GEOS-5 FP if None.
+    ozone_cm : Union[Raster, np.ndarray], optional
+        Ozone column [cm]. Retrieved from GEOS-5 FP if None.
     albedo_visible : Union[Raster, np.ndarray], optional
         Surface albedo in visible wavelengths (400-700 nm) [-]. 
         Calculated from GEOS-5 FP albedo products if None.
@@ -68,6 +77,8 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
         - RH : Relative humidity [fraction, 0-1]
         - COT : Cloud optical thickness [-]
         - AOT : Aerosol optical thickness [-]
+        - vapor_gccm : Water vapor [g cm⁻²]
+        - ozone_cm : Ozone column [cm]
         - albedo_visible : Surface albedo in visible wavelengths [-]
         - albedo_NIR : Surface albedo in near-infrared wavelengths [-]
         - Ca : Atmospheric CO₂ concentration [ppm]
@@ -77,10 +88,39 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
     -----
     The visible and NIR albedo are calculated by scaling the input albedo with
     the ratio of GEOS-5 FP directional albedo products to total albedo.
+    
+    This function uses retrieve_FLiESANN_GEOS5FP_inputs for atmospheric parameters
+    (COT, AOT, vapor_gccm, ozone_cm) to maintain consistency with FLiESANN.
+    
+    When time_UTC is a list, it handles point-by-point queries where each point
+    may have a different datetime.
     """
     # Create GEOS-5 FP connection if not provided
     if GEOS5FP_connection is None:
         GEOS5FP_connection = GEOS5FP()
+    
+    # Check if time_UTC is a list (for point-by-point queries)
+    is_time_list = isinstance(time_UTC, (list, tuple))
+    
+    # Use FLiESANN retrieval function for atmospheric parameters
+    # Note: FLiESANN's retrieval function handles both single datetime and list
+    flies_inputs = retrieve_FLiESANN_GEOS5FP_inputs(
+        COT=COT,
+        AOT=AOT,
+        vapor_gccm=vapor_gccm,
+        ozone_cm=ozone_cm,
+        geometry=geometry,
+        time_UTC=time_UTC,
+        GEOS5FP_connection=GEOS5FP_connection,
+        resampling=resampling,
+        zero_COT_correction=False
+    )
+    
+    # Extract atmospheric parameters from FLiESANN retrieval
+    COT = flies_inputs["COT"]
+    AOT = flies_inputs["AOT"]
+    vapor_gccm = flies_inputs["vapor_gccm"]
+    ozone_cm = flies_inputs["ozone_cm"]
     
     # Retrieve air temperature if not provided
     if Ta_C is None:
@@ -89,14 +129,6 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
     # Retrieve relative humidity if not provided
     if RH is None:
         RH = GEOS5FP_connection.RH(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-    
-    # Retrieve cloud optical thickness if not provided
-    if COT is None:
-        COT = GEOS5FP_connection.COT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-    
-    # Retrieve aerosol optical thickness if not provided
-    if AOT is None:
-        AOT = GEOS5FP_connection.AOT(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
     
     # Calculate visible albedo from GEOS-5 FP products if not provided
     if albedo_visible is None:
@@ -123,6 +155,8 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
         "RH": RH,
         "COT": COT,
         "AOT": AOT,
+        "vapor_gccm": vapor_gccm,
+        "ozone_cm": ozone_cm,
         "albedo_visible": albedo_visible,
         "albedo_NIR": albedo_NIR,
         "Ca": Ca,
