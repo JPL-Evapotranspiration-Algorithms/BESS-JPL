@@ -27,6 +27,9 @@ def process_BESS_table(
 
     RH = np.array(input_df.RH).astype(np.float64)
 
+    if "elevation_m" in input_df:
+        elevation_m = np.array(input_df.elevation_m).astype(np.float64)
+        evation_km = elevation_m / 1000
     if "elevation_km" in input_df:
         elevation_km = np.array(input_df.elevation_km).astype(np.float64)
         elevation_m = elevation_km * 1000

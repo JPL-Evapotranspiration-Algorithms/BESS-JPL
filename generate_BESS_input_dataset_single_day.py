@@ -1,5 +1,6 @@
 # Import necessary libraries
 import pandas as pd
+import numpy as np
 from GEOS5FP import GEOS5FP
 from NASADEM import NASADEMConnection
 from ECOv002_calval_tables import load_calval_table
@@ -32,6 +33,28 @@ def main():
         NASADEM_connection=NASADEM_connection,
         row_wise=True
     )
+
+    # Convert any array-like values to scalars by extracting first element if needed
+    def extract_scalar(x):
+        if isinstance(x, pd.DataFrame):
+            # Handle DataFrame - extract first value
+            return x.iloc[0, 0] if not x.empty else x
+        elif isinstance(x, pd.Series):
+            # Handle Series - extract first value
+            return x.iloc[0] if len(x) > 0 else x
+        elif isinstance(x, np.ndarray):
+            # Handle numpy arrays
+            return x.item() if x.size == 1 else x.flat[0] if x.size > 0 else x
+        elif isinstance(x, list):
+            # Handle lists
+            return x[0] if len(x) > 0 else x
+        else:
+            # Return as-is for scalars
+            return x
+    
+    # Apply extraction to all columns
+    for col in FLiES_results_df.columns:
+        FLiES_results_df[col] = FLiES_results_df[col].apply(extract_scalar)
 
     # Load static tower BESS inputs
     static_inputs_df = load_ECOv002_static_tower_BESS_inputs()
