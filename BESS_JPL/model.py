@@ -272,6 +272,8 @@ def BESS_JPL(
         RH=RH,
         COT=COT,
         AOT=AOT,
+        vapor_gccm=vapor_gccm,
+        ozone_cm=ozone_cm,
         albedo_visible=albedo_visible,
         albedo_NIR=albedo_NIR,
         Ca=Ca,
@@ -284,6 +286,8 @@ def BESS_JPL(
     RH = GEOS5FP_inputs["RH"]
     COT = GEOS5FP_inputs["COT"]
     AOT = GEOS5FP_inputs["AOT"]
+    vapor_gccm = GEOS5FP_inputs["vapor_gccm"]
+    ozone_cm = GEOS5FP_inputs["ozone_cm"]
     albedo_visible = GEOS5FP_inputs["albedo_visible"]
     albedo_NIR = GEOS5FP_inputs["albedo_NIR"]
     Ca = GEOS5FP_inputs["Ca"]
