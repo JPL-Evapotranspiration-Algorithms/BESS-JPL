@@ -5,6 +5,8 @@ import numpy as np
 from rasters import Raster, RasterGeometry
 import rasters as rt
 
+from check_distribution import check_distribution
+
 from GEOS5FP import GEOS5FP
 from FLiESANN import retrieve_FLiESANN_GEOS5FP_inputs
 
@@ -128,10 +130,14 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
     if Ta_C is None:
         Ta_C = GEOS5FP_connection.Ta_C(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
     
+    check_distribution(Ta_C, "Ta_C")
+
     # Retrieve relative humidity if not provided
     if RH is None:
         RH = GEOS5FP_connection.RH(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
     
+    check_distribution(RH, "RH")
+
     # Calculate visible albedo from GEOS-5 FP products if not provided
     if albedo_visible is None:
         albedo_NWP = GEOS5FP_connection.ALBEDO(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
@@ -148,10 +154,16 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
     if Ca is None:
         Ca = GEOS5FP_connection.CO2SC(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
     
+    check_distribution(Ca, "Ca")
+
     # Retrieve wind speed if not provided
     if wind_speed_mps is None:
         wind_speed_mps = GEOS5FP_connection.wind_speed(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
     
+    wind_speed_mps = rt.clip(wind_speed_mps, 0.1, None)
+
+    check_distribution(wind_speed_mps, "wind_speed_mps")
+
     return {
         "Ta_C": Ta_C,
         "RH": RH,
