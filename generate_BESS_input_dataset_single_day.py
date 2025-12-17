@@ -1,7 +1,6 @@
 # Import necessary libraries
 import pandas as pd
 import numpy as np
-from GEOS5FP import GEOS5FP
 from ECOv002_calval_tables import load_calval_table
 from FLiESANN import process_FLiESANN_table
 from BESS_JPL import load_ECOv002_static_tower_BESS_inputs, process_BESS_table
@@ -20,15 +19,11 @@ def main():
     first_date = calval_df['date_UTC'].min()
     calval_df = calval_df[calval_df['date_UTC'] == first_date]
 
-    # Initialize connection for GEOS5FP data
-    GEOS5FP_connection = GEOS5FP(download_directory="GEOS5FP_download")
-
     # Process the filtered dataset with FLiESANN to get atmospheric inputs
-    # Defaults: COT=0, AOT=0, vapor_gccm=0, ozone_cm=0.3
-    # Note: Not passing NASADEM_connection so elevation will be taken from the cal/val dataset
+    # Note: Not passing GEOS5FP_connection or NASADEM_connection since the cal/val 
+    # dataset already contains all required inputs (COT, AOT, vapor_gccm, ozone_cm, elevation)
     FLiES_results_df = process_FLiESANN_table(
-        calval_df,  # Use dataset with atmospheric defaults
-        GEOS5FP_connection=GEOS5FP_connection,
+        calval_df,
         row_wise=True
     )
 

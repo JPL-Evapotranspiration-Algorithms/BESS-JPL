@@ -102,25 +102,27 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
     # Check if time_UTC is a list (for point-by-point queries)
     is_time_list = isinstance(time_UTC, (list, tuple))
     
+    # Only retrieve atmospheric parameters if any are missing
     # Use FLiESANN retrieval function for atmospheric parameters
     # Note: FLiESANN's retrieval function handles both single datetime and list
-    flies_inputs = retrieve_FLiESANN_GEOS5FP_inputs(
-        COT=COT,
-        AOT=AOT,
-        vapor_gccm=vapor_gccm,
-        ozone_cm=ozone_cm,
-        geometry=geometry,
-        time_UTC=time_UTC,
-        GEOS5FP_connection=GEOS5FP_connection,
-        resampling=resampling,
-        zero_COT_correction=False
-    )
-    
-    # Extract atmospheric parameters from FLiESANN retrieval
-    COT = flies_inputs["COT"]
-    AOT = flies_inputs["AOT"]
-    vapor_gccm = flies_inputs["vapor_gccm"]
-    ozone_cm = flies_inputs["ozone_cm"]
+    if COT is None or AOT is None or vapor_gccm is None or ozone_cm is None:
+        flies_inputs = retrieve_FLiESANN_GEOS5FP_inputs(
+            COT=COT,
+            AOT=AOT,
+            vapor_gccm=vapor_gccm,
+            ozone_cm=ozone_cm,
+            geometry=geometry,
+            time_UTC=time_UTC,
+            GEOS5FP_connection=GEOS5FP_connection,
+            resampling=resampling,
+            zero_COT_correction=False
+        )
+        
+        # Extract atmospheric parameters from FLiESANN retrieval
+        COT = flies_inputs["COT"]
+        AOT = flies_inputs["AOT"]
+        vapor_gccm = flies_inputs["vapor_gccm"]
+        ozone_cm = flies_inputs["ozone_cm"]
     
     # Retrieve air temperature if not provided
     if Ta_C is None:
