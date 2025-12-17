@@ -119,6 +119,9 @@ def process_BESS_table(
 
     if "wind_speed_mps" in input_df:
         wind_speed_mps = np.array(input_df.wind_speed_mps).astype(np.float64)
+        # Apply default wind speed of 7.4 m/s when wind speed is 0 or very low
+        # to avoid numerical instability in aerodynamic resistance calculations
+        wind_speed_mps = np.where(wind_speed_mps < 0.1, 7.4, wind_speed_mps)
     else:
         wind_speed_mps = None
 

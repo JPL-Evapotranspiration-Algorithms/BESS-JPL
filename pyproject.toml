@@ -14,7 +14,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "check-distribution",
+    "check-distribution>=1.2.0",
     "daylight-evapotranspiration",
     "ECOv002-calval-tables>=1.6.0",
     "FLiESANN>=2.5.1",
