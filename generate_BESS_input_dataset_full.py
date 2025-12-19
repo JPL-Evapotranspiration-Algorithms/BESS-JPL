@@ -17,7 +17,6 @@ def main():
     # dataset already contains all required inputs (COT, AOT, vapor_gccm, ozone_cm, elevation)
     FLiES_results_df = process_FLiESANN_table(
         calval_df,
-        row_wise=False,
         GEOS5FP_connection=None,
         NASADEM_connection=None
     )
