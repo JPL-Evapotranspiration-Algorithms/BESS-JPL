@@ -22,10 +22,7 @@ def main():
     # Process the filtered dataset with FLiESANN to get atmospheric inputs
     # Note: Not passing GEOS5FP_connection or NASADEM_connection since the cal/val 
     # dataset already contains all required inputs (COT, AOT, vapor_gccm, ozone_cm, elevation)
-    FLiES_results_df = process_FLiESANN_table(
-        calval_df,
-        row_wise=True
-    )
+    FLiES_results_df = process_FLiESANN_table(calval_df)
 
     # Convert any array-like values to scalars by extracting first element if needed
     def extract_scalar(x):
