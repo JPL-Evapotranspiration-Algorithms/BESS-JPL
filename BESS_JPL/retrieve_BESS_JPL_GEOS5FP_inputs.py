@@ -8,7 +8,6 @@ import rasters as rt
 from check_distribution import check_distribution
 
 from GEOS5FP import GEOS5FP
-from FLiESANN import retrieve_FLiESANN_GEOS5FP_inputs
 
 
 def retrieve_BESS_JPL_GEOS5FP_inputs(
@@ -26,14 +25,15 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
         albedo_NIR: Union[Raster, np.ndarray] = None,
         Ca: Union[Raster, np.ndarray] = None,
         wind_speed_mps: Union[Raster, np.ndarray] = None,
-        resampling: str = "cubic") -> dict:
+        resampling: str = "cubic",
+        verbose: bool = False) -> dict:
     """
     Retrieve GEOS-5 FP meteorological inputs for BESS-JPL model.
     
     This function retrieves meteorological variables from GEOS-5 FP data products
-    when they are not provided as inputs. It handles all the GEOS-5 FP data
-    retrievals needed by the BESS-JPL model, utilizing the FLiESANN retrieval
-    function for atmospheric parameters (COT, AOT, vapor, ozone).
+    when they are not provided as inputs. All missing variables are retrieved in
+    a single efficient `.query()` call to minimize network requests and improve
+    performance.
     
     Parameters
     ----------
@@ -91,8 +91,8 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
     The visible and NIR albedo are calculated by scaling the input albedo with
     the ratio of GEOS-5 FP directional albedo products to total albedo.
     
-    This function uses retrieve_FLiESANN_GEOS5FP_inputs for atmospheric parameters
-    (COT, AOT, vapor_gccm, ozone_cm) to maintain consistency with FLiESANN.
+    All missing GEOS-5 FP variables are retrieved in a single `.query()` call
+    for optimal performance, reducing network overhead and improving efficiency.
     
     When time_UTC is a list, it handles point-by-point queries where each point
     may have a different datetime.
@@ -101,68 +101,79 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
     if GEOS5FP_connection is None:
         GEOS5FP_connection = GEOS5FP()
     
-    # Check if time_UTC is a list (for point-by-point queries)
-    is_time_list = isinstance(time_UTC, (list, tuple))
+    # Determine which variables need to be retrieved from GEOS-5 FP
+    variables_to_retrieve = []
     
-    # Only retrieve atmospheric parameters if any are missing
-    # Use FLiESANN retrieval function for atmospheric parameters
-    # Note: FLiESANN's retrieval function handles both single datetime and list
-    if COT is None or AOT is None or vapor_gccm is None or ozone_cm is None:
-        flies_inputs = retrieve_FLiESANN_GEOS5FP_inputs(
-            COT=COT,
-            AOT=AOT,
-            vapor_gccm=vapor_gccm,
-            ozone_cm=ozone_cm,
-            geometry=geometry,
+    # Atmospheric parameters (from FLiESANN)
+    if COT is None:
+        variables_to_retrieve.append("COT")
+    if AOT is None:
+        variables_to_retrieve.append("AOT")
+    if vapor_gccm is None:
+        variables_to_retrieve.append("vapor_gccm")
+    if ozone_cm is None:
+        variables_to_retrieve.append("ozone_cm")
+    
+    # Meteorological parameters
+    if Ta_C is None:
+        variables_to_retrieve.append("Ta_C")
+    if RH is None:
+        variables_to_retrieve.append("RH")
+    if Ca is None:
+        variables_to_retrieve.append("CO2SC")
+    if wind_speed_mps is None:
+        variables_to_retrieve.append("wind_speed_mps")
+    
+    # Albedo products needed for visible/NIR calculations
+    if albedo_visible is None or albedo_NIR is None:
+        variables_to_retrieve.append("ALBEDO")
+    if albedo_visible is None:
+        variables_to_retrieve.append("ALBVISDR")
+    if albedo_NIR is None:
+        variables_to_retrieve.append("ALBNIRDR")
+    
+    # Retrieve all missing variables in a single query
+    if variables_to_retrieve:
+        retrieved = GEOS5FP_connection.query(
+            target_variables=variables_to_retrieve,
             time_UTC=time_UTC,
-            GEOS5FP_connection=GEOS5FP_connection,
+            geometry=geometry,
             resampling=resampling,
-            zero_COT_correction=False
+            verbose=verbose
         )
         
-        # Extract atmospheric parameters from FLiESANN retrieval
-        COT = flies_inputs["COT"]
-        AOT = flies_inputs["AOT"]
-        vapor_gccm = flies_inputs["vapor_gccm"]
-        ozone_cm = flies_inputs["ozone_cm"]
-    
-    # Retrieve air temperature if not provided
-    if Ta_C is None:
-        Ta_C = GEOS5FP_connection.Ta_C(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-    
-    check_distribution(Ta_C, "Ta_C")
-
-    # Retrieve relative humidity if not provided
-    if RH is None:
-        RH = GEOS5FP_connection.RH(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-    
-    check_distribution(RH, "RH")
-
-    # Calculate visible albedo from GEOS-5 FP products if not provided
-    if albedo_visible is None:
-        albedo_NWP = GEOS5FP_connection.ALBEDO(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-        RVIS_NWP = GEOS5FP_connection.ALBVISDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-        albedo_visible = rt.clip(albedo * (RVIS_NWP / albedo_NWP), 0, 1)
-    
-    # Calculate NIR albedo from GEOS-5 FP products if not provided
-    if albedo_NIR is None:
-        albedo_NWP = GEOS5FP_connection.ALBEDO(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-        RNIR_NWP = GEOS5FP_connection.ALBNIRDR(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-        albedo_NIR = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
-    
-    # Retrieve CO2 concentration if not provided
-    if Ca is None:
-        Ca = GEOS5FP_connection.CO2SC(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-    
-    check_distribution(Ca, "Ca")
-
-    # Retrieve wind speed if not provided
-    if wind_speed_mps is None:
-        wind_speed_mps = GEOS5FP_connection.wind_speed(time_UTC=time_UTC, geometry=geometry, resampling=resampling)
-    
-    wind_speed_mps = rt.clip(wind_speed_mps, 0.1, None)
-
-    check_distribution(wind_speed_mps, "wind_speed_mps")
+        # Extract retrieved values
+        if COT is None:
+            COT = retrieved["COT"]
+        if AOT is None:
+            AOT = retrieved["AOT"]
+        if vapor_gccm is None:
+            vapor_gccm = retrieved["vapor_gccm"]
+        if ozone_cm is None:
+            ozone_cm = retrieved["ozone_cm"]
+        if Ta_C is None:
+            Ta_C = retrieved["Ta_C"]
+            check_distribution(Ta_C, "Ta_C")
+        if RH is None:
+            RH = retrieved["RH"]
+            check_distribution(RH, "RH")
+        if Ca is None:
+            Ca = retrieved["CO2SC"]
+            check_distribution(Ca, "Ca")
+        if wind_speed_mps is None:
+            wind_speed_mps = rt.clip(retrieved["wind_speed_mps"], 0.1, None)
+            check_distribution(wind_speed_mps, "wind_speed_mps")
+        
+        # Calculate visible and NIR albedo from retrieved products
+        if albedo_visible is None:
+            albedo_NWP = retrieved["ALBEDO"]
+            RVIS_NWP = retrieved["ALBVISDR"]
+            albedo_visible = rt.clip(albedo * (RVIS_NWP / albedo_NWP), 0, 1)
+        
+        if albedo_NIR is None:
+            albedo_NWP = retrieved["ALBEDO"]
+            RNIR_NWP = retrieved["ALBNIRDR"]
+            albedo_NIR = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
 
     return {
         "Ta_C": Ta_C,
