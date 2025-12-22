@@ -5,14 +5,37 @@ import rasters as rt
 from dateutil import parser
 from pandas import DataFrame
 
+from GEOS5FP import GEOS5FP
+
 from .constants import *
 from .model import BESS_JPL
+from .retrieve_BESS_JPL_GEOS5FP_inputs import retrieve_BESS_JPL_GEOS5FP_inputs
 
 logger = logging.getLogger(__name__)
 
+def _is_notebook() -> bool:
+    """Check if code is running in a Jupyter notebook environment."""
+    try:
+        from IPython import get_ipython
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except (ImportError, NameError):
+        return False      # Probably standard Python interpreter
+
 def process_BESS_table(
         input_df: DataFrame,
-        C4_fraction_scale_factor: float = C4_FRACTION_SCALE_FACTOR) -> DataFrame:
+        GEOS5FP_connection: GEOS5FP = None,
+        C4_fraction_scale_factor: float = C4_FRACTION_SCALE_FACTOR,
+        verbose: bool = None) -> DataFrame:
+    # Set verbose default based on environment if not explicitly provided
+    if verbose is None:
+        verbose = not _is_notebook()
+    
     ST_C = np.array(input_df.ST_C).astype(np.float64)
     NDVI = np.array(input_df.NDVI).astype(np.float64)
 
@@ -160,7 +183,7 @@ def process_BESS_table(
 
     input_df = ensure_geometry(input_df)
 
-    logger.info("started extracting geometry from PT-JPL-SM input table")
+    logger.info("started extracting geometry from BESS input table")
 
     if "geometry" in input_df:
         # Convert Point objects to coordinate tuples for MultiPoint
@@ -178,7 +201,7 @@ def process_BESS_table(
 
     logger.info("completed extracting geometry from PT-JPL-SM input table")
 
-    logger.info("started extracting time from PT-JPL-SM input table")
+    logger.info("started extracting time from BESS input table")
     time_UTC_list = pd.to_datetime(input_df.time_UTC).tolist()
     
     # Check if all times are the same
@@ -188,6 +211,24 @@ def process_BESS_table(
     else:
         # Different timestamps per point, keep as list
         time_UTC = time_UTC_list
+
+    BESS_GEOS5FP_inputs = retrieve_BESS_JPL_GEOS5FP_inputs(
+        time_UTC=time_UTC,
+        geometry=geometry,
+        albedo=albedo,
+        GEOS5FP_connection=GEOS5FP_connection,
+        Ta_C=Ta_C,
+        RH=RH,
+        COT=COT,
+        AOT=AOT,
+        vapor_gccm=vapor_gccm,
+        ozone_cm=ozone_cm,
+        albedo_visible=albedo,
+        albedo_NIR=albedo,
+        Ca=Ca,
+        wind_speed_mps=wind_speed_mps,
+        verbose=verbose
+    )
     
     logger.info("completed extracting time from PT-JPL-SM input table")
 
@@ -221,7 +262,8 @@ def process_BESS_table(
         ozone_cm=ozone_cm,
         albedo_visible=albedo,
         albedo_NIR=albedo,
-        C4_fraction_scale_factor=C4_fraction_scale_factor
+        C4_fraction_scale_factor=C4_fraction_scale_factor,
+        GEOS5FP_connection=GEOS5FP_connection
     )
 
     output_df = input_df.copy()

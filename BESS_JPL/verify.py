@@ -1,6 +1,6 @@
 def verify() -> bool:
     """
-    Verifies the correctness of the PT-JPL-SM model implementation by comparing
+    Verifies the correctness of the BESS model implementation by comparing
     its outputs to a reference dataset.
 
     This function loads a known input table and the corresponding expected output table.
