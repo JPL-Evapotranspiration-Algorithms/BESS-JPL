@@ -9,6 +9,9 @@ from check_distribution import check_distribution
 
 from GEOS5FP import GEOS5FP
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def retrieve_BESS_JPL_GEOS5FP_inputs(
         time_UTC: Union[datetime, List[datetime]],
@@ -132,6 +135,11 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
     if albedo_NIR is None:
         variables_to_retrieve.append("ALBNIRDR")
     
+    if len(variables_to_retrieve) == 0:
+        logger.info("All GEOS-5 FP inputs provided, no retrieval needed.")
+    else:
+        logger.info(f"Retrieving GEOS-5 FP variables: {', '.join(variables_to_retrieve)}")
+
     # Retrieve all missing variables in a single query
     if variables_to_retrieve:
         retrieved = GEOS5FP_connection.query(

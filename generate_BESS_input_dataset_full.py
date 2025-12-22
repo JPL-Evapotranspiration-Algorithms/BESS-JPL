@@ -2,24 +2,19 @@
 import pandas as pd
 import numpy as np
 from ECOv002_calval_tables import load_calval_table
-from FLiESANN import process_FLiESANN_table
+from FLiESANN import process_FLiESANN_table, load_ECOv002_calval_FLiESANN_inputs
 from BESS_JPL import load_ECOv002_static_tower_BESS_inputs, process_BESS_table
 
 # Load the calibration/validation table
 def main():
-    calval_df = load_calval_table()
+    # calval_df = load_calval_table()
+    model_inputs_df = load_ECOv002_calval_FLiESANN_inputs()
 
     # Ensure `time_UTC` is in datetime format
-    calval_df['time_UTC'] = pd.to_datetime(calval_df['time_UTC'])
+    model_inputs_df['time_UTC'] = pd.to_datetime(model_inputs_df['time_UTC'])
 
-    # Process the full dataset with FLiESANN to get atmospheric inputs
-    # Note: Explicitly passing None for GEOS5FP_connection and NASADEM_connection since the cal/val 
-    # dataset already contains all required inputs (COT, AOT, vapor_gccm, ozone_cm, elevation)
-    FLiES_results_df = process_FLiESANN_table(
-        calval_df,
-        GEOS5FP_connection=None,
-        NASADEM_connection=None
-    )
+    # Create a `date_UTC` column by extracting the date from `time_UTC`
+    model_inputs_df['date_UTC'] = model_inputs_df['time_UTC'].dt.date
 
     # Convert any array-like values to scalars by extracting first element if needed
     def extract_scalar(x):
@@ -40,8 +35,8 @@ def main():
             return x
     
     # Apply extraction to all columns
-    for col in FLiES_results_df.columns:
-        FLiES_results_df[col] = FLiES_results_df[col].apply(extract_scalar)
+    for col in model_inputs_df.columns:
+        model_inputs_df[col] = model_inputs_df[col].apply(extract_scalar)
 
     # Load static tower BESS inputs
     static_inputs_df = load_ECOv002_static_tower_BESS_inputs()
@@ -49,7 +44,7 @@ def main():
     # Merge FLiESANN outputs with static BESS inputs on Site ID
     # FLiESANN outputs contain time-varying atmospheric and radiation inputs
     # Static inputs contain vegetation parameters
-    model_inputs_df = FLiES_results_df.merge(
+    model_inputs_df = model_inputs_df.merge(
         static_inputs_df,
         left_on='ID',
         right_on='ID',
