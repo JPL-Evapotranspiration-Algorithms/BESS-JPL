@@ -19,7 +19,7 @@ dependencies = [
     "ECOv002-calval-tables>=1.6.0",
     "FLiESANN>=2.6.0",
     "gedi-canopy-height>=1.1.0",
-    "GEOS5FP>=2.9.0",
+    "GEOS5FP>=2.9.1",
     "koppengeiger>=1.1.0",
     "MODISCI>=1.4.0",
     "monte-carlo-sensitivity",
