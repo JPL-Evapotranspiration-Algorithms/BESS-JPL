@@ -100,8 +100,7 @@ def calculate_bulk_aerodynamic_resistance(
     
     # Calculate friction velocity using logarithmic wind profile
     # Characterizes turbulent momentum transfer intensity
-    ustar = calculate_friction_velocity(wind_speed_mps, reference_height_m, z0, k)or simplicity
-    ustar = wind_speed_mps * k / (np.log(reference_height_m / z0))
+    ustar = calculate_friction_velocity(wind_speed_mps, reference_height_m, z0, k)
     
     # Bulk aerodynamic resistance - Eq. (2-4) from Ryu et al. (2008)
     # First term: resistance in the inertial sublayer
