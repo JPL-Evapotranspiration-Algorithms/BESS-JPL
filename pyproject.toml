@@ -17,7 +17,7 @@ dependencies = [
     "check-distribution>=1.2.0",
     "daylight-evapotranspiration",
     "ECOv002-calval-tables>=1.6.0",
-    "FLiESANN>=2.6.0",
+    "FLiESANN>=2.11.0",
     "gedi-canopy-height>=1.1.0",
     "GEOS5FP>=2.9.1",
     "koppengeiger>=1.1.0",
