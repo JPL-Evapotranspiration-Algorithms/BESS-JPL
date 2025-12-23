@@ -13,13 +13,13 @@ logger = logging.getLogger(__name__)
 def generate_input_dataset():
     logger.info("Generating BESS-JPL input dataset from ECOv002 cal/val FLiESANN inputs")
     # calval_df = load_calval_table()
-    model_inputs_df = load_ECOv002_calval_FLiESANN_inputs()
+    inputs_df = load_ECOv002_calval_FLiESANN_inputs()
 
     # Ensure `time_UTC` is in datetime format
-    model_inputs_df['time_UTC'] = pd.to_datetime(model_inputs_df['time_UTC'])
+    inputs_df['time_UTC'] = pd.to_datetime(inputs_df['time_UTC'])
 
     # Create a `date_UTC` column by extracting the date from `time_UTC`
-    model_inputs_df['date_UTC'] = model_inputs_df['time_UTC'].dt.date
+    inputs_df['date_UTC'] = inputs_df['time_UTC'].dt.date
 
     # Convert any array-like values to scalars by extracting first element if needed
     def extract_scalar(x):
@@ -40,8 +40,8 @@ def generate_input_dataset():
             return x
 
     # Apply extraction to all columns
-    for col in model_inputs_df.columns:
-        model_inputs_df[col] = model_inputs_df[col].apply(extract_scalar)
+    for col in inputs_df.columns:
+        inputs_df[col] = inputs_df[col].apply(extract_scalar)
 
     # Load static tower BESS inputs
     static_inputs_df = load_ECOv002_static_tower_BESS_inputs()
@@ -49,7 +49,7 @@ def generate_input_dataset():
     # Merge FLiESANN outputs with static BESS inputs on Site ID
     # FLiESANN outputs contain time-varying atmospheric and radiation inputs
     # Static inputs contain vegetation parameters
-    model_inputs_df = model_inputs_df.merge(
+    inputs_df = inputs_df.merge(
         static_inputs_df,
         left_on='ID',
         right_on='ID',
@@ -58,23 +58,23 @@ def generate_input_dataset():
     )
 
     # Remove duplicate columns from the merge (keep non-static versions)
-    duplicate_cols = [col for col in model_inputs_df.columns if col.endswith('_static')]
-    model_inputs_df = model_inputs_df.drop(columns=duplicate_cols)
+    duplicate_cols = [col for col in inputs_df.columns if col.endswith('_static')]
+    inputs_df = inputs_df.drop(columns=duplicate_cols)
 
     # Process with BESS-JPL model
-    BESS_results_df = process_BESS_table(model_inputs_df)
+    outputs_df = process_BESS_table(inputs_df)
 
     inputs_filename = join(abspath(dirname(__file__)), "ECOv002-cal-val-BESS-JPL-inputs.csv")
     outputs_filename = join(abspath(dirname(__file__)), "ECOv002-cal-val-BESS-JPL-outputs.csv")
 
     # Save the input dataset to a CSV file
-    model_inputs_df.to_csv(inputs_filename, index=False)
+    inputs_df.to_csv(inputs_filename, index=False)
 
     # Save the processed results to a CSV file
-    BESS_results_df.to_csv(outputs_filename, index=False)
+    outputs_df.to_csv(outputs_filename, index=False)
 
-    logger.info(f"Processed {len(BESS_results_df)} records from the full cal/val dataset")
+    logger.info(f"Processed {len(outputs_df)} records from the full cal/val dataset")
     logger.info(f"input dataset: {inputs_filename}")
     logger.info(f"output dataset: {outputs_filename}")
     
-    return BESS_results_df
+    return outputs_df
