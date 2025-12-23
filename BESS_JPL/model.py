@@ -68,8 +68,8 @@ def BESS_JPL(
         NIR_diffuse_Wm2: Union[Raster, np.ndarray] = None,  # diffuse near-infrared radiation in W/m^2
         NIR_direct_Wm2: Union[Raster, np.ndarray] = None,  # direct near-infrared radiation in W/m^2
         UV_Wm2: Union[Raster, np.ndarray] = None,  # incoming ultraviolet radiation in W/m^2
-        albedo_visible: Union[Raster, np.ndarray] = None, # surface albedo in visible wavelengths (initialized to surface albedo if left as None)
-        albedo_NIR: Union[Raster, np.ndarray] = None, # surface albedo in near-infrared wavelengths (initialized to surface albedo if left as None)
+        PAR_albedo: Union[Raster, np.ndarray] = None, # surface albedo in visible wavelengths (initialized to surface albedo if left as None)
+        NIR_albedo: Union[Raster, np.ndarray] = None, # surface albedo in near-infrared wavelengths (initialized to surface albedo if left as None)
         COT: Union[Raster, np.ndarray] = None,  # cloud optical thickness
         AOT: Union[Raster, np.ndarray] = None,  # aerosol optical thickness
         vapor_gccm: Union[Raster, np.ndarray] = None,  # water vapor in g/ccm
@@ -274,8 +274,8 @@ def BESS_JPL(
         AOT=AOT,
         vapor_gccm=vapor_gccm,
         ozone_cm=ozone_cm,
-        albedo_visible=albedo_visible,
-        albedo_NIR=albedo_NIR,
+        albedo_visible=PAR_albedo,
+        albedo_NIR=NIR_albedo,
         Ca=Ca,
         wind_speed_mps=wind_speed_mps,
         resampling=resampling
@@ -288,8 +288,8 @@ def BESS_JPL(
     AOT = GEOS5FP_inputs["AOT"]
     vapor_gccm = GEOS5FP_inputs["vapor_gccm"]
     ozone_cm = GEOS5FP_inputs["ozone_cm"]
-    albedo_visible = GEOS5FP_inputs["albedo_visible"]
-    albedo_NIR = GEOS5FP_inputs["albedo_NIR"]
+    PAR_albedo = GEOS5FP_inputs["albedo_visible"]
+    NIR_albedo = GEOS5FP_inputs["albedo_NIR"]
     Ca = GEOS5FP_inputs["Ca"]
     wind_speed_mps = GEOS5FP_inputs["wind_speed_mps"]
 
@@ -365,11 +365,11 @@ def BESS_JPL(
         "SWin_Wm2": SWin_Wm2,
         "PAR_diffuse_Wm2": PAR_diffuse_Wm2,
         "PAR_direct_Wm2": PAR_direct_Wm2,
-        "NI_diffuse_Wm2": NIR_diffuse_Wm2,
-        "NI_direct_Wm2": NIR_direct_Wm2,
+        "NIR_diffuse_Wm2": NIR_diffuse_Wm2,
+        "NIR_direct_Wm2": NIR_direct_Wm2,
         "UV_Wm2": UV_Wm2,
-        "albedo_visible": albedo_visible,
-        "albedo_NIR": albedo_NIR
+        "PAR_albedo": PAR_albedo,
+        "NIR_albedo": NIR_albedo
     }
 
     # Check for None values and size mismatches
@@ -386,7 +386,7 @@ def BESS_JPL(
                 logger.warning(f"Variable '{name}' has a different size: {size} (expected: {reference_size}).")
 
     # check if any of the FLiES outputs are not given
-    flies_variables = [SWin_Wm2, PAR_diffuse_Wm2, PAR_direct_Wm2, NIR_diffuse_Wm2, NIR_direct_Wm2, UV_Wm2, albedo_visible, albedo_NIR]
+    flies_variables = [SWin_Wm2, PAR_diffuse_Wm2, PAR_direct_Wm2, NIR_diffuse_Wm2, NIR_direct_Wm2, UV_Wm2, PAR_albedo, NIR_albedo]
     flies_variables_missing = False
     for variable in flies_variables:
         if variable is None:
@@ -540,8 +540,8 @@ def BESS_JPL(
         SZA_deg=SZA_deg,  # solar zenith angle in degrees
         LAI=LAI,  # leaf area index
         CI=CI,  # clumping index
-        albedo_visible=albedo_visible,  # surface albedo in visible wavelengths
-        albedo_NIR=albedo_NIR  # surface albedo in near-infrared wavelengths
+        albedo_visible=PAR_albedo,  # surface albedo in visible wavelengths
+        albedo_NIR=NIR_albedo  # surface albedo in near-infrared wavelengths
     )
 
     # Check the distribution for each variable
