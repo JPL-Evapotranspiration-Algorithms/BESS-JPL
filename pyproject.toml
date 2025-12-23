@@ -22,7 +22,7 @@ dependencies = [
     "GEOS5FP>=2.9.1",
     "koppengeiger>=1.1.0",
     "MODISCI>=1.4.0",
-    "monte-carlo-sensitivity",
+    "monte-carlo-sensitivity>=1.5.0",
     "NASADEM>=1.3.0",
     "numpy",
     "pytictoc",
