@@ -5,14 +5,37 @@ import rasters as rt
 from dateutil import parser
 from pandas import DataFrame
 
+from GEOS5FP import GEOS5FP
+
 from .constants import *
 from .model import BESS_JPL
+from .retrieve_BESS_JPL_GEOS5FP_inputs import retrieve_BESS_JPL_GEOS5FP_inputs
 
 logger = logging.getLogger(__name__)
 
+def _is_notebook() -> bool:
+    """Check if code is running in a Jupyter notebook environment."""
+    try:
+        from IPython import get_ipython
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except (ImportError, NameError):
+        return False      # Probably standard Python interpreter
+
 def process_BESS_table(
         input_df: DataFrame,
-        C4_fraction_scale_factor: float = C4_FRACTION_SCALE_FACTOR) -> DataFrame:
+        GEOS5FP_connection: GEOS5FP = None,
+        C4_fraction_scale_factor: float = C4_FRACTION_SCALE_FACTOR,
+        verbose: bool = None) -> DataFrame:
+    # Set verbose default based on environment if not explicitly provided
+    if verbose is None:
+        verbose = not _is_notebook()
+    
     ST_C = np.array(input_df.ST_C).astype(np.float64)
     NDVI = np.array(input_df.NDVI).astype(np.float64)
 
@@ -27,7 +50,10 @@ def process_BESS_table(
 
     RH = np.array(input_df.RH).astype(np.float64)
 
-    if "elevation_km" in input_df:
+    if "elevation_m" in input_df:
+        elevation_m = np.array(input_df.elevation_m).astype(np.float64)
+        elevation_km = elevation_m / 1000
+    elif "elevation_km" in input_df:
         elevation_km = np.array(input_df.elevation_km).astype(np.float64)
         elevation_m = elevation_km * 1000
     else:
@@ -116,6 +142,9 @@ def process_BESS_table(
 
     if "wind_speed_mps" in input_df:
         wind_speed_mps = np.array(input_df.wind_speed_mps).astype(np.float64)
+        # Apply default wind speed of 7.4 m/s when wind speed is 0 or very low
+        # to avoid numerical instability in aerodynamic resistance calculations
+        # wind_speed_mps = np.where(wind_speed_mps < 0.1, 7.4, wind_speed_mps)
     else:
         wind_speed_mps = None
 
@@ -154,7 +183,7 @@ def process_BESS_table(
 
     input_df = ensure_geometry(input_df)
 
-    logger.info("started extracting geometry from PT-JPL-SM input table")
+    logger.info("started extracting geometry from BESS input table")
 
     if "geometry" in input_df:
         # Convert Point objects to coordinate tuples for MultiPoint
@@ -172,8 +201,35 @@ def process_BESS_table(
 
     logger.info("completed extracting geometry from PT-JPL-SM input table")
 
-    logger.info("started extracting time from PT-JPL-SM input table")
-    time_UTC = pd.to_datetime(input_df.time_UTC).tolist()
+    logger.info("started extracting time from BESS input table")
+    time_UTC_list = pd.to_datetime(input_df.time_UTC).tolist()
+    
+    # Check if all times are the same
+    if len(set(time_UTC_list)) == 1:
+        # All timestamps are identical, use single datetime
+        time_UTC = time_UTC_list[0]
+    else:
+        # Different timestamps per point, keep as list
+        time_UTC = time_UTC_list
+
+    BESS_GEOS5FP_inputs = retrieve_BESS_JPL_GEOS5FP_inputs(
+        time_UTC=time_UTC,
+        geometry=geometry,
+        albedo=albedo,
+        GEOS5FP_connection=GEOS5FP_connection,
+        Ta_C=Ta_C,
+        RH=RH,
+        COT=COT,
+        AOT=AOT,
+        vapor_gccm=vapor_gccm,
+        ozone_cm=ozone_cm,
+        albedo_visible=albedo,
+        albedo_NIR=albedo,
+        Ca=Ca,
+        wind_speed_mps=wind_speed_mps,
+        verbose=verbose
+    )
+    
     logger.info("completed extracting time from PT-JPL-SM input table")
 
     results = BESS_JPL(
@@ -201,12 +257,13 @@ def process_BESS_table(
         COT=COT,
         AOT=AOT,
         Ca=Ca,
-        wind_speed_mps=COT * 0 + 7.4,
+        wind_speed_mps=wind_speed_mps,
         vapor_gccm=vapor_gccm,
         ozone_cm=ozone_cm,
         albedo_visible=albedo,
         albedo_NIR=albedo,
-        C4_fraction_scale_factor=C4_fraction_scale_factor
+        C4_fraction_scale_factor=C4_fraction_scale_factor,
+        GEOS5FP_connection=GEOS5FP_connection
     )
 
     output_df = input_df.copy()

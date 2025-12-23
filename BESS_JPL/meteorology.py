@@ -1,5 +1,6 @@
 from typing import Tuple, Union
 import numpy as np
+from .calculate_bulk_aerodynamic_resistance import calculate_bulk_aerodynamic_resistance
 
 
 def SVP_kPa_from_Ta_C(Ta_C: np.ndarray) -> np.ndarray:
@@ -282,26 +283,6 @@ def calculate_upscaling_factor(RaDaily: np.ndarray, Ra: np.ndarray, SZA: np.ndar
     SFd = np.where(RaDaily != 0, 1800.0 * Ra / (RaDaily * 3600 * 24), 1)
     SFd = np.where(SZA > 89.0, 1, SFd)
     return np.clip(SFd, None, 1)
-
-def calculate_bulk_aerodynamic_resistance(wind_speed_mps: np.ndarray, canopy_height_meters: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Calculate bulk aerodynamic resistance and related parameters.
-
-    Args:
-        wind_speed_mps (np.ndarray): Wind speed in meters per second.
-        canopy_height_meters (np.ndarray): Canopy height in meters.
-
-    Returns:
-        Tuple[np.ndarray, np.ndarray, np.ndarray]: Bulk aerodynamic resistance (R), surface resistance (Rs), and canopy resistance (Rc).
-    """
-    k = 0.4  # von Karman constant
-    z0 = np.clip(canopy_height_meters * 0.05, 0.05, None)
-    ustar = wind_speed_mps * k / (np.log(10.0 / z0))  # Stability item ignored
-    R = wind_speed_mps / (ustar * ustar) + 2.0 / (k * ustar)  # Eq. (2-4) in Ryu et al 2008
-    R = np.clip(R, None, 1000)
-    Rs = 0.5 * R
-    Rc = R  # was: Rc = 0.5 * R * 2
-    return R, Rs, Rc
 
 def calculate_upscaling_factor_net_radiation(hour_of_day: np.ndarray, DL: np.ndarray) -> np.ndarray:
     """

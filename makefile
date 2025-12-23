@@ -37,6 +37,9 @@ reinstall:
 	make uninstall
 	make install
 
+generate-input-dataset:
+	python -c "from BESS_JPL.generate_input_dataset import generate_input_dataset; generate_input_dataset()"
+
 environment:
 	mamba create -y -n $(ENVIRONMENT_NAME) -c conda-forge python=3.11
 

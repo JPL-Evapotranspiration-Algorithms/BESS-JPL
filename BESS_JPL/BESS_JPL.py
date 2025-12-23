@@ -47,3 +47,4 @@ from .ECOv002_static_tower_BESS_inputs import load_ECOv002_static_tower_BESS_inp
 from .ECOv002_calval_BESS_inputs import load_ECOv002_calval_BESS_inputs
 from .verify import verify
 from .colors import *
+from .generate_input_dataset import generate_input_dataset
