@@ -360,6 +360,46 @@ def BESS_JPL(
 
     check_distribution(ball_berry_intercept_C3, "ball_berry_intercept_C3")
 
+    # load koppen geiger climate classification if not provided
+    if KG_climate is None:
+        KG_climate = load_koppen_geiger(geometry=geometry)
+
+    check_distribution(np.float32(KG_climate), "KG_climate")
+
+    # load canopy height in meters if not provided
+    if canopy_height_meters is None:
+        canopy_height_meters = load_canopy_height(
+            geometry=geometry, 
+            resampling=resampling,
+            source_directory=GEDI_download_directory
+        )
+
+    check_distribution(canopy_height_meters, "canopy_height_meters")
+    check_distribution(Ca, "Ca")
+    check_distribution(wind_speed_mps, "wind_speed_mps")
+
+    # canopy temperature defaults to surface temperature
+    if canopy_temperature_C is None:
+        canopy_temperature_C = ST_C
+
+    # soil temperature defaults to surface temperature
+    if soil_temperature_C is None:
+        soil_temperature_C = ST_C
+
+    # calculate solar zenith angle if not provided
+    if SZA_deg is None:
+        SZA_deg = calculate_SZA_from_DOY_and_hour(geometry.lat, geometry.lon, day_of_year, hour_of_day)
+
+    if MODISCI_connection is None:
+        MODISCI_connection = MODISCI()
+
+    if CI is None and geometry is not None:
+        CI = MODISCI_connection.CI(geometry=geometry, resampling=resampling)
+
+    # canopy height defaults to zero
+    canopy_height_meters = np.where(np.isnan(canopy_height_meters), 0, canopy_height_meters)
+
+
     # Create a dictionary of variables to check
     variables_to_check = {
         "SWin_Wm2": SWin_Wm2,
@@ -425,45 +465,6 @@ def BESS_JPL(
         check_distribution(PAR_direct_Wm2, "PAR_direct_Wm2")
     else:
         logger.info("using given FLiES output as BESS parameters")
-
-    # load koppen geiger climate classification if not provided
-    if KG_climate is None:
-        KG_climate = load_koppen_geiger(geometry=geometry)
-
-    check_distribution(np.float32(KG_climate), "KG_climate")
-
-    # load canopy height in meters if not provided
-    if canopy_height_meters is None:
-        canopy_height_meters = load_canopy_height(
-            geometry=geometry, 
-            resampling=resampling,
-            source_directory=GEDI_download_directory
-        )
-
-    check_distribution(canopy_height_meters, "canopy_height_meters")
-    check_distribution(Ca, "Ca")
-    check_distribution(wind_speed_mps, "wind_speed_mps")
-
-    # canopy temperature defaults to surface temperature
-    if canopy_temperature_C is None:
-        canopy_temperature_C = ST_C
-
-    # soil temperature defaults to surface temperature
-    if soil_temperature_C is None:
-        soil_temperature_C = ST_C
-
-    # calculate solar zenith angle if not provided
-    if SZA_deg is None:
-        SZA_deg = calculate_SZA_from_DOY_and_hour(geometry.lat, geometry.lon, day_of_year, hour_of_day)
-
-    if MODISCI_connection is None:
-        MODISCI_connection = MODISCI()
-
-    if CI is None and geometry is not None:
-        CI = MODISCI_connection.CI(geometry=geometry, resampling=resampling)
-
-    # canopy height defaults to zero
-    canopy_height_meters = np.where(np.isnan(canopy_height_meters), 0, canopy_height_meters)
 
     # calculate saturation vapor pressure in Pascal from air temperature in Kelvin
     Ta_K = Ta_C + 273.15
@@ -560,7 +561,10 @@ def BESS_JPL(
     ASW_soil_Wm2 = canopy_shortwave_radiation_results["ASW_soil_Wm2"]
     G_Wm2 = canopy_shortwave_radiation_results["G_Wm2"]
 
+    # convert canopy temperature from Celsius to Kelvin
     canopy_temperature_K = canopy_temperature_C + 273.15
+
+    # convert soil temperature from Celsius to Kelvin
     soil_temperature_K = soil_temperature_C + 273.15
 
     GPP_C3, LE_C3, LE_soil_C3, LE_canopy_C3, Rn_C3, Rn_soil_C3, Rn_canopy_C3 = carbon_water_fluxes(
