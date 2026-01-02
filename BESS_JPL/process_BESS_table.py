@@ -255,8 +255,8 @@ def process_BESS_table(
         AOT=AOT,
         vapor_gccm=vapor_gccm,
         ozone_cm=ozone_cm,
-        albedo_visible=albedo,
-        albedo_NIR=albedo,
+        PAR_albedo=albedo,
+        NIR_albedo=albedo,
         Ca=Ca,
         wind_speed_mps=wind_speed_mps,
         verbose=verbose

@@ -45,6 +45,7 @@ from .calculate_VCmax import *
 from .meteorology import *
 from .soil_energy_balance import *
 from .retrieve_BESS_JPL_GEOS5FP_inputs import retrieve_BESS_JPL_GEOS5FP_inputs
+from .retrieve_BESS_inputs import retrieve_BESS_inputs
 
 logger = logging.getLogger(__name__)
 
@@ -254,151 +255,225 @@ def BESS_JPL(
     if time_UTC is None and day_of_year is None and hour_of_day is None:
         raise ValueError("no time given between time_UTC, day_of_year, and hour_of_day")
 
-    if elevation_m is None and geometry is not None:
-        if NASADEM_connection is None:
-            NASADEM_connection = NASADEMConnection()
-
-        elevation_m = NASADEM_connection.elevation_m(geometry=geometry)
-
-    check_distribution(elevation_m, "elevation_m")
-
-    # Retrieve GEOS-5 FP inputs if not provided
-    GEOS5FP_inputs = retrieve_BESS_JPL_GEOS5FP_inputs(
-        time_UTC=time_UTC,
-        geometry=geometry,
+    BESS_inputs_dict = retrieve_BESS_inputs(
+        ST_C=ST_C,
+        NDVI=NDVI,
         albedo=albedo,
+        geometry=geometry,
+        time_UTC=time_UTC,
+        hour_of_day=hour_of_day,
+        day_of_year=day_of_year,
         GEOS5FP_connection=GEOS5FP_connection,
+        elevation_m=elevation_m,
         Ta_C=Ta_C,
         RH=RH,
+        NDVI_minimum=NDVI_minimum,
+        NDVI_maximum=NDVI_maximum,
+        PAR_albedo=PAR_albedo,
+        NIR_albedo=NIR_albedo,
         COT=COT,
         AOT=AOT,
         vapor_gccm=vapor_gccm,
         ozone_cm=ozone_cm,
-        albedo_visible=PAR_albedo,
-        albedo_NIR=NIR_albedo,
+        KG_climate=KG_climate,
+        canopy_height_meters=canopy_height_meters,
         Ca=Ca,
         wind_speed_mps=wind_speed_mps,
-        resampling=resampling
+        SZA_deg=SZA_deg,
+        canopy_temperature_C=canopy_temperature_C,
+        soil_temperature_C=soil_temperature_C,
+        C4_fraction=C4_fraction,
+        carbon_uptake_efficiency=carbon_uptake_efficiency,
+        kn=kn,
+        ball_berry_intercept_C3=ball_berry_intercept_C3,
+        ball_berry_intercept_C4=ball_berry_intercept_C4,
+        ball_berry_slope_C3=ball_berry_slope_C3,
+        ball_berry_slope_C4=ball_berry_slope_C4,
+        peakVCmax_C3_μmolm2s1=peakVCmax_C3_μmolm2s1,
+        peakVCmax_C4_μmolm2s1=peakVCmax_C4_μmolm2s1,
+        CI=CI,
+        C4_fraction_scale_factor=C4_fraction_scale_factor,
+        MODISCI_connection=MODISCI_connection,
+        NASADEM_connection=NASADEM_connection,
+        resampling=resampling,
+        GEDI_download_directory=GEDI_download_directory
     )
+
+    # Extract all variables from the resulting dictionary
+    CI = BESS_inputs_dict["CI"]
+    elevation_m = BESS_inputs_dict["elevation_m"]
+    NDVI_minimum = BESS_inputs_dict["NDVI_minimum"]
+    NDVI_maximum = BESS_inputs_dict["NDVI_maximum"]
+    C4_fraction = BESS_inputs_dict["C4_fraction"]
+    carbon_uptake_efficiency = BESS_inputs_dict["carbon_uptake_efficiency"]
+    kn = BESS_inputs_dict["kn"]
+    peakVCmax_C3_μmolm2s1 = BESS_inputs_dict["peakVCmax_C3_μmolm2s1"]
+    peakVCmax_C4_μmolm2s1 = BESS_inputs_dict["peakVCmax_C4_μmolm2s1"]
+    ball_berry_slope_C3 = BESS_inputs_dict["ball_berry_slope_C3"]
+    ball_berry_slope_C4 = BESS_inputs_dict["ball_berry_slope_C4"]
+    ball_berry_intercept_C3 = BESS_inputs_dict["ball_berry_intercept_C3"]
+    KG_climate = BESS_inputs_dict["KG_climate"]
+    canopy_height_meters = BESS_inputs_dict["canopy_height_meters"]
+    canopy_temperature_C = BESS_inputs_dict["canopy_temperature_C"]
+    soil_temperature_C = BESS_inputs_dict["soil_temperature_C"]
+    SZA_deg = BESS_inputs_dict["SZA_deg"]
+
+    # Variables from GEOS5FP_inputs (merged via results.update())
+    Ta_C = BESS_inputs_dict["Ta_C"]
+    RH = BESS_inputs_dict["RH"]
+    COT = BESS_inputs_dict["COT"]
+    AOT = BESS_inputs_dict["AOT"]
+    vapor_gccm = BESS_inputs_dict["vapor_gccm"]
+    ozone_cm = BESS_inputs_dict["ozone_cm"]
+    PAR_albedo = BESS_inputs_dict["PAR_albedo"]
+    NIR_albedo = BESS_inputs_dict["NIR_albedo"]
+    Ca = BESS_inputs_dict["Ca"]
+    wind_speed_mps = BESS_inputs_dict["wind_speed_mps"]
     
-    # Extract GEOS-5 FP inputs from dictionary
-    Ta_C = GEOS5FP_inputs["Ta_C"]
-    RH = GEOS5FP_inputs["RH"]
-    COT = GEOS5FP_inputs["COT"]
-    AOT = GEOS5FP_inputs["AOT"]
-    vapor_gccm = GEOS5FP_inputs["vapor_gccm"]
-    ozone_cm = GEOS5FP_inputs["ozone_cm"]
-    PAR_albedo = GEOS5FP_inputs["albedo_visible"]
-    NIR_albedo = GEOS5FP_inputs["albedo_NIR"]
-    Ca = GEOS5FP_inputs["Ca"]
-    wind_speed_mps = GEOS5FP_inputs["wind_speed_mps"]
+    # if elevation_m is None and geometry is not None:
+    #     if NASADEM_connection is None:
+    #         NASADEM_connection = NASADEMConnection()
 
-    check_distribution(Ta_C, "Ta_C")
-    check_distribution(RH, "RH")
+    #     elevation_m = NASADEM_connection.elevation_m(geometry=geometry)
 
-    # load minimum NDVI if not provided
-    if NDVI_minimum is None and geometry is not None:
-        NDVI_minimum = load_NDVI_minimum(geometry=geometry, resampling=resampling)
+    # check_distribution(elevation_m, "elevation_m")
 
-    check_distribution(NDVI_minimum, "NDVI_minimum")
-
-    # load maximum NDVI if not provided
-    if NDVI_maximum is None and geometry is not None:
-        NDVI_maximum = load_NDVI_maximum(geometry=geometry, resampling=resampling)
-
-    check_distribution(NDVI_maximum, "NDVI_maximum")
-
-    # load C4 fraction if not provided
-    if C4_fraction is None:
-        C4_fraction = load_C4_fraction(
-            geometry=geometry, 
-            resampling=resampling,
-            scale_factor=C4_fraction_scale_factor
-        )
-
-    check_distribution(C4_fraction, "C4_fraction")
-
-    # load carbon uptake efficiency if not provided
-    if carbon_uptake_efficiency is None:
-        carbon_uptake_efficiency = load_carbon_uptake_efficiency(geometry=geometry, resampling=resampling)
+    # # Retrieve GEOS-5 FP inputs if not provided
+    # GEOS5FP_inputs = retrieve_BESS_JPL_GEOS5FP_inputs(
+    #     time_UTC=time_UTC,
+    #     geometry=geometry,
+    #     albedo=albedo,
+    #     GEOS5FP_connection=GEOS5FP_connection,
+    #     Ta_C=Ta_C,
+    #     RH=RH,
+    #     COT=COT,
+    #     AOT=AOT,
+    #     vapor_gccm=vapor_gccm,
+    #     ozone_cm=ozone_cm,
+    #     albedo_visible=PAR_albedo,
+    #     albedo_NIR=NIR_albedo,
+    #     Ca=Ca,
+    #     wind_speed_mps=wind_speed_mps,
+    #     resampling=resampling
+    # )
     
-    check_distribution(carbon_uptake_efficiency, "carbon_uptake_efficiency")
+    # # Extract GEOS-5 FP inputs from dictionary
+    # Ta_C = GEOS5FP_inputs["Ta_C"]
+    # RH = GEOS5FP_inputs["RH"]
+    # COT = GEOS5FP_inputs["COT"]
+    # AOT = GEOS5FP_inputs["AOT"]
+    # vapor_gccm = GEOS5FP_inputs["vapor_gccm"]
+    # ozone_cm = GEOS5FP_inputs["ozone_cm"]
+    # PAR_albedo = GEOS5FP_inputs["albedo_visible"]
+    # NIR_albedo = GEOS5FP_inputs["albedo_NIR"]
+    # Ca = GEOS5FP_inputs["Ca"]
+    # wind_speed_mps = GEOS5FP_inputs["wind_speed_mps"]
 
-    # load kn if not provided
-    if kn is None:
-        kn = load_kn(geometry=geometry, resampling=resampling)
+    # check_distribution(Ta_C, "Ta_C")
+    # check_distribution(RH, "RH")
 
-    check_distribution(kn, "kn")
+    # # load minimum NDVI if not provided
+    # if NDVI_minimum is None and geometry is not None:
+    #     NDVI_minimum = load_NDVI_minimum(geometry=geometry, resampling=resampling)
 
-    # load peak VC max for C3 plants if not provided
-    if peakVCmax_C3_μmolm2s1 is None:
-        peakVCmax_C3_μmolm2s1 = load_peakVCmax_C3(geometry=geometry, resampling=resampling)
+    # check_distribution(NDVI_minimum, "NDVI_minimum")
 
-    check_distribution(peakVCmax_C3_μmolm2s1, "peakVCmax_C3")
+    # # load maximum NDVI if not provided
+    # if NDVI_maximum is None and geometry is not None:
+    #     NDVI_maximum = load_NDVI_maximum(geometry=geometry, resampling=resampling)
 
-    # load peak VC max for C4 plants if not provided
-    if peakVCmax_C4_μmolm2s1 is None:
-        peakVCmax_C4_μmolm2s1 = load_peakVCmax_C4(geometry=geometry, resampling=resampling)
+    # check_distribution(NDVI_maximum, "NDVI_maximum")
 
-    check_distribution(peakVCmax_C4_μmolm2s1, "peakVCmax_C4")
+    # # load C4 fraction if not provided
+    # if C4_fraction is None:
+    #     C4_fraction = load_C4_fraction(
+    #         geometry=geometry, 
+    #         resampling=resampling,
+    #         scale_factor=C4_fraction_scale_factor
+    #     )
 
-    # load Ball-Berry slope for C3 plants if not provided
-    if ball_berry_slope_C3 is None:
-        ball_berry_slope_C3 = load_ball_berry_slope_C3(geometry=geometry, resampling=resampling)
+    # check_distribution(C4_fraction, "C4_fraction")
+
+    # # load carbon uptake efficiency if not provided
+    # if carbon_uptake_efficiency is None:
+    #     carbon_uptake_efficiency = load_carbon_uptake_efficiency(geometry=geometry, resampling=resampling)
     
-    check_distribution(ball_berry_slope_C3, "ball_berry_slope_C3")
+    # check_distribution(carbon_uptake_efficiency, "carbon_uptake_efficiency")
 
-    # load Ball-Berry slope for C4 plants if not provided
-    if ball_berry_slope_C4 is None:
-        ball_berry_slope_C4 = load_ball_berry_slope_C4(geometry=geometry, resampling=resampling)
+    # # load kn if not provided
+    # if kn is None:
+    #     kn = load_kn(geometry=geometry, resampling=resampling)
 
-    check_distribution(ball_berry_slope_C4, "ball_berry_slope_C4")
+    # check_distribution(kn, "kn")
 
-    # load Ball-Berry intercept for C3 plants if not provided
-    if ball_berry_intercept_C3 is None:
-        ball_berry_intercept_C3 = load_ball_berry_intercept_C3(geometry=geometry, resampling=resampling)
+    # # load peak VC max for C3 plants if not provided
+    # if peakVCmax_C3_μmolm2s1 is None:
+    #     peakVCmax_C3_μmolm2s1 = load_peakVCmax_C3(geometry=geometry, resampling=resampling)
 
-    check_distribution(ball_berry_intercept_C3, "ball_berry_intercept_C3")
+    # check_distribution(peakVCmax_C3_μmolm2s1, "peakVCmax_C3")
 
-    # load koppen geiger climate classification if not provided
-    if KG_climate is None:
-        KG_climate = load_koppen_geiger(geometry=geometry)
+    # # load peak VC max for C4 plants if not provided
+    # if peakVCmax_C4_μmolm2s1 is None:
+    #     peakVCmax_C4_μmolm2s1 = load_peakVCmax_C4(geometry=geometry, resampling=resampling)
 
-    check_distribution(np.float32(KG_climate), "KG_climate")
+    # check_distribution(peakVCmax_C4_μmolm2s1, "peakVCmax_C4")
 
-    # load canopy height in meters if not provided
-    if canopy_height_meters is None:
-        canopy_height_meters = load_canopy_height(
-            geometry=geometry, 
-            resampling=resampling,
-            source_directory=GEDI_download_directory
-        )
+    # # load Ball-Berry slope for C3 plants if not provided
+    # if ball_berry_slope_C3 is None:
+    #     ball_berry_slope_C3 = load_ball_berry_slope_C3(geometry=geometry, resampling=resampling)
+    
+    # check_distribution(ball_berry_slope_C3, "ball_berry_slope_C3")
 
-    check_distribution(canopy_height_meters, "canopy_height_meters")
-    check_distribution(Ca, "Ca")
-    check_distribution(wind_speed_mps, "wind_speed_mps")
+    # # load Ball-Berry slope for C4 plants if not provided
+    # if ball_berry_slope_C4 is None:
+    #     ball_berry_slope_C4 = load_ball_berry_slope_C4(geometry=geometry, resampling=resampling)
 
-    # canopy temperature defaults to surface temperature
-    if canopy_temperature_C is None:
-        canopy_temperature_C = ST_C
+    # check_distribution(ball_berry_slope_C4, "ball_berry_slope_C4")
 
-    # soil temperature defaults to surface temperature
-    if soil_temperature_C is None:
-        soil_temperature_C = ST_C
+    # # load Ball-Berry intercept for C3 plants if not provided
+    # if ball_berry_intercept_C3 is None:
+    #     ball_berry_intercept_C3 = load_ball_berry_intercept_C3(geometry=geometry, resampling=resampling)
 
-    # calculate solar zenith angle if not provided
-    if SZA_deg is None:
-        SZA_deg = calculate_SZA_from_DOY_and_hour(geometry.lat, geometry.lon, day_of_year, hour_of_day)
+    # check_distribution(ball_berry_intercept_C3, "ball_berry_intercept_C3")
 
-    if MODISCI_connection is None:
-        MODISCI_connection = MODISCI()
+    # # load koppen geiger climate classification if not provided
+    # if KG_climate is None:
+    #     KG_climate = load_koppen_geiger(geometry=geometry)
 
-    if CI is None and geometry is not None:
-        CI = MODISCI_connection.CI(geometry=geometry, resampling=resampling)
+    # check_distribution(np.float32(KG_climate), "KG_climate")
 
-    # canopy height defaults to zero
-    canopy_height_meters = np.where(np.isnan(canopy_height_meters), 0, canopy_height_meters)
+    # # load canopy height in meters if not provided
+    # if canopy_height_meters is None:
+    #     canopy_height_meters = load_canopy_height(
+    #         geometry=geometry, 
+    #         resampling=resampling,
+    #         source_directory=GEDI_download_directory
+    #     )
 
+    # check_distribution(canopy_height_meters, "canopy_height_meters")
+    # check_distribution(Ca, "Ca")
+    # check_distribution(wind_speed_mps, "wind_speed_mps")
+
+    # # canopy temperature defaults to surface temperature
+    # if canopy_temperature_C is None:
+    #     canopy_temperature_C = ST_C
+
+    # # soil temperature defaults to surface temperature
+    # if soil_temperature_C is None:
+    #     soil_temperature_C = ST_C
+
+    # # calculate solar zenith angle if not provided
+    # if SZA_deg is None:
+    #     SZA_deg = calculate_SZA_from_DOY_and_hour(geometry.lat, geometry.lon, day_of_year, hour_of_day)
+
+    # if MODISCI_connection is None:
+    #     MODISCI_connection = MODISCI()
+
+    # if CI is None and geometry is not None:
+    #     CI = MODISCI_connection.CI(geometry=geometry, resampling=resampling)
+
+    # # canopy height defaults to zero
+    # canopy_height_meters = np.where(np.isnan(canopy_height_meters), 0, canopy_height_meters)
 
     # Create a dictionary of variables to check
     variables_to_check = {

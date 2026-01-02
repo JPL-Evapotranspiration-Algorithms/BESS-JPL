@@ -222,8 +222,8 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
         AOT=AOT,
         vapor_gccm=vapor_gccm,
         ozone_cm=ozone_cm,
-        albedo_visible=PAR_albedo,
-        albedo_NIR=NIR_albedo,
+        PAR_albedo=PAR_albedo,
+        NIR_albedo=NIR_albedo,
         Ca=Ca,
         wind_speed_mps=wind_speed_mps,
         resampling=resampling
