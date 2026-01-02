@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+import pandas as pd
 import rasters as rt
 from dateutil import parser
 from pandas import DataFrame
@@ -161,7 +162,8 @@ def process_BESS_table(
     # --- Handle geometry and time columns ---
     import pandas as pd
     from rasters import MultiPoint, WGS84
-    from shapely.geometry import Point
+    # from shapely.geometry import Point
+    from rasters import Point
 
     def ensure_geometry(df):
         if "geometry" in df:
@@ -186,23 +188,53 @@ def process_BESS_table(
     logger.info("started extracting geometry from BESS input table")
 
     if "geometry" in input_df:
-        # Convert Point objects to coordinate tuples for MultiPoint
+        # Convert Point objects to a list of Points
         if hasattr(input_df.geometry.iloc[0], "x") and hasattr(input_df.geometry.iloc[0], "y"):
-            coords = [(pt.x, pt.y) for pt in input_df.geometry]
-            geometry = MultiPoint(coords, crs=WGS84)
+            geometry = [Point(pt.x, pt.y) for pt in input_df.geometry]
         else:
-            geometry = MultiPoint(input_df.geometry, crs=WGS84)
+            geometry = [Point(pt) for pt in input_df.geometry]
     elif "lat" in input_df and "lon" in input_df:
         lat = np.array(input_df.lat).astype(np.float64)
         lon = np.array(input_df.lon).astype(np.float64)
-        geometry = MultiPoint(x=lon, y=lat, crs=WGS84)
+        geometry = [Point(lon[i], lat[i]) for i in range(len(lat))]
     else:
         raise KeyError("Input DataFrame must contain either 'geometry' or both 'lat' and 'lon' columns.")
 
-    logger.info("completed extracting geometry from PT-JPL-SM input table")
+    logger.info("completed extracting geometry from BESS input table")
 
     logger.info("started extracting time from BESS input table")
     time_UTC_list = pd.to_datetime(input_df.time_UTC).tolist()
+    
+    # Import functions for calculating solar time
+    from solar_apparent_time import calculate_solar_day_of_year, calculate_solar_hour_of_day
+    from geopandas import GeoSeries
+    from shapely.geometry import Point as ShapelyPoint
+    
+    # Calculate day_of_year and hour_of_day for each point
+    day_of_year_list = []
+    hour_of_day_list = []
+    
+    for i, (time_utc, geom) in enumerate(zip(time_UTC_list, geometry)):
+        # Create a GeoSeries with a Shapely Point (lon, lat order)
+        shapely_point = ShapelyPoint(geom.x, geom.y)
+        geoseries = GeoSeries([shapely_point])
+        doy = calculate_solar_day_of_year(time_UTC=time_utc, geometry=geoseries)
+        hod = calculate_solar_hour_of_day(time_UTC=time_utc, geometry=geoseries)
+        # Extract scalar values if returned as arrays
+        doy_scalar = doy[0] if hasattr(doy, '__getitem__') else doy
+        hod_scalar = hod[0] if hasattr(hod, '__getitem__') else hod
+        day_of_year_list.append(doy_scalar)
+        hour_of_day_list.append(hod_scalar)
+    
+    # Convert to numpy arrays (1D)
+    day_of_year = np.array(day_of_year_list)
+    hour_of_day = np.array(hour_of_day_list)
+    
+    # Convert list of rasters.Point to MultiPoint for compatibility with FLiESANN and other functions
+    from rasters import MultiPoint
+    # Extract (x, y) tuples from rasters.Point objects
+    point_tuples = [(pt.x, pt.y) for pt in geometry]
+    geometry_multipoint = MultiPoint(point_tuples)
     
     # Check if all times are the same
     if len(set(time_UTC_list)) == 1:
@@ -214,7 +246,7 @@ def process_BESS_table(
 
     BESS_GEOS5FP_inputs = retrieve_BESS_JPL_GEOS5FP_inputs(
         time_UTC=time_UTC,
-        geometry=geometry,
+        geometry=geometry_multipoint,
         albedo=albedo,
         GEOS5FP_connection=GEOS5FP_connection,
         Ta_C=Ta_C,
@@ -230,11 +262,13 @@ def process_BESS_table(
         verbose=verbose
     )
     
-    logger.info("completed extracting time from PT-JPL-SM input table")
+    logger.info("completed extracting time from BESS input table")
 
     results = BESS_JPL(
-        geometry=geometry,
+        geometry=geometry_multipoint,
         time_UTC=time_UTC,
+        day_of_year=day_of_year,
+        hour_of_day=hour_of_day,
         ST_C=ST_C,
         albedo=albedo,
         NDVI=NDVI,
