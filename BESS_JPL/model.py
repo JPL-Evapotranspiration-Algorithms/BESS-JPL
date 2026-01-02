@@ -4,21 +4,18 @@ import logging
 import numpy as np
 from pytictoc import TicToc
 
-import rasters as rt
 from rasters import Raster, RasterGeometry
 
 from check_distribution import check_distribution
 
-from sun_angles import calculate_SZA_from_DOY_and_hour
 from solar_apparent_time import calculate_solar_day_of_year, calculate_solar_hour_of_day
-from koppengeiger import load_koppen_geiger
-from gedi_canopy_height import load_canopy_height, GEDI_DOWNLOAD_DIRECTORY
+from gedi_canopy_height import GEDI_DOWNLOAD_DIRECTORY
 from FLiESANN import FLiESANN
 from GEOS5FP import GEOS5FP
 from MODISCI import MODISCI
 from NASADEM import NASADEMConnection
 
-from daylight_evapotranspiration import daylight_ET_from_instantaneous_LE, daylight_ET_from_daylight_LE
+from daylight_evapotranspiration import daylight_ET_from_instantaneous_LE
 
 from .constants import *
 from .colors import *
@@ -44,7 +41,6 @@ from .load_ball_berry_slope_C4 import *
 from .calculate_VCmax import *
 from .meteorology import *
 from .soil_energy_balance import *
-from .retrieve_BESS_JPL_GEOS5FP_inputs import retrieve_BESS_JPL_GEOS5FP_inputs
 from .retrieve_BESS_inputs import retrieve_BESS_inputs
 
 logger = logging.getLogger(__name__)
@@ -101,146 +97,7 @@ def BESS_JPL(
     """
     Breathing Earth System Simulator (BESS) model for estimating gross primary productivity (GPP)
     and evapotranspiration (ET) using coupled atmospheric and canopy radiative transfer processes.
-    
-    The BESS model couples atmospheric and canopy radiative transfer processes with photosynthesis,
-    stomatal conductance, and transpiration models on sunlit and shaded portions of vegetation and soil.
-    
-    References:
-        Ryu, Y., et al. (2011). Integration of MODIS land and atmosphere products with a coupled-process 
-        model to estimate gross primary productivity and evapotranspiration from 1 km to global scales. 
-        Remote Sensing of Environment, 115(8), 1865-1874.
-    
-    Parameters
-    ----------
-    ST_C : Union[Raster, np.ndarray]
-        Surface temperature [°C]
-    NDVI : Union[Raster, np.ndarray]  
-        Normalized Difference Vegetation Index [-]
-    albedo : Union[Raster, np.ndarray]
-        Surface albedo [-]
-    geometry : RasterGeometry, optional
-        Raster geometry for spatial operations
-    time_UTC : datetime, optional
-        UTC time for solar calculations
-    hour_of_day : np.ndarray, optional
-        Solar hour of day [hours, 0-24]
-    day_of_year : np.ndarray, optional
-        Day of year [days, 1-365/366]
-    GEOS5FP_connection : GEOS5FP, optional
-        Connection to GEOS-5 FP meteorological data
-    elevation_m : Union[Raster, np.ndarray], optional
-        Elevation above sea level [m]
-    Ta_C : Union[Raster, np.ndarray], optional
-        Air temperature [°C]
-    RH : Union[Raster, np.ndarray], optional
-        Relative humidity [fraction, 0-1]
-    NDVI_minimum : Union[Raster, np.ndarray], optional
-        Minimum NDVI for phenology scaling [-]
-    NDVI_maximum : Union[Raster, np.ndarray], optional
-        Maximum NDVI for phenology scaling [-]
-    SWin_Wm2 : Union[Raster, np.ndarray], optional
-        Incoming shortwave radiation [W m⁻²]
-    PAR_diffuse_Wm2 : Union[Raster, np.ndarray], optional
-        Diffuse photosynthetically active radiation (400-700 nm) [W m⁻²]
-    PAR_direct_Wm2 : Union[Raster, np.ndarray], optional
-        Direct photosynthetically active radiation (400-700 nm) [W m⁻²]
-    NIR_diffuse_Wm2 : Union[Raster, np.ndarray], optional
-        Diffuse near-infrared radiation [W m⁻²]
-    NIR_direct_Wm2 : Union[Raster, np.ndarray], optional
-        Direct near-infrared radiation [W m⁻²]
-    UV_Wm2 : Union[Raster, np.ndarray], optional
-        Incoming ultraviolet radiation [W m⁻²]
-    albedo_visible : Union[Raster, np.ndarray], optional
-        Surface albedo in visible wavelengths (400-700 nm) [-]
-    albedo_NIR : Union[Raster, np.ndarray], optional
-        Surface albedo in near-infrared wavelengths [-]
-    COT : Union[Raster, np.ndarray], optional
-        Cloud optical thickness [-]
-    AOT : Union[Raster, np.ndarray], optional
-        Aerosol optical thickness [-]
-    vapor_gccm : Union[Raster, np.ndarray], optional
-        Water vapor column [g cm⁻²]
-    ozone_cm : Union[Raster, np.ndarray], optional
-        Ozone column [cm]
-    KG_climate : Union[Raster, np.ndarray], optional
-        Köppen-Geiger climate classification [-]
-    canopy_height_meters : Union[Raster, np.ndarray], optional
-        Canopy height [m]
-    Ca : Union[Raster, np.ndarray], optional
-        Atmospheric CO₂ concentration [ppm]
-    wind_speed_mps : Union[Raster, np.ndarray], optional
-        Wind speed [m s⁻¹]
-    SZA_deg : Union[Raster, np.ndarray], optional
-        Solar zenith angle [degrees]
-    canopy_temperature_C : Union[Raster, np.ndarray], optional
-        Canopy temperature [°C]. Defaults to surface temperature if None
-    soil_temperature_C : Union[Raster, np.ndarray], optional
-        Soil temperature [°C]. Defaults to surface temperature if None
-    C4_fraction : Union[Raster, np.ndarray], optional
-        Fraction of C4 plants [fraction, 0-1]
-    carbon_uptake_efficiency : Union[Raster, np.ndarray], optional
-        Intrinsic quantum efficiency for carbon uptake [mol CO₂ mol⁻¹ photons]
-    kn : np.ndarray, optional
-        Nitrogen decay coefficient [-]
-    ball_berry_intercept_C3 : np.ndarray, optional
-        Ball-Berry stomatal conductance intercept for C3 plants [mol m⁻² s⁻¹]
-    ball_berry_intercept_C4 : Union[np.ndarray, float], optional
-        Ball-Berry stomatal conductance intercept for C4 plants [mol m⁻² s⁻¹]
-    ball_berry_slope_C3 : np.ndarray, optional
-        Ball-Berry stomatal conductance slope for C3 plants [-]
-    ball_berry_slope_C4 : np.ndarray, optional
-        Ball-Berry stomatal conductance slope for C4 plants [-]
-    peakVCmax_C3_μmolm2s1 : np.ndarray, optional
-        Peak maximum carboxylation rate for C3 plants [μmol m⁻² s⁻¹]
-    peakVCmax_C4_μmolm2s1 : np.ndarray, optional
-        Peak maximum carboxylation rate for C4 plants [μmol m⁻² s⁻¹]
-    CI : Union[Raster, np.ndarray], optional
-        Clumping index [-]
-    C4_fraction_scale_factor : float, optional
-        Scale factor for C4 fraction adjustment [-]
-    MODISCI_connection : MODISCI, optional
-        Connection to MODIS clumping index data
-    NASADEM_connection : NASADEMConnection, optional
-        Connection to NASADEM elevation data
-    resampling : str, optional
-        Resampling method for data processing
-    GEDI_download_directory : str, optional
-        Directory for GEDI canopy height data downloads
-    
-    Returns
-    -------
-    dict
-        Dictionary containing model outputs:
-        
-        GPP : Union[Raster, np.ndarray]
-            Instantaneous gross primary productivity [μmol CO₂ m⁻² s⁻¹]
-        GPP_daily : Union[Raster, np.ndarray]
-            Daily gross primary productivity [g C m⁻² day⁻¹]
-        Rn_Wm2 : Union[Raster, np.ndarray]
-            Net radiation [W m⁻²]
-        Rn_soil_Wm2 : Union[Raster, np.ndarray]
-            Soil net radiation [W m⁻²]
-        Rn_canopy_Wm2 : Union[Raster, np.ndarray]
-            Canopy net radiation [W m⁻²]
-        LE_Wm2 : Union[Raster, np.ndarray]
-            Latent heat flux (evapotranspiration) [W m⁻²]
-        LE_soil_Wm2 : Union[Raster, np.ndarray]
-            Soil latent heat flux [W m⁻²]
-        LE_canopy_Wm2 : Union[Raster, np.ndarray]
-            Canopy latent heat flux (transpiration) [W m⁻²]
-        G_Wm2 : Union[Raster, np.ndarray]
-            Soil heat flux [W m⁻²]
-    
-    Notes
-    -----
-    The model uses the FLiES radiative transfer model to estimate incoming solar radiation
-    components when they are not provided. The model calculates photosynthesis and energy
-    balance separately for C3 and C4 vegetation types, then interpolates results based on
-    the C4 fraction.
-    
-    For sunlit and shaded leaf fractions, the model applies different light extinction
-    coefficients and photosynthetic parameters to account for canopy structure effects
-    on radiation distribution and photosynthetic capacity.
+    ...
     """
     if geometry is None and isinstance(ST_C, Raster):
         geometry = ST_C.geometry
