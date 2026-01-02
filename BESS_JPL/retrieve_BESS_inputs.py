@@ -2,7 +2,6 @@ from typing import Union
 from datetime import datetime
 import logging
 import numpy as np
-from pytictoc import TicToc
 
 import rasters as rt
 from rasters import Raster, RasterGeometry
@@ -17,8 +16,6 @@ from FLiESANN import FLiESANN
 from GEOS5FP import GEOS5FP
 from MODISCI import MODISCI
 from NASADEM import NASADEMConnection
-
-from daylight_evapotranspiration import daylight_ET_from_instantaneous_LE, daylight_ET_from_daylight_LE
 
 from .constants import *
 from .colors import *
@@ -61,12 +58,6 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
         RH: Union[Raster, np.ndarray] = None,  # relative humidity as a proportion
         NDVI_minimum: Union[Raster, np.ndarray] = None,  # minimum NDVI
         NDVI_maximum: Union[Raster, np.ndarray] = None,  # maximum NDVI
-        SWin_Wm2: Union[Raster, np.ndarray] = None,  # incoming shortwave radiation in W/m^2
-        PAR_diffuse_Wm2: Union[Raster, np.ndarray] = None,  # diffuse visible radiation in W/m^2
-        PAR_direct_Wm2: Union[Raster, np.ndarray] = None,  # direct visible radiation in W/m^2
-        NIR_diffuse_Wm2: Union[Raster, np.ndarray] = None,  # diffuse near-infrared radiation in W/m^2
-        NIR_direct_Wm2: Union[Raster, np.ndarray] = None,  # direct near-infrared radiation in W/m^2
-        UV_Wm2: Union[Raster, np.ndarray] = None,  # incoming ultraviolet radiation in W/m^2
         PAR_albedo: Union[Raster, np.ndarray] = None, # surface albedo in visible wavelengths (initialized to surface albedo if left as None)
         NIR_albedo: Union[Raster, np.ndarray] = None, # surface albedo in near-infrared wavelengths (initialized to surface albedo if left as None)
         COT: Union[Raster, np.ndarray] = None,  # cloud optical thickness
@@ -93,11 +84,10 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
         C4_fraction_scale_factor: float = C4_FRACTION_SCALE_FACTOR,
         MODISCI_connection: MODISCI = None,
         NASADEM_connection: NASADEMConnection = None,
-        upscale_to_daylight: bool = UPSCALE_TO_DAYLIGHT,
         resampling: str = RESAMPLING,
         GEDI_download_directory: str = GEDI_DOWNLOAD_DIRECTORY):
     results = {}
-    
+
     if (day_of_year is None or hour_of_day is None) and time_UTC is not None and geometry is not None:
         day_of_year = calculate_solar_day_of_year(time_UTC=time_UTC, geometry=geometry)
         hour_of_day = calculate_solar_hour_of_day(time_UTC=time_UTC, geometry=geometry)
@@ -239,19 +229,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
         resampling=resampling
     )
     
-    # Extract GEOS-5 FP inputs from dictionary
-    Ta_C = GEOS5FP_inputs["Ta_C"]
-    RH = GEOS5FP_inputs["RH"]
-    COT = GEOS5FP_inputs["COT"]
-    AOT = GEOS5FP_inputs["AOT"]
-    vapor_gccm = GEOS5FP_inputs["vapor_gccm"]
-    ozone_cm = GEOS5FP_inputs["ozone_cm"]
-    PAR_albedo = GEOS5FP_inputs["albedo_visible"]
-    NIR_albedo = GEOS5FP_inputs["albedo_NIR"]
-    Ca = GEOS5FP_inputs["Ca"]
-    wind_speed_mps = GEOS5FP_inputs["wind_speed_mps"]
-
-    # merge GEOS-5 FP inputs into results dictionary
+    # Merge GEOS-5 FP inputs into results dictionary
     results.update(GEOS5FP_inputs)
 
     # canopy temperature defaults to surface temperature
@@ -274,7 +252,5 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     check_distribution(SZA_deg, "SZA_deg")
     results["SZA_deg"] = SZA_deg
-
-
 
     return results
