@@ -374,6 +374,7 @@ def BESS_JPL(
 
     # Check for None values and size mismatches
     reference_size = None
+
     for name, var in variables_to_check.items():
         if var is None:
             logger.warning(f"Variable '{name}' is None.")
@@ -386,12 +387,14 @@ def BESS_JPL(
                 logger.warning(f"Variable '{name}' has a different size: {size} (expected: {reference_size}).")
 
     # check if any of the FLiES outputs are not given
-    flies_variables = [SWin_Wm2, PAR_diffuse_Wm2, PAR_direct_Wm2, NIR_diffuse_Wm2, NIR_direct_Wm2, UV_Wm2, PAR_albedo, NIR_albedo]
-    flies_variables_missing = False
-    for variable in flies_variables:
+    FLiES_variables = [SWin_Wm2, PAR_diffuse_Wm2, PAR_direct_Wm2, NIR_diffuse_Wm2, NIR_direct_Wm2, UV_Wm2, PAR_albedo, NIR_albedo]
+    FLiES_variables_missing = False
+    
+    for variable in FLiES_variables:
         if variable is None:
-            flies_variables_missing = True
-    if flies_variables_missing:
+            FLiES_variables_missing = True
+
+    if FLiES_variables_missing:
         # run FLiES radiative transfer model
         FLiES_results = FLiESANN(
             time_UTC=time_UTC,
