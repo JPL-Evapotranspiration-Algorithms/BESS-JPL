@@ -95,6 +95,21 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
     if time_UTC is None and day_of_year is None and hour_of_day is None:
         raise ValueError("no time given between time_UTC, day_of_year, and hour_of_day")
 
+    # calculate solar zenith angle if not provided
+    if SZA_deg is None:
+        SZA_deg = calculate_SZA_from_DOY_and_hour(geometry.lat, geometry.lon, day_of_year, hour_of_day)
+
+    if isinstance(SZA_deg, np.ndarray):
+        # cast SZA_deg numpy array to float32
+        SZA_deg = SZA_deg.astype(np.float32)
+
+    print(type(SZA_deg))
+    print(SZA_deg.dtype)
+
+    check_distribution(SZA_deg, "SZA_deg")
+    results["SZA_deg"] = SZA_deg
+
+
     if CI is None and geometry is not None:
         if MODISCI_connection is None:
             MODISCI_connection = MODISCI()
@@ -245,12 +260,5 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     check_distribution(soil_temperature_C, "soil_temperature_C")
     results["soil_temperature_C"] = soil_temperature_C
-
-    # calculate solar zenith angle if not provided
-    if SZA_deg is None:
-        SZA_deg = calculate_SZA_from_DOY_and_hour(geometry.lat, geometry.lon, day_of_year, hour_of_day)
-
-    check_distribution(SZA_deg, "SZA_deg")
-    results["SZA_deg"] = SZA_deg
 
     return results

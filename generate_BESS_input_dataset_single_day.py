@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from ECOv002_calval_tables import load_calval_table
 from FLiESANN import process_FLiESANN_table, load_ECOv002_calval_FLiESANN_inputs
-from BESS_JPL import load_ECOv002_static_tower_BESS_inputs, process_BESS_table
+from BESS_JPL import load_ECOv002_static_tower_BESS_inputs, generate_BESS_inputs_table, process_BESS_table
 
 # Load the calibration/validation table
 def main():
@@ -61,7 +61,7 @@ def main():
     model_inputs_df = model_inputs_df.drop(columns=duplicate_cols)
 
     # Process with BESS-JPL model
-    BESS_results_df = process_BESS_table(model_inputs_df, verbose=False)
+    BESS_results_df = generate_BESS_inputs_table(model_inputs_df)
 
     # Save the processed results to a CSV file
     BESS_results_df.to_csv("ECOv002-cal-val-BESS-JPL-inputs-single-day.csv", index=False)
