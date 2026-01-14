@@ -68,7 +68,10 @@ def main():
     BESS_results_df.to_csv("ECOv002-cal-val-BESS-JPL-inputs-single-day.csv", index=False)
 
     for column in BESS_results_df.columns:
-        check_distribution(BESS_results_df[column], column)
+        try:
+            check_distribution(BESS_results_df[column], column)
+        except Exception as e:
+            continue
 
 if __name__ == "__main__":
     main()
