@@ -100,11 +100,17 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
         SZA_deg = calculate_SZA_from_DOY_and_hour(geometry.lat, geometry.lon, day_of_year, hour_of_day)
 
     if isinstance(SZA_deg, np.ndarray):
-        # cast SZA_deg numpy array to float32
-        SZA_deg = SZA_deg.astype(np.float32)
+        # If array contains string representations, convert them first
+        if SZA_deg.dtype == object or SZA_deg.dtype.kind in ['U', 'S']:
+            # Handle string arrays by converting each element
+            # This handles cases like '[71.46303285]' or '71.46303285'
+            SZA_deg = np.array([float(str(x).strip('[]')) for x in SZA_deg], dtype=np.float32)
+        else:
+            # cast SZA_deg numpy array to float32
+            SZA_deg = SZA_deg.astype(np.float32)
 
     print(type(SZA_deg))
-    print(SZA_deg.dtype)
+    print(SZA_deg.dtype if isinstance(SZA_deg, np.ndarray) else type(SZA_deg))
 
     check_distribution(SZA_deg, "SZA_deg")
     results["SZA_deg"] = SZA_deg
