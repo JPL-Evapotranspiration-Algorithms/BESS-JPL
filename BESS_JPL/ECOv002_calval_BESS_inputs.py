@@ -1,12 +1,13 @@
 import os
 import pandas as pd
+import geopandas as gpd
 
-def load_ECOv002_calval_BESS_inputs() -> pd.DataFrame:
+def load_ECOv002_calval_BESS_inputs() -> gpd.GeoDataFrame:
     """
-    Load the input data for the BESS model from the ECOSTRESS Collection 2 Cal-Val dataset.
+    Load the input data for the BESS model from the ECOSTRESS Collection 2 Cal-Val dataset as a GeoDataFrame.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the input data.
+        gpd.GeoDataFrame: A GeoDataFrame containing the input data with geometry.
     """
 
     # Define the path to the input CSV file relative to this module's directory
@@ -16,4 +17,14 @@ def load_ECOv002_calval_BESS_inputs() -> pd.DataFrame:
     # Load the input data into a DataFrame
     inputs_df = pd.read_csv(input_file_path)
 
-    return inputs_df
+    # Convert the DataFrame to a GeoDataFrame using the geometry column
+    if 'geometry' not in inputs_df.columns:
+        raise ValueError("The input CSV file must contain a 'geometry' column with WKT or similar geometry data.")
+
+    inputs_gdf = gpd.GeoDataFrame(
+        inputs_df,
+        geometry=gpd.GeoSeries.from_wkt(inputs_df['geometry']),
+        crs="EPSG:4326"  # Assuming WGS84 as the coordinate reference system
+    )
+
+    return inputs_gdf
