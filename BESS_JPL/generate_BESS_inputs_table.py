@@ -176,7 +176,9 @@ def generate_BESS_inputs_table(
         # Skip values with mismatched lengths
         if hasattr(values, '__len__') and not isinstance(values, str):
             if len(values) != len(output_df):
+                logger.warning(f"Skipping {key}: length mismatch ({len(values)} != {len(output_df)})")
                 continue
+        logger.info(f"Adding {key} to output DataFrame (type: {type(values)}, length: {len(values) if hasattr(values, '__len__') and not isinstance(values, str) else 'N/A'})")
         output_df[key] = values
 
     logger.info("completed generating BESS inputs table")

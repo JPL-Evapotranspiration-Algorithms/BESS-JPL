@@ -13,6 +13,9 @@ clean:
 test:
 	pytest -vv
 
+verify:
+	python -c "from BESS_JPL.verify import verify; exit(0 if verify() else 1)"
+
 build:
 	python -m build
 

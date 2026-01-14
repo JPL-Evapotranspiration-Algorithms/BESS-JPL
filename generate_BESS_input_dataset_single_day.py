@@ -4,6 +4,7 @@ import numpy as np
 from ECOv002_calval_tables import load_calval_table
 from FLiESANN import process_FLiESANN_table, load_ECOv002_calval_FLiESANN_inputs
 from BESS_JPL import load_ECOv002_static_tower_BESS_inputs, generate_BESS_inputs_table, process_BESS_table
+from check_distribution import check_distribution
 
 # Load the calibration/validation table
 def main():
@@ -65,6 +66,12 @@ def main():
 
     # Save the processed results to a CSV file
     BESS_results_df.to_csv("ECOv002-cal-val-BESS-JPL-inputs-single-day.csv", index=False)
+
+    for column in BESS_results_df.columns:
+        try:
+            check_distribution(BESS_results_df[column], column)
+        except Exception as e:
+            continue
 
 if __name__ == "__main__":
     main()

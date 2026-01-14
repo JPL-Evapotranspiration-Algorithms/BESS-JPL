@@ -1,6 +1,7 @@
 from typing import Union, List
 from datetime import datetime
 import numpy as np
+import pandas as pd
 
 from rasters import Raster, RasterGeometry
 import rasters as rt
@@ -142,13 +143,30 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
 
     # Retrieve all missing variables in a single query
     if variables_to_retrieve:
+        logger.info(f"Retrieving GEOS-5 FP variables: {', '.join(variables_to_retrieve)}")
+        logger.info(f"Time UTC type: {type(time_UTC)}")
+        logger.info(f"Geometry type: {type(geometry)}")
+        if hasattr(time_UTC, '__len__'):
+            logger.info(f"Time UTC length: {len(time_UTC)}")
+            logger.info(f"First few times: {time_UTC[:3] if hasattr(time_UTC, '__getitem__') else time_UTC}")
+        else:
+            logger.info(f"Time UTC value: {time_UTC}")
+        if hasattr(geometry, '__len__'):
+            logger.info(f"Geometry length: {len(geometry)}")
+        
         retrieved = GEOS5FP_connection.query(
             target_variables=variables_to_retrieve,
             time_UTC=time_UTC,
             geometry=geometry,
             resampling=resampling,
-            verbose=verbose
+            verbose=True  # Force verbose to see what's happening
         )
+        
+        logger.info(f"Retrieved keys: {list(retrieved.keys())}")
+        if "CO2SC" in retrieved:
+            logger.info(f"CO2SC in retrieved: {retrieved['CO2SC']}")
+        else:
+            logger.warning("CO2SC not in retrieved dictionary!")
         
         # Extract retrieved values
         if COT is None:
@@ -167,6 +185,14 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
             check_distribution(RH, "RH")
         if Ca is None:
             Ca = retrieved["CO2SC"]
+            logger.info(f"Retrieved Ca from GEOS-5 FP: {Ca}")
+            logger.info(f"Ca type: {type(Ca)}")
+            # Convert Series to numpy array to avoid index alignment issues
+            if isinstance(Ca, pd.Series):
+                Ca = Ca.values
+            if isinstance(Ca, np.ndarray):
+                logger.info(f"Ca shape: {Ca.shape}, dtype: {Ca.dtype}")
+                logger.info(f"Ca has NaN: {np.any(np.isnan(Ca))}")
             check_distribution(Ca, "Ca")
         if wind_speed_mps is None:
             wind_speed_mps = rt.clip(retrieved["wind_speed_mps"], 0.1, None)
