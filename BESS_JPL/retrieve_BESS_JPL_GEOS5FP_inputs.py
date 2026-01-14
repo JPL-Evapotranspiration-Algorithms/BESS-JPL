@@ -24,8 +24,8 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
         AOT: Union[Raster, np.ndarray] = None,
         vapor_gccm: Union[Raster, np.ndarray] = None,
         ozone_cm: Union[Raster, np.ndarray] = None,
-        albedo_visible: Union[Raster, np.ndarray] = None,
-        albedo_NIR: Union[Raster, np.ndarray] = None,
+        PAR_albedo: Union[Raster, np.ndarray] = None,
+        NIR_albedo: Union[Raster, np.ndarray] = None,
         Ca: Union[Raster, np.ndarray] = None,
         wind_speed_mps: Union[Raster, np.ndarray] = None,
         resampling: str = "cubic",
@@ -128,11 +128,11 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
         variables_to_retrieve.append("wind_speed_mps")
     
     # Albedo products needed for visible/NIR calculations
-    if albedo_visible is None or albedo_NIR is None:
+    if PAR_albedo is None or NIR_albedo is None:
         variables_to_retrieve.append("ALBEDO")
-    if albedo_visible is None:
+    if PAR_albedo is None:
         variables_to_retrieve.append("ALBVISDR")
-    if albedo_NIR is None:
+    if NIR_albedo is None:
         variables_to_retrieve.append("ALBNIRDR")
     
     if len(variables_to_retrieve) == 0:
@@ -173,15 +173,15 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
             check_distribution(wind_speed_mps, "wind_speed_mps")
         
         # Calculate visible and NIR albedo from retrieved products
-        if albedo_visible is None:
+        if PAR_albedo is None:
             albedo_NWP = retrieved["ALBEDO"]
             RVIS_NWP = retrieved["ALBVISDR"]
-            albedo_visible = rt.clip(albedo * (RVIS_NWP / albedo_NWP), 0, 1)
+            PAR_albedo = rt.clip(albedo * (RVIS_NWP / albedo_NWP), 0, 1)
         
-        if albedo_NIR is None:
+        if NIR_albedo is None:
             albedo_NWP = retrieved["ALBEDO"]
             RNIR_NWP = retrieved["ALBNIRDR"]
-            albedo_NIR = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
+            NIR_albedo = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
 
     return {
         "Ta_C": Ta_C,
@@ -190,8 +190,8 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
         "AOT": AOT,
         "vapor_gccm": vapor_gccm,
         "ozone_cm": ozone_cm,
-        "albedo_visible": albedo_visible,
-        "albedo_NIR": albedo_NIR,
+        "PAR_albedo": PAR_albedo,
+        "NIR_albedo": NIR_albedo,
         "Ca": Ca,
         "wind_speed_mps": wind_speed_mps
     }

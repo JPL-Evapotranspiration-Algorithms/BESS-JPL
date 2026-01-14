@@ -4,21 +4,18 @@ import logging
 import numpy as np
 from pytictoc import TicToc
 
-import rasters as rt
 from rasters import Raster, RasterGeometry
 
 from check_distribution import check_distribution
 
-from sun_angles import calculate_SZA_from_DOY_and_hour
 from solar_apparent_time import calculate_solar_day_of_year, calculate_solar_hour_of_day
-from koppengeiger import load_koppen_geiger
-from gedi_canopy_height import load_canopy_height, GEDI_DOWNLOAD_DIRECTORY
+from gedi_canopy_height import GEDI_DOWNLOAD_DIRECTORY
 from FLiESANN import FLiESANN
 from GEOS5FP import GEOS5FP
 from MODISCI import MODISCI
 from NASADEM import NASADEMConnection
 
-from daylight_evapotranspiration import daylight_ET_from_instantaneous_LE, daylight_ET_from_daylight_LE
+from daylight_evapotranspiration import daylight_ET_from_instantaneous_LE
 
 from .constants import *
 from .colors import *
@@ -44,7 +41,7 @@ from .load_ball_berry_slope_C4 import *
 from .calculate_VCmax import *
 from .meteorology import *
 from .soil_energy_balance import *
-from .retrieve_BESS_JPL_GEOS5FP_inputs import retrieve_BESS_JPL_GEOS5FP_inputs
+from .retrieve_BESS_inputs import retrieve_BESS_inputs
 
 logger = logging.getLogger(__name__)
 
@@ -100,152 +97,13 @@ def BESS_JPL(
     """
     Breathing Earth System Simulator (BESS) model for estimating gross primary productivity (GPP)
     and evapotranspiration (ET) using coupled atmospheric and canopy radiative transfer processes.
-    
-    The BESS model couples atmospheric and canopy radiative transfer processes with photosynthesis,
-    stomatal conductance, and transpiration models on sunlit and shaded portions of vegetation and soil.
-    
-    References:
-        Ryu, Y., et al. (2011). Integration of MODIS land and atmosphere products with a coupled-process 
-        model to estimate gross primary productivity and evapotranspiration from 1 km to global scales. 
-        Remote Sensing of Environment, 115(8), 1865-1874.
-    
-    Parameters
-    ----------
-    ST_C : Union[Raster, np.ndarray]
-        Surface temperature [°C]
-    NDVI : Union[Raster, np.ndarray]  
-        Normalized Difference Vegetation Index [-]
-    albedo : Union[Raster, np.ndarray]
-        Surface albedo [-]
-    geometry : RasterGeometry, optional
-        Raster geometry for spatial operations
-    time_UTC : datetime, optional
-        UTC time for solar calculations
-    hour_of_day : np.ndarray, optional
-        Solar hour of day [hours, 0-24]
-    day_of_year : np.ndarray, optional
-        Day of year [days, 1-365/366]
-    GEOS5FP_connection : GEOS5FP, optional
-        Connection to GEOS-5 FP meteorological data
-    elevation_m : Union[Raster, np.ndarray], optional
-        Elevation above sea level [m]
-    Ta_C : Union[Raster, np.ndarray], optional
-        Air temperature [°C]
-    RH : Union[Raster, np.ndarray], optional
-        Relative humidity [fraction, 0-1]
-    NDVI_minimum : Union[Raster, np.ndarray], optional
-        Minimum NDVI for phenology scaling [-]
-    NDVI_maximum : Union[Raster, np.ndarray], optional
-        Maximum NDVI for phenology scaling [-]
-    SWin_Wm2 : Union[Raster, np.ndarray], optional
-        Incoming shortwave radiation [W m⁻²]
-    PAR_diffuse_Wm2 : Union[Raster, np.ndarray], optional
-        Diffuse photosynthetically active radiation (400-700 nm) [W m⁻²]
-    PAR_direct_Wm2 : Union[Raster, np.ndarray], optional
-        Direct photosynthetically active radiation (400-700 nm) [W m⁻²]
-    NIR_diffuse_Wm2 : Union[Raster, np.ndarray], optional
-        Diffuse near-infrared radiation [W m⁻²]
-    NIR_direct_Wm2 : Union[Raster, np.ndarray], optional
-        Direct near-infrared radiation [W m⁻²]
-    UV_Wm2 : Union[Raster, np.ndarray], optional
-        Incoming ultraviolet radiation [W m⁻²]
-    albedo_visible : Union[Raster, np.ndarray], optional
-        Surface albedo in visible wavelengths (400-700 nm) [-]
-    albedo_NIR : Union[Raster, np.ndarray], optional
-        Surface albedo in near-infrared wavelengths [-]
-    COT : Union[Raster, np.ndarray], optional
-        Cloud optical thickness [-]
-    AOT : Union[Raster, np.ndarray], optional
-        Aerosol optical thickness [-]
-    vapor_gccm : Union[Raster, np.ndarray], optional
-        Water vapor column [g cm⁻²]
-    ozone_cm : Union[Raster, np.ndarray], optional
-        Ozone column [cm]
-    KG_climate : Union[Raster, np.ndarray], optional
-        Köppen-Geiger climate classification [-]
-    canopy_height_meters : Union[Raster, np.ndarray], optional
-        Canopy height [m]
-    Ca : Union[Raster, np.ndarray], optional
-        Atmospheric CO₂ concentration [ppm]
-    wind_speed_mps : Union[Raster, np.ndarray], optional
-        Wind speed [m s⁻¹]
-    SZA_deg : Union[Raster, np.ndarray], optional
-        Solar zenith angle [degrees]
-    canopy_temperature_C : Union[Raster, np.ndarray], optional
-        Canopy temperature [°C]. Defaults to surface temperature if None
-    soil_temperature_C : Union[Raster, np.ndarray], optional
-        Soil temperature [°C]. Defaults to surface temperature if None
-    C4_fraction : Union[Raster, np.ndarray], optional
-        Fraction of C4 plants [fraction, 0-1]
-    carbon_uptake_efficiency : Union[Raster, np.ndarray], optional
-        Intrinsic quantum efficiency for carbon uptake [mol CO₂ mol⁻¹ photons]
-    kn : np.ndarray, optional
-        Nitrogen decay coefficient [-]
-    ball_berry_intercept_C3 : np.ndarray, optional
-        Ball-Berry stomatal conductance intercept for C3 plants [mol m⁻² s⁻¹]
-    ball_berry_intercept_C4 : Union[np.ndarray, float], optional
-        Ball-Berry stomatal conductance intercept for C4 plants [mol m⁻² s⁻¹]
-    ball_berry_slope_C3 : np.ndarray, optional
-        Ball-Berry stomatal conductance slope for C3 plants [-]
-    ball_berry_slope_C4 : np.ndarray, optional
-        Ball-Berry stomatal conductance slope for C4 plants [-]
-    peakVCmax_C3_μmolm2s1 : np.ndarray, optional
-        Peak maximum carboxylation rate for C3 plants [μmol m⁻² s⁻¹]
-    peakVCmax_C4_μmolm2s1 : np.ndarray, optional
-        Peak maximum carboxylation rate for C4 plants [μmol m⁻² s⁻¹]
-    CI : Union[Raster, np.ndarray], optional
-        Clumping index [-]
-    C4_fraction_scale_factor : float, optional
-        Scale factor for C4 fraction adjustment [-]
-    MODISCI_connection : MODISCI, optional
-        Connection to MODIS clumping index data
-    NASADEM_connection : NASADEMConnection, optional
-        Connection to NASADEM elevation data
-    resampling : str, optional
-        Resampling method for data processing
-    GEDI_download_directory : str, optional
-        Directory for GEDI canopy height data downloads
-    
-    Returns
-    -------
-    dict
-        Dictionary containing model outputs:
-        
-        GPP : Union[Raster, np.ndarray]
-            Instantaneous gross primary productivity [μmol CO₂ m⁻² s⁻¹]
-        GPP_daily : Union[Raster, np.ndarray]
-            Daily gross primary productivity [g C m⁻² day⁻¹]
-        Rn_Wm2 : Union[Raster, np.ndarray]
-            Net radiation [W m⁻²]
-        Rn_soil_Wm2 : Union[Raster, np.ndarray]
-            Soil net radiation [W m⁻²]
-        Rn_canopy_Wm2 : Union[Raster, np.ndarray]
-            Canopy net radiation [W m⁻²]
-        LE_Wm2 : Union[Raster, np.ndarray]
-            Latent heat flux (evapotranspiration) [W m⁻²]
-        LE_soil_Wm2 : Union[Raster, np.ndarray]
-            Soil latent heat flux [W m⁻²]
-        LE_canopy_Wm2 : Union[Raster, np.ndarray]
-            Canopy latent heat flux (transpiration) [W m⁻²]
-        G_Wm2 : Union[Raster, np.ndarray]
-            Soil heat flux [W m⁻²]
-    
-    Notes
-    -----
-    The model uses the FLiES radiative transfer model to estimate incoming solar radiation
-    components when they are not provided. The model calculates photosynthesis and energy
-    balance separately for C3 and C4 vegetation types, then interpolates results based on
-    the C4 fraction.
-    
-    For sunlit and shaded leaf fractions, the model applies different light extinction
-    coefficients and photosynthetic parameters to account for canopy structure effects
-    on radiation distribution and photosynthetic capacity.
+    ...
     """
     if geometry is None and isinstance(ST_C, Raster):
         geometry = ST_C.geometry
 
     if GEOS5FP_connection is None:
-        GEOS5FP_connection = GEOS5FP()
+            GEOS5FP_connection = GEOS5FP()
 
     if (day_of_year is None or hour_of_day is None) and time_UTC is not None and geometry is not None:
         day_of_year = calculate_solar_day_of_year(time_UTC=time_UTC, geometry=geometry)
@@ -254,112 +112,81 @@ def BESS_JPL(
     if time_UTC is None and day_of_year is None and hour_of_day is None:
         raise ValueError("no time given between time_UTC, day_of_year, and hour_of_day")
 
-    if elevation_m is None and geometry is not None:
-        if NASADEM_connection is None:
-            NASADEM_connection = NASADEMConnection()
-
-        elevation_m = NASADEM_connection.elevation_m(geometry=geometry)
-
-    check_distribution(elevation_m, "elevation_m")
-
-    # Retrieve GEOS-5 FP inputs if not provided
-    GEOS5FP_inputs = retrieve_BESS_JPL_GEOS5FP_inputs(
-        time_UTC=time_UTC,
-        geometry=geometry,
+    BESS_inputs_dict = retrieve_BESS_inputs(
+        ST_C=ST_C,
+        NDVI=NDVI,
         albedo=albedo,
+        geometry=geometry,
+        time_UTC=time_UTC,
+        hour_of_day=hour_of_day,
+        day_of_year=day_of_year,
         GEOS5FP_connection=GEOS5FP_connection,
+        elevation_m=elevation_m,
         Ta_C=Ta_C,
         RH=RH,
+        NDVI_minimum=NDVI_minimum,
+        NDVI_maximum=NDVI_maximum,
+        PAR_albedo=PAR_albedo,
+        NIR_albedo=NIR_albedo,
         COT=COT,
         AOT=AOT,
         vapor_gccm=vapor_gccm,
         ozone_cm=ozone_cm,
-        albedo_visible=PAR_albedo,
-        albedo_NIR=NIR_albedo,
+        KG_climate=KG_climate,
+        canopy_height_meters=canopy_height_meters,
         Ca=Ca,
         wind_speed_mps=wind_speed_mps,
-        resampling=resampling
+        SZA_deg=SZA_deg,
+        canopy_temperature_C=canopy_temperature_C,
+        soil_temperature_C=soil_temperature_C,
+        C4_fraction=C4_fraction,
+        carbon_uptake_efficiency=carbon_uptake_efficiency,
+        kn=kn,
+        ball_berry_intercept_C3=ball_berry_intercept_C3,
+        ball_berry_intercept_C4=ball_berry_intercept_C4,
+        ball_berry_slope_C3=ball_berry_slope_C3,
+        ball_berry_slope_C4=ball_berry_slope_C4,
+        peakVCmax_C3_μmolm2s1=peakVCmax_C3_μmolm2s1,
+        peakVCmax_C4_μmolm2s1=peakVCmax_C4_μmolm2s1,
+        CI=CI,
+        C4_fraction_scale_factor=C4_fraction_scale_factor,
+        MODISCI_connection=MODISCI_connection,
+        NASADEM_connection=NASADEM_connection,
+        resampling=resampling,
+        GEDI_download_directory=GEDI_download_directory
     )
+
+    # Extract all variables from the resulting dictionary
+    CI = BESS_inputs_dict["CI"]
+    elevation_m = BESS_inputs_dict["elevation_m"]
+    NDVI_minimum = BESS_inputs_dict["NDVI_minimum"]
+    NDVI_maximum = BESS_inputs_dict["NDVI_maximum"]
+    C4_fraction = BESS_inputs_dict["C4_fraction"]
+    carbon_uptake_efficiency = BESS_inputs_dict["carbon_uptake_efficiency"]
+    kn = BESS_inputs_dict["kn"]
+    peakVCmax_C3_μmolm2s1 = BESS_inputs_dict["peakVCmax_C3_μmolm2s1"]
+    peakVCmax_C4_μmolm2s1 = BESS_inputs_dict["peakVCmax_C4_μmolm2s1"]
+    ball_berry_slope_C3 = BESS_inputs_dict["ball_berry_slope_C3"]
+    ball_berry_slope_C4 = BESS_inputs_dict["ball_berry_slope_C4"]
+    ball_berry_intercept_C3 = BESS_inputs_dict["ball_berry_intercept_C3"]
+    KG_climate = BESS_inputs_dict["KG_climate"]
+    canopy_height_meters = BESS_inputs_dict["canopy_height_meters"]
+    canopy_temperature_C = BESS_inputs_dict["canopy_temperature_C"]
+    soil_temperature_C = BESS_inputs_dict["soil_temperature_C"]
+    SZA_deg = BESS_inputs_dict["SZA_deg"]
+
+    # Variables from GEOS5FP_inputs (merged via results.update())
+    Ta_C = BESS_inputs_dict["Ta_C"]
+    RH = BESS_inputs_dict["RH"]
+    COT = BESS_inputs_dict["COT"]
+    AOT = BESS_inputs_dict["AOT"]
+    vapor_gccm = BESS_inputs_dict["vapor_gccm"]
+    ozone_cm = BESS_inputs_dict["ozone_cm"]
+    PAR_albedo = BESS_inputs_dict["PAR_albedo"]
+    NIR_albedo = BESS_inputs_dict["NIR_albedo"]
+    Ca = BESS_inputs_dict["Ca"]
+    wind_speed_mps = BESS_inputs_dict["wind_speed_mps"]
     
-    # Extract GEOS-5 FP inputs from dictionary
-    Ta_C = GEOS5FP_inputs["Ta_C"]
-    RH = GEOS5FP_inputs["RH"]
-    COT = GEOS5FP_inputs["COT"]
-    AOT = GEOS5FP_inputs["AOT"]
-    vapor_gccm = GEOS5FP_inputs["vapor_gccm"]
-    ozone_cm = GEOS5FP_inputs["ozone_cm"]
-    PAR_albedo = GEOS5FP_inputs["albedo_visible"]
-    NIR_albedo = GEOS5FP_inputs["albedo_NIR"]
-    Ca = GEOS5FP_inputs["Ca"]
-    wind_speed_mps = GEOS5FP_inputs["wind_speed_mps"]
-
-    check_distribution(Ta_C, "Ta_C")
-    check_distribution(RH, "RH")
-
-    # load minimum NDVI if not provided
-    if NDVI_minimum is None and geometry is not None:
-        NDVI_minimum = load_NDVI_minimum(geometry=geometry, resampling=resampling)
-
-    check_distribution(NDVI_minimum, "NDVI_minimum")
-
-    # load maximum NDVI if not provided
-    if NDVI_maximum is None and geometry is not None:
-        NDVI_maximum = load_NDVI_maximum(geometry=geometry, resampling=resampling)
-
-    check_distribution(NDVI_maximum, "NDVI_maximum")
-
-    # load C4 fraction if not provided
-    if C4_fraction is None:
-        C4_fraction = load_C4_fraction(
-            geometry=geometry, 
-            resampling=resampling,
-            scale_factor=C4_fraction_scale_factor
-        )
-
-    check_distribution(C4_fraction, "C4_fraction")
-
-    # load carbon uptake efficiency if not provided
-    if carbon_uptake_efficiency is None:
-        carbon_uptake_efficiency = load_carbon_uptake_efficiency(geometry=geometry, resampling=resampling)
-    
-    check_distribution(carbon_uptake_efficiency, "carbon_uptake_efficiency")
-
-    # load kn if not provided
-    if kn is None:
-        kn = load_kn(geometry=geometry, resampling=resampling)
-
-    check_distribution(kn, "kn")
-
-    # load peak VC max for C3 plants if not provided
-    if peakVCmax_C3_μmolm2s1 is None:
-        peakVCmax_C3_μmolm2s1 = load_peakVCmax_C3(geometry=geometry, resampling=resampling)
-
-    check_distribution(peakVCmax_C3_μmolm2s1, "peakVCmax_C3")
-
-    # load peak VC max for C4 plants if not provided
-    if peakVCmax_C4_μmolm2s1 is None:
-        peakVCmax_C4_μmolm2s1 = load_peakVCmax_C4(geometry=geometry, resampling=resampling)
-
-    check_distribution(peakVCmax_C4_μmolm2s1, "peakVCmax_C4")
-
-    # load Ball-Berry slope for C3 plants if not provided
-    if ball_berry_slope_C3 is None:
-        ball_berry_slope_C3 = load_ball_berry_slope_C3(geometry=geometry, resampling=resampling)
-    
-    check_distribution(ball_berry_slope_C3, "ball_berry_slope_C3")
-
-    # load Ball-Berry slope for C4 plants if not provided
-    if ball_berry_slope_C4 is None:
-        ball_berry_slope_C4 = load_ball_berry_slope_C4(geometry=geometry, resampling=resampling)
-
-    check_distribution(ball_berry_slope_C4, "ball_berry_slope_C4")
-
-    # load Ball-Berry intercept for C3 plants if not provided
-    if ball_berry_intercept_C3 is None:
-        ball_berry_intercept_C3 = load_ball_berry_intercept_C3(geometry=geometry, resampling=resampling)
-
-    check_distribution(ball_berry_intercept_C3, "ball_berry_intercept_C3")
-
     # Create a dictionary of variables to check
     variables_to_check = {
         "SWin_Wm2": SWin_Wm2,
@@ -374,6 +201,7 @@ def BESS_JPL(
 
     # Check for None values and size mismatches
     reference_size = None
+
     for name, var in variables_to_check.items():
         if var is None:
             logger.warning(f"Variable '{name}' is None.")
@@ -386,12 +214,14 @@ def BESS_JPL(
                 logger.warning(f"Variable '{name}' has a different size: {size} (expected: {reference_size}).")
 
     # check if any of the FLiES outputs are not given
-    flies_variables = [SWin_Wm2, PAR_diffuse_Wm2, PAR_direct_Wm2, NIR_diffuse_Wm2, NIR_direct_Wm2, UV_Wm2, PAR_albedo, NIR_albedo]
-    flies_variables_missing = False
-    for variable in flies_variables:
+    FLiES_variables = [SWin_Wm2, PAR_diffuse_Wm2, PAR_direct_Wm2, NIR_diffuse_Wm2, NIR_direct_Wm2, UV_Wm2, PAR_albedo, NIR_albedo]
+    FLiES_variables_missing = False
+    
+    for variable in FLiES_variables:
         if variable is None:
-            flies_variables_missing = True
-    if flies_variables_missing:
+            FLiES_variables_missing = True
+
+    if FLiES_variables_missing:
         # run FLiES radiative transfer model
         FLiES_results = FLiESANN(
             time_UTC=time_UTC,
@@ -422,45 +252,6 @@ def BESS_JPL(
         check_distribution(PAR_direct_Wm2, "PAR_direct_Wm2")
     else:
         logger.info("using given FLiES output as BESS parameters")
-
-    # load koppen geiger climate classification if not provided
-    if KG_climate is None:
-        KG_climate = load_koppen_geiger(geometry=geometry)
-
-    check_distribution(np.float32(KG_climate), "KG_climate")
-
-    # load canopy height in meters if not provided
-    if canopy_height_meters is None:
-        canopy_height_meters = load_canopy_height(
-            geometry=geometry, 
-            resampling=resampling,
-            source_directory=GEDI_download_directory
-        )
-
-    check_distribution(canopy_height_meters, "canopy_height_meters")
-    check_distribution(Ca, "Ca")
-    check_distribution(wind_speed_mps, "wind_speed_mps")
-
-    # canopy temperature defaults to surface temperature
-    if canopy_temperature_C is None:
-        canopy_temperature_C = ST_C
-
-    # soil temperature defaults to surface temperature
-    if soil_temperature_C is None:
-        soil_temperature_C = ST_C
-
-    # calculate solar zenith angle if not provided
-    if SZA_deg is None:
-        SZA_deg = calculate_SZA_from_DOY_and_hour(geometry.lat, geometry.lon, day_of_year, hour_of_day)
-
-    if MODISCI_connection is None:
-        MODISCI_connection = MODISCI()
-
-    if CI is None and geometry is not None:
-        CI = MODISCI_connection.CI(geometry=geometry, resampling=resampling)
-
-    # canopy height defaults to zero
-    canopy_height_meters = np.where(np.isnan(canopy_height_meters), 0, canopy_height_meters)
 
     # calculate saturation vapor pressure in Pascal from air temperature in Kelvin
     Ta_K = Ta_C + 273.15
@@ -557,7 +348,10 @@ def BESS_JPL(
     ASW_soil_Wm2 = canopy_shortwave_radiation_results["ASW_soil_Wm2"]
     G_Wm2 = canopy_shortwave_radiation_results["G_Wm2"]
 
+    # convert canopy temperature from Celsius to Kelvin
     canopy_temperature_K = canopy_temperature_C + 273.15
+
+    # convert soil temperature from Celsius to Kelvin
     soil_temperature_K = soil_temperature_C + 273.15
 
     GPP_C3, LE_C3, LE_soil_C3, LE_canopy_C3, Rn_C3, Rn_soil_C3, Rn_canopy_C3 = carbon_water_fluxes(
