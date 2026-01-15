@@ -1,7 +1,6 @@
 from typing import Union, List
 from datetime import datetime
 import numpy as np
-import pandas as pd
 
 from rasters import Raster, RasterGeometry
 import rasters as rt
@@ -148,9 +147,6 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
         logger.info(f"Geometry type: {type(geometry)}")
         if hasattr(time_UTC, '__len__'):
             logger.info(f"Time UTC length: {len(time_UTC)}")
-            logger.info(f"First few times: {time_UTC[:3] if hasattr(time_UTC, '__getitem__') else time_UTC}")
-        else:
-            logger.info(f"Time UTC value: {time_UTC}")
         if hasattr(geometry, '__len__'):
             logger.info(f"Geometry length: {len(geometry)}")
         
@@ -159,7 +155,7 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
             time_UTC=time_UTC,
             geometry=geometry,
             resampling=resampling,
-            verbose=True  # Force verbose to see what's happening
+            verbose=verbose
         )
         
         logger.info(f"Retrieved keys: {list(retrieved.keys())}")
@@ -187,9 +183,6 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
             Ca = retrieved["CO2SC"]
             logger.info(f"Retrieved Ca from GEOS-5 FP: {Ca}")
             logger.info(f"Ca type: {type(Ca)}")
-            # Convert Series to numpy array to avoid index alignment issues
-            if isinstance(Ca, pd.Series):
-                Ca = Ca.values
             if isinstance(Ca, np.ndarray):
                 logger.info(f"Ca shape: {Ca.shape}, dtype: {Ca.dtype}")
                 logger.info(f"Ca has NaN: {np.any(np.isnan(Ca))}")

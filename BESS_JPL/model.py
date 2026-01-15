@@ -99,6 +99,9 @@ def BESS_JPL(
     and evapotranspiration (ET) using coupled atmospheric and canopy radiative transfer processes.
     ...
     """
+    # Initialize results dictionary to collect all inputs and outputs
+    results = {}
+    
     if geometry is None and isinstance(ST_C, Raster):
         geometry = ST_C.geometry
 
@@ -111,6 +114,15 @@ def BESS_JPL(
 
     if time_UTC is None and day_of_year is None and hour_of_day is None:
         raise ValueError("no time given between time_UTC, day_of_year, and hour_of_day")
+    
+    # Add primary inputs to results
+    results["ST_C"] = ST_C
+    results["NDVI"] = NDVI
+    results["albedo"] = albedo
+    results["geometry"] = geometry
+    results["time_UTC"] = time_UTC
+    results["day_of_year"] = day_of_year
+    results["hour_of_day"] = hour_of_day
 
     BESS_inputs_dict = retrieve_BESS_inputs(
         ST_C=ST_C,
@@ -187,6 +199,9 @@ def BESS_JPL(
     Ca = BESS_inputs_dict["Ca"]
     wind_speed_mps = BESS_inputs_dict["wind_speed_mps"]
     
+    # Add all BESS inputs to results
+    results.update(BESS_inputs_dict)
+    
     # Create a dictionary of variables to check
     variables_to_check = {
         "SWin_Wm2": SWin_Wm2,
@@ -252,6 +267,14 @@ def BESS_JPL(
         check_distribution(PAR_direct_Wm2, "PAR_direct_Wm2")
     else:
         logger.info("using given FLiES output as BESS parameters")
+    
+    # Add radiation inputs to results
+    results["SWin_Wm2"] = SWin_Wm2
+    results["PAR_diffuse_Wm2"] = PAR_diffuse_Wm2
+    results["PAR_direct_Wm2"] = PAR_direct_Wm2
+    results["NIR_diffuse_Wm2"] = NIR_diffuse_Wm2
+    results["NIR_direct_Wm2"] = NIR_direct_Wm2
+    results["UV_Wm2"] = UV_Wm2
 
     # calculate saturation vapor pressure in Pascal from air temperature in Kelvin
     Ta_K = Ta_C + 273.15
@@ -297,6 +320,12 @@ def BESS_JPL(
     # Check the distribution for each variable
     for var_name, var_value in meteorology_results.items():
         check_distribution(var_value, var_name)
+    
+    # Add meteorology results to output
+    results.update(meteorology_results)
+    results["Ta_K"] = Ta_K
+    results["SVP_Pa"] = SVP_Pa
+    results["Ea_Pa"] = Ea_Pa
 
     # convert NDVI to LAI
     LAI = LAI_from_NDVI(NDVI)
@@ -321,6 +350,12 @@ def BESS_JPL(
     # Check the distribution for each variable
     for var_name, var_value in VCmax_results.items():
         check_distribution(var_value, var_name)
+    
+    # Add LAI and VCmax results to output
+    results["LAI"] = LAI
+    results["LAI_minimum"] = LAI_minimum
+    results["LAI_maximum"] = LAI_maximum
+    results.update(VCmax_results)
 
     canopy_shortwave_radiation_results = canopy_shortwave_radiation(
         PAR_diffuse_Wm2=PAR_diffuse_Wm2,  # diffuse photosynthetically active radiation in W/m^2
@@ -347,6 +382,9 @@ def BESS_JPL(
     ASW_shade_Wm2 = canopy_shortwave_radiation_results["ASW_shade_Wm2"]
     ASW_soil_Wm2 = canopy_shortwave_radiation_results["ASW_soil_Wm2"]
     G_Wm2 = canopy_shortwave_radiation_results["G_Wm2"]
+    
+    # Add canopy shortwave radiation results to output
+    results.update(canopy_shortwave_radiation_results)
 
     # convert canopy temperature from Celsius to Kelvin
     canopy_temperature_K = canopy_temperature_C + 273.15
@@ -402,6 +440,11 @@ def BESS_JPL(
     # Check the distribution for each variable
     for var_name, var_value in carbon_water_fluxes_outputs.items():
         check_distribution(var_value, var_name)
+    
+    # Add temperature conversions and C3 results to output
+    results["canopy_temperature_K"] = canopy_temperature_K
+    results["soil_temperature_K"] = soil_temperature_K
+    results.update(carbon_water_fluxes_outputs)
 
     GPP_C4, LE_C4, LE_soil_C4, LE_canopy_C4, Rn_C4, Rn_soil_C4, Rn_canopy_C4 = carbon_water_fluxes(
         canopy_temperature_K=canopy_temperature_K,  # canopy temperature in Kelvin
@@ -451,9 +494,13 @@ def BESS_JPL(
     # Check the distribution for each variable
     for var_name, var_value in carbon_water_fluxes_C4_outputs.items():
         check_distribution(var_value, var_name)
+    
+    # Add C4 results to output
+    results.update(carbon_water_fluxes_C4_outputs)
 
     # interpolate C3 and C4 GPP
     ST_K = ST_C + 273.15
+    results["ST_K"] = ST_K
     GPP = np.clip(interpolate_C3_C4(GPP_C3, GPP_C4, C4_fraction), 0, 50)
     GPP = np.where(np.isnan(ST_K), np.nan, GPP)
 
@@ -511,17 +558,16 @@ def BESS_JPL(
         LE_canopy_Wm2 = Raster(LE_canopy_Wm2, geometry=geometry)
         LE_canopy_Wm2.cmap = ET_COLORMAP
 
-    results = {
-        "GPP": GPP,
-        "GPP_daily": GPP_daily,
-        "Rn_Wm2": Rn_Wm2,
-        "Rn_soil_Wm2": Rn_soil_Wm2,
-        "Rn_canopy_Wm2": Rn_canopy_Wm2,
-        "LE_Wm2": LE_Wm2,
-        "LE_soil_Wm2": LE_soil_Wm2,
-        "LE_canopy_Wm2": LE_canopy_Wm2,
-        "G_Wm2": G_Wm2
-    }
+    # Add final interpolated outputs to results
+    results["GPP"] = GPP
+    results["GPP_daily"] = GPP_daily
+    results["Rn_Wm2"] = Rn_Wm2
+    results["Rn_soil_Wm2"] = Rn_soil_Wm2
+    results["Rn_canopy_Wm2"] = Rn_canopy_Wm2
+    results["LE_Wm2"] = LE_Wm2
+    results["LE_soil_Wm2"] = LE_soil_Wm2
+    results["LE_canopy_Wm2"] = LE_canopy_Wm2
+    # G_Wm2 already added via canopy_shortwave_radiation_results
 
     if upscale_to_daylight and time_UTC is not None:
         logger.info("started daylight ET upscaling")
