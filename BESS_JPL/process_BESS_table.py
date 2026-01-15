@@ -303,6 +303,16 @@ def process_BESS_table(
     output_df = input_df.copy()
 
     for key, value in results.items():
-        output_df[key] = value
+        # Skip non-array-like objects (e.g., MultiPoint geometry)
+        if hasattr(value, '__len__') and not isinstance(value, (str, MultiPoint)):
+            try:
+                output_df[key] = value
+            except (ValueError, TypeError):
+                # Skip values that can't be assigned to DataFrame
+                logger.warning(f"Skipping assignment of key '{key}' to output DataFrame")
+                continue
+        elif isinstance(value, (int, float, np.number)):
+            # Handle scalar values
+            output_df[key] = value
 
     return output_df
