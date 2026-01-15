@@ -46,7 +46,6 @@ generate-input-dataset:
 generate-output-dataset:
 	python -c "from FLiESANN.generate_output_dataset import main; main()"
 
-
 environment:
 	mamba create -y -n $(ENVIRONMENT_NAME) -c conda-forge python=3.11
 
