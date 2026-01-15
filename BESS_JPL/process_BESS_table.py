@@ -44,6 +44,16 @@ def process_BESS_table(
 
     albedo = np.array(input_df.albedo).astype(np.float64)
     
+    if "PAR_albedo" in input_df:
+        PAR_albedo = np.array(input_df.PAR_albedo).astype(np.float64)
+    else:
+        PAR_albedo = None
+        
+    if "NIR_albedo" in input_df:
+        NIR_albedo = np.array(input_df.NIR_albedo).astype(np.float64)
+    else:
+        NIR_albedo = None
+    
     if "Ta_C" in input_df:
         Ta_C = np.array(input_df.Ta_C).astype(np.float64)
     elif "Ta" in input_df:
@@ -255,12 +265,24 @@ def process_BESS_table(
         AOT=AOT,
         vapor_gccm=vapor_gccm,
         ozone_cm=ozone_cm,
-        PAR_albedo=albedo,
+        PAR_albedo=PAR_albedo,
         NIR_albedo=albedo,
         Ca=Ca,
         wind_speed_mps=wind_speed_mps,
         verbose=verbose
     )
+    
+    albedo = BESS_GEOS5FP_inputs['albedo']
+    Ta_C = BESS_GEOS5FP_inputs['Ta_C']
+    RH = BESS_GEOS5FP_inputs['RH']
+    COT = BESS_GEOS5FP_inputs['COT']
+    AOT = BESS_GEOS5FP_inputs['AOT']
+    vapor_gccm = BESS_GEOS5FP_inputs['vapor_gccm']
+    ozone_cm = BESS_GEOS5FP_inputs['ozone_cm']
+    PAR_albedo = BESS_GEOS5FP_inputs['PAR_albedo']
+    NIR_albedo = BESS_GEOS5FP_inputs['NIR_albedo']
+    Ca = BESS_GEOS5FP_inputs['Ca']
+    wind_speed_mps = BESS_GEOS5FP_inputs['wind_speed_mps']
     
     logger.info("completed extracting time from BESS input table")
 
