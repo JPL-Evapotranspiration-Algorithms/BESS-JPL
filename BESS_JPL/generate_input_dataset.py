@@ -8,6 +8,15 @@ from .process_BESS_table import process_BESS_table
 from .retrieve_BESS_JPL_GEOS5FP_inputs import retrieve_BESS_JPL_GEOS5FP_inputs
 
 import logging
+import warnings
+import os
+
+# Suppress TensorFlow warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
+# Suppress pandas warnings
+warnings.filterwarnings('ignore', category=UserWarning)
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +26,7 @@ def generate_input_dataset():
     inputs_df = load_ECOv002_calval_FLiESANN_inputs()
 
     # Ensure `time_UTC` is in datetime format
-    inputs_df['time_UTC'] = pd.to_datetime(inputs_df['time_UTC'])
+    inputs_df['time_UTC'] = pd.to_datetime(inputs_df['time_UTC'], errors='coerce')
 
     # Create a `date_UTC` column by extracting the date from `time_UTC`
     inputs_df['date_UTC'] = inputs_df['time_UTC'].dt.date
