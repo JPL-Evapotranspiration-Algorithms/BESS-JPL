@@ -20,6 +20,16 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 logger = logging.getLogger(__name__)
 
+# Configure GEOS5FP logging to be visible
+geos5fp_logger = logging.getLogger('GEOS5FP')
+geos5fp_logger.setLevel(logging.INFO)
+if not geos5fp_logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('[%(asctime)s %(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    handler.setFormatter(formatter)
+    geos5fp_logger.addHandler(handler)
+
 def generate_input_dataset():
     logger.info("Generating BESS-JPL input dataset from ECOv002 cal/val FLiESANN inputs")
     # calval_df = load_calval_table()
@@ -80,7 +90,7 @@ def generate_input_dataset():
     albedo = np.array(inputs_df.albedo).astype(np.float64)
     
     # Extract time and geometry
-    from rasters import Point, MultiPoint
+    from rasters import Point
     from solar_apparent_time import calculate_solar_day_of_year, calculate_solar_hour_of_day
     from geopandas import GeoSeries
     from shapely.geometry import Point as ShapelyPoint
@@ -129,15 +139,9 @@ def generate_input_dataset():
     day_of_year = np.array(day_of_year_list)
     hour_of_day = np.array(hour_of_day_list)
     
-    # Convert to MultiPoint for retrieve_BESS_inputs
-    point_tuples = [(pt.x, pt.y) for pt in geometry]
-    geometry_multipoint = MultiPoint(point_tuples)
-    
-    # Use single datetime if all times are the same, otherwise list
-    if len(set(time_UTC_list)) == 1:
-        time_UTC = time_UTC_list[0]
-    else:
-        time_UTC = time_UTC_list
+    # Keep geometry as list of Points - do NOT convert to MultiPoint
+    # This allows proper matching of each point with its corresponding time
+    time_UTC = time_UTC_list
     
     # Extract optional inputs if present
     Ta_C = np.array(inputs_df.Ta_C).astype(np.float64) if "Ta_C" in inputs_df else (np.array(inputs_df.Ta).astype(np.float64) if "Ta" in inputs_df else None)
@@ -166,11 +170,13 @@ def generate_input_dataset():
     canopy_height_meters = np.array(inputs_df.canopy_height_meters).astype(np.float64) if "canopy_height_meters" in inputs_df else None
 
     logger.info("Retrieving GEOS-5 FP meteorological inputs")
+    logger.info(f"Calling retrieve_BESS_JPL_GEOS5FP_inputs with {len(time_UTC)} time points and {len(geometry)} geometry points")
     
     # Retrieve only GEOS-5 FP meteorological inputs (vegetation params already in inputs_df)
+    # Pass geometry as list of Points to match each time with its corresponding location
     GEOS5FP_inputs_dict = retrieve_BESS_JPL_GEOS5FP_inputs(
         time_UTC=time_UTC,
-        geometry=geometry_multipoint,
+        geometry=geometry,
         albedo=albedo,
         Ta_C=Ta_C,
         RH=RH,
@@ -183,6 +189,8 @@ def generate_input_dataset():
         Ca=Ca,
         wind_speed_mps=wind_speed_mps
     )
+    
+    logger.info("Completed retrieving GEOS-5 FP meteorological inputs")
     
     # Create complete inputs dataframe by starting with original inputs_df and updating with retrieved values
     complete_inputs_df = inputs_df.copy()
@@ -203,7 +211,7 @@ def generate_input_dataset():
     
     # Add all retrieved GEOS5FP inputs to complete_inputs_df
     for key, value in GEOS5FP_inputs_dict.items():
-        if hasattr(value, '__len__') and not isinstance(value, (str, MultiPoint)):
+        if hasattr(value, '__len__') and not isinstance(value, str):
             try:
                 complete_inputs_df[key] = value
             except (ValueError, TypeError) as e:

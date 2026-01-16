@@ -184,7 +184,7 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
             time_UTC=time_UTC,
             geometry=geometry,
             resampling=resampling,
-            verbose=verbose
+            verbose=True  # Enable verbose logging to see progress
         )
         
         logger.info(f"Retrieved keys: {list(retrieved.keys())}")
