@@ -5,7 +5,7 @@ from ECOv002_calval_tables import load_calval_table
 from FLiESANN import process_FLiESANN_table, load_ECOv002_calval_FLiESANN_inputs
 from .ECOv002_static_tower_BESS_inputs import load_ECOv002_static_tower_BESS_inputs
 from .process_BESS_table import process_BESS_table
-from .retrieve_BESS_inputs import retrieve_BESS_inputs
+from .retrieve_BESS_JPL_GEOS5FP_inputs import retrieve_BESS_JPL_GEOS5FP_inputs
 
 import logging
 
@@ -156,41 +156,23 @@ def generate_input_dataset():
     CI = np.array(inputs_df.CI).astype(np.float64) if "CI" in inputs_df else None
     canopy_height_meters = np.array(inputs_df.canopy_height_meters).astype(np.float64) if "canopy_height_meters" in inputs_df else None
 
-    logger.info("Retrieving complete BESS inputs using retrieve_BESS_inputs")
+    logger.info("Retrieving GEOS-5 FP meteorological inputs")
     
-    # Retrieve all BESS inputs (this will fetch missing data from GEOS5FP and other sources)
-    BESS_inputs_dict = retrieve_BESS_inputs(
-        ST_C=ST_C,
-        NDVI=NDVI,
-        albedo=albedo,
-        geometry=geometry_multipoint,
+    # Retrieve only GEOS-5 FP meteorological inputs (vegetation params already in inputs_df)
+    GEOS5FP_inputs_dict = retrieve_BESS_JPL_GEOS5FP_inputs(
         time_UTC=time_UTC,
-        hour_of_day=hour_of_day,
-        day_of_year=day_of_year,
-        elevation_m=elevation_m,
+        geometry=geometry_multipoint,
+        albedo=albedo,
         Ta_C=Ta_C,
         RH=RH,
-        NDVI_minimum=NDVI_minimum,
-        NDVI_maximum=NDVI_maximum,
-        PAR_albedo=PAR_albedo,
-        NIR_albedo=NIR_albedo,
         COT=COT,
         AOT=AOT,
         vapor_gccm=vapor_gccm,
         ozone_cm=ozone_cm,
-        KG_climate=KG_climate,
-        canopy_height_meters=canopy_height_meters,
+        PAR_albedo=PAR_albedo,
+        NIR_albedo=NIR_albedo,
         Ca=Ca,
-        wind_speed_mps=wind_speed_mps,
-        C4_fraction=C4_fraction,
-        carbon_uptake_efficiency=carbon_uptake_efficiency,
-        kn=kn,
-        ball_berry_intercept_C3=ball_berry_intercept_C3,
-        ball_berry_slope_C3=ball_berry_slope_C3,
-        ball_berry_slope_C4=ball_berry_slope_C4,
-        peakVCmax_C3_μmolm2s1=peakVCmax_C3,
-        peakVCmax_C4_μmolm2s1=peakVCmax_C4,
-        CI=CI
+        wind_speed_mps=wind_speed_mps
     )
     
     # Create complete inputs dataframe by starting with original inputs_df and updating with retrieved values
@@ -228,8 +210,8 @@ def generate_input_dataset():
 
     inputs_filename = join(abspath(dirname(__file__)), "ECOv002-cal-val-BESS-JPL-inputs.csv")
     outputs_filename = join(abspath(dirname(__file__)), "ECOv002-cal-val-BESS-JPL-outputs.csv")
-
-    # Save the complete input dataset to a CSV file
+GEOS5FP inputs to complete_inputs_df
+    for key, value in GEOS5FPput dataset to a CSV file
     complete_inputs_df.to_csv(inputs_filename, index=False)
 
     # Save the processed results to a CSV file
