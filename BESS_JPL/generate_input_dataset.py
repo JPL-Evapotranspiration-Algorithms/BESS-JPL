@@ -192,8 +192,8 @@ def generate_input_dataset():
     if 'lon' not in complete_inputs_df:
         complete_inputs_df['lon'] = [pt.x for pt in geometry]
     
-    # Add all retrieved inputs from BESS_inputs_dict
-    for key, value in BESS_inputs_dict.items():
+    # Add all retrieved GEOS5FP inputs to complete_inputs_df
+    for key, value in GEOS5FP_inputs_dict.items():
         if hasattr(value, '__len__') and not isinstance(value, (str, MultiPoint)):
             try:
                 complete_inputs_df[key] = value
@@ -210,8 +210,8 @@ def generate_input_dataset():
 
     inputs_filename = join(abspath(dirname(__file__)), "ECOv002-cal-val-BESS-JPL-inputs.csv")
     outputs_filename = join(abspath(dirname(__file__)), "ECOv002-cal-val-BESS-JPL-outputs.csv")
-GEOS5FP inputs to complete_inputs_df
-    for key, value in GEOS5FPput dataset to a CSV file
+
+    # Save the complete input dataset to a CSV file
     complete_inputs_df.to_csv(inputs_filename, index=False)
 
     # Save the processed results to a CSV file
