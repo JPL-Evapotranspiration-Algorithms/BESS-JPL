@@ -104,6 +104,31 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
     if GEOS5FP_connection is None:
         GEOS5FP_connection = GEOS5FP()
     
+    # Initialize results dictionary
+    results = {}
+    
+    # Add provided inputs to results
+    if Ta_C is not None:
+        results["Ta_C"] = Ta_C
+    if RH is not None:
+        results["RH"] = RH
+    if COT is not None:
+        results["COT"] = COT
+    if AOT is not None:
+        results["AOT"] = AOT
+    if vapor_gccm is not None:
+        results["vapor_gccm"] = vapor_gccm
+    if ozone_cm is not None:
+        results["ozone_cm"] = ozone_cm
+    if PAR_albedo is not None:
+        results["PAR_albedo"] = PAR_albedo
+    if NIR_albedo is not None:
+        results["NIR_albedo"] = NIR_albedo
+    if Ca is not None:
+        results["Ca"] = Ca
+    if wind_speed_mps is not None:
+        results["wind_speed_mps"] = wind_speed_mps
+    
     # Determine which variables need to be retrieved from GEOS-5 FP
     variables_to_retrieve = []
     
@@ -164,53 +189,42 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
         else:
             logger.warning("CO2SC not in retrieved dictionary!")
         
-        # Extract retrieved values
-        if COT is None:
-            COT = retrieved["COT"]
-        if AOT is None:
-            AOT = retrieved["AOT"]
-        if vapor_gccm is None:
-            vapor_gccm = retrieved["vapor_gccm"]
-        if ozone_cm is None:
-            ozone_cm = retrieved["ozone_cm"]
-        if Ta_C is None:
-            Ta_C = retrieved["Ta_C"]
-            check_distribution(Ta_C, "Ta_C")
-        if RH is None:
-            RH = retrieved["RH"]
-            check_distribution(RH, "RH")
-        if Ca is None:
-            Ca = retrieved["CO2SC"]
-            logger.info(f"Retrieved Ca from GEOS-5 FP: {Ca}")
-            logger.info(f"Ca type: {type(Ca)}")
-            if isinstance(Ca, np.ndarray):
-                logger.info(f"Ca shape: {Ca.shape}, dtype: {Ca.dtype}")
-                logger.info(f"Ca has NaN: {np.any(np.isnan(Ca))}")
-            check_distribution(Ca, "Ca")
-        if wind_speed_mps is None:
-            wind_speed_mps = rt.clip(retrieved["wind_speed_mps"], 0.1, None)
-            check_distribution(wind_speed_mps, "wind_speed_mps")
+        # Extract retrieved values and add to results
+        if "COT" in retrieved:
+            results["COT"] = retrieved["COT"]
+        if "AOT" in retrieved:
+            results["AOT"] = retrieved["AOT"]
+        if "vapor_gccm" in retrieved:
+            results["vapor_gccm"] = retrieved["vapor_gccm"]
+        if "ozone_cm" in retrieved:
+            results["ozone_cm"] = retrieved["ozone_cm"]
+        if "Ta_C" in retrieved:
+            results["Ta_C"] = retrieved["Ta_C"]
+            check_distribution(results["Ta_C"], "Ta_C")
+        if "RH" in retrieved:
+            results["RH"] = retrieved["RH"]
+            check_distribution(results["RH"], "RH")
+        if "CO2SC" in retrieved:
+            results["Ca"] = retrieved["CO2SC"]
+            logger.info(f"Retrieved Ca from GEOS-5 FP: {results['Ca']}")
+            logger.info(f"Ca type: {type(results['Ca'])}")
+            if isinstance(results["Ca"], np.ndarray):
+                logger.info(f"Ca shape: {results['Ca'].shape}, dtype: {results['Ca'].dtype}")
+                logger.info(f"Ca has NaN: {np.any(np.isnan(results['Ca']))}")
+            check_distribution(results["Ca"], "Ca")
+        if "wind_speed_mps" in retrieved:
+            results["wind_speed_mps"] = rt.clip(retrieved["wind_speed_mps"], 0.1, None)
+            check_distribution(results["wind_speed_mps"], "wind_speed_mps")
         
-        # Calculate visible and NIR albedo from retrieved products
-        if PAR_albedo is None:
+        # Calculate visible and NIR albedo from retrieved products and add to results
+        if "PAR_albedo" not in results:
             albedo_NWP = retrieved["ALBEDO"]
             RVIS_NWP = retrieved["ALBVISDR"]
-            PAR_albedo = rt.clip(albedo * (RVIS_NWP / albedo_NWP), 0, 1)
+            results["PAR_albedo"] = rt.clip(albedo * (RVIS_NWP / albedo_NWP), 0, 1)
         
-        if NIR_albedo is None:
+        if "NIR_albedo" not in results:
             albedo_NWP = retrieved["ALBEDO"]
             RNIR_NWP = retrieved["ALBNIRDR"]
-            NIR_albedo = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
+            results["NIR_albedo"] = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
 
-    return {
-        "Ta_C": Ta_C,
-        "RH": RH,
-        "COT": COT,
-        "AOT": AOT,
-        "vapor_gccm": vapor_gccm,
-        "ozone_cm": ozone_cm,
-        "PAR_albedo": PAR_albedo,
-        "NIR_albedo": NIR_albedo,
-        "Ca": Ca,
-        "wind_speed_mps": wind_speed_mps
-    }
+    return results
