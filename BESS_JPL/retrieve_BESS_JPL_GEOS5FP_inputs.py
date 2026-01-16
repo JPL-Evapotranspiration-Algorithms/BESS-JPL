@@ -78,14 +78,15 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
     -------
     dict
         Dictionary containing all meteorological inputs:
+        - albedo : Surface albedo [-]
         - Ta_C : Air temperature [°C]
         - RH : Relative humidity [fraction, 0-1]
         - COT : Cloud optical thickness [-]
         - AOT : Aerosol optical thickness [-]
         - vapor_gccm : Water vapor [g cm⁻²]
         - ozone_cm : Ozone column [cm]
-        - albedo_visible : Surface albedo in visible wavelengths [-]
-        - albedo_NIR : Surface albedo in near-infrared wavelengths [-]
+        - PAR_albedo : Surface albedo in PAR wavelengths [-]
+        - NIR_albedo : Surface albedo in near-infrared wavelengths [-]
         - Ca : Atmospheric CO₂ concentration [ppm]
         - wind_speed_mps : Wind speed [m s⁻¹]
     
@@ -106,6 +107,9 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
     
     # Initialize results dictionary
     results = {}
+    
+    # Add albedo (always required)
+    results["albedo"] = albedo
     
     # Add provided inputs to results
     if Ta_C is not None:
@@ -226,5 +230,12 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
             albedo_NWP = retrieved["ALBEDO"]
             RNIR_NWP = retrieved["ALBNIRDR"]
             results["NIR_albedo"] = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
+    
+    # Verify all required keys are present
+    required_keys = ['albedo', 'Ta_C', 'RH', 'COT', 'AOT', 'vapor_gccm', 'ozone_cm', 
+                     'PAR_albedo', 'NIR_albedo', 'Ca', 'wind_speed_mps']
+    missing_keys = [key for key in required_keys if key not in results]
+    if missing_keys:
+        raise ValueError(f"Missing required keys in results: {missing_keys}")
 
     return results
