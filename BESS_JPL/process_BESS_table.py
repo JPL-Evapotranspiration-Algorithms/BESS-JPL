@@ -149,7 +149,8 @@ def process_BESS_table(
     if "Ca" in input_df:
         Ca = np.array(input_df.Ca).astype(np.float64)
     else:
-        Ca = None
+        # Default to 400 ppm when Ca is not provided
+        Ca = np.full_like(ST_C, 400.0, dtype=np.float64)
 
     if "wind_speed_mps" in input_df:
         wind_speed_mps = np.array(input_df.wind_speed_mps).astype(np.float64)
@@ -168,6 +169,19 @@ def process_BESS_table(
         ozone_cm = np.array(input_df.ozone_cm).astype(np.float64)
     else:
         ozone_cm = None
+
+    # Handle temperature defaults
+    if "canopy_temperature_C" in input_df:
+        canopy_temperature_C = np.array(input_df.canopy_temperature_C).astype(np.float64)
+    else:
+        # Default to surface temperature when canopy temperature is not provided
+        canopy_temperature_C = ST_C.copy()
+
+    if "soil_temperature_C" in input_df:
+        soil_temperature_C = np.array(input_df.soil_temperature_C).astype(np.float64)
+    else:
+        # Default to surface temperature when soil temperature is not provided
+        soil_temperature_C = ST_C.copy()
 
     # --- Handle geometry and time columns ---
     import pandas as pd
@@ -318,6 +332,8 @@ def process_BESS_table(
         ozone_cm=ozone_cm,
         PAR_albedo=albedo,
         NIR_albedo=albedo,
+        canopy_temperature_C=canopy_temperature_C,
+        soil_temperature_C=soil_temperature_C,
         C4_fraction_scale_factor=C4_fraction_scale_factor,
         GEOS5FP_connection=GEOS5FP_connection
     )
