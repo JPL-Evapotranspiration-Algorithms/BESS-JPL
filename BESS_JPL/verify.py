@@ -37,7 +37,8 @@ def verify() -> bool:
         'RH', 'elevation_m',  # or 'elevation_km'
         'wind_speed_mps',
         # Atmospheric inputs from GEOS5FP
-        'COT', 'AOT', 'vapor_gccm', 'ozone_cm', 'Ca',
+        'COT', 'AOT', 'vapor_gccm', 'ozone_cm',
+        # Note: Ca defaults to 400 ppm if not provided
         # Radiation inputs
         'PAR_albedo', 'NIR_albedo',
         # Vegetation parameters
@@ -48,8 +49,7 @@ def verify() -> bool:
         'ball_berry_slope_C3', 'ball_berry_slope_C4', 'ball_berry_intercept_C3',
         # Other required inputs
         'KG_climate', 'CI', 'canopy_height_meters', 'SZA_deg',
-        # Temperature inputs
-        'canopy_temperature_C', 'soil_temperature_C'
+        # Note: canopy_temperature_C and soil_temperature_C default to ST_C if not provided
     ]
     
     # Check for alternative column names
