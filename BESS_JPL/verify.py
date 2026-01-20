@@ -97,11 +97,12 @@ def verify() -> bool:
         model_vals = model_df[col].values
         ref_vals = output_df[col].values
         # Use numpy allclose for floating point comparison
-        if not np.allclose(model_vals, ref_vals, rtol=1e-5, atol=1e-8, equal_nan=True):
+        # Tolerances account for minor platform/version differences (macOS vs Ubuntu, different numpy versions)
+        if not np.allclose(model_vals, ref_vals, rtol=1e-4, atol=1e-7, equal_nan=True):
             # Find indices where values differ
             diffs = np.abs(model_vals - ref_vals)
             max_diff = np.nanmax(diffs)
-            idxs = np.where(~np.isclose(model_vals, ref_vals, rtol=1e-5, atol=1e-8, equal_nan=True))[0]
+            idxs = np.where(~np.isclose(model_vals, ref_vals, rtol=1e-4, atol=1e-7, equal_nan=True))[0]
             mismatch_info = {
                 'indices': idxs.tolist(),
                 'model_values': model_vals[idxs].tolist(),
