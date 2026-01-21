@@ -79,7 +79,7 @@ def verify() -> bool:
     print("Input verification passed: All required BESS inputs are present.")
     
     # Run the model on the input table
-    model_df = process_BESS_table(input_df)
+    model_df = process_BESS_table(input_df, offline_mode=True)
 
     # Columns to compare (model outputs)
     output_columns = [

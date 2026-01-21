@@ -85,7 +85,8 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
         MODISCI_connection: MODISCI = None,
         NASADEM_connection: NASADEMConnection = None,
         resampling: str = RESAMPLING,
-        GEDI_download_directory: str = GEDI_DOWNLOAD_DIRECTORY):
+        GEDI_download_directory: str = GEDI_DOWNLOAD_DIRECTORY,
+        offline_mode: bool = False) -> dict:
     results = {}
 
     if (day_of_year is None or hour_of_day is None) and time_UTC is not None and geometry is not None:
@@ -247,7 +248,8 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
         NIR_albedo=NIR_albedo,
         Ca=Ca,
         wind_speed_mps=wind_speed_mps,
-        resampling=resampling
+        resampling=resampling,
+        offline_mode=offline_mode
     )
     
     # Merge GEOS-5 FP inputs into results dictionary

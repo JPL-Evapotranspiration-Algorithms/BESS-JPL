@@ -46,6 +46,9 @@ generate-input-dataset:
 generate-output-dataset:
 	python -c "from BESS_JPL.generate_output_dataset import main; main()"
 
+generate-GEOS5FP-inputs:
+	python -c "from BESS_JPL.generate_BESS_GEOS5FP_inputs import generate_BESS_GEOS5FP_inputs; generate_BESS_GEOS5FP_inputs()"
+
 environment:
 	mamba create -y -n $(ENVIRONMENT_NAME) -c conda-forge python=3.11
 

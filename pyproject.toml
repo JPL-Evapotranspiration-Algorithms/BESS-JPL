@@ -3,7 +3,7 @@ requires = ["setuptools>=60", "setuptools-scm>=8.0", "wheel"]
 
 [project]
 name = "BESS-JPL"
-version = "1.24.0"
+version = "1.25.0"
 description = "Breathing Earth System Simulator (BESS) Gross Primary Production (GPP) and Evapotranspiration (ET) Model Python"
 readme = "README.md"
 authors = [
@@ -17,9 +17,9 @@ dependencies = [
     "check-distribution>=1.2.0",
     "daylight-evapotranspiration",
     "ECOv002-calval-tables>=1.6.0",
-    "FLiESANN>=2.12.0",
+    "FLiESANN>=2.13.0",
     "gedi-canopy-height>=1.1.0",
-    "GEOS5FP>=2.17.0",
+    "GEOS5FP>=2.19.0",
     "koppengeiger>=1.1.0",
     "MODISCI>=1.4.0",
     "monte-carlo-sensitivity>=1.5.0",
