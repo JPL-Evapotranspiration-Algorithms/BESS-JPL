@@ -12,6 +12,9 @@ from GEOS5FP import GEOS5FP
 import logging
 logger = logging.getLogger(__name__)
 
+class MissingOfflineParameter(Exception):
+    """Custom exception for missing offline parameters."""
+    pass
 
 def retrieve_BESS_JPL_GEOS5FP_inputs(
         time_UTC: Union[datetime, List[datetime]],
@@ -29,7 +32,8 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
         Ca: Union[Raster, np.ndarray] = None,
         wind_speed_mps: Union[Raster, np.ndarray] = None,
         resampling: str = "cubic",
-        verbose: bool = False) -> dict:
+        verbose: bool = False,
+        offline_mode: bool = False) -> dict:
     """
     Retrieve GEOS-5 FP meteorological inputs for BESS-JPL model.
     
@@ -168,6 +172,9 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
         logger.info("All GEOS-5 FP inputs provided, no retrieval needed.")
     else:
         logger.info(f"Retrieving GEOS-5 FP variables: {', '.join(variables_to_retrieve)}")
+
+    if offline_mode and variables_to_retrieve:
+        raise MissingOfflineParameter(f"missing offline parameters for BESS: {', '.join(variables_to_retrieve)}")
 
     # Retrieve all missing variables in a single query
     if variables_to_retrieve:

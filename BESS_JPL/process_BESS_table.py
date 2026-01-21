@@ -6,6 +6,11 @@ import rasters as rt
 from dateutil import parser
 from pandas import DataFrame
 
+# Import functions for calculating solar time
+from solar_apparent_time import calculate_solar_day_of_year, calculate_solar_hour_of_day
+from geopandas import GeoSeries
+from shapely.geometry import Point as ShapelyPoint
+
 from GEOS5FP import GEOS5FP
 
 from .constants import *
@@ -32,7 +37,8 @@ def process_BESS_table(
         input_df: DataFrame,
         GEOS5FP_connection: GEOS5FP = None,
         C4_fraction_scale_factor: float = C4_FRACTION_SCALE_FACTOR,
-        verbose: bool = None) -> DataFrame:
+        verbose: bool = None,
+        offline_mode: bool = False) -> DataFrame:
     # Set verbose default based on environment if not explicitly provided
     if verbose is None:
         verbose = not _is_notebook()
@@ -229,11 +235,6 @@ def process_BESS_table(
     logger.info("started extracting time from BESS input table")
     time_UTC_list = pd.to_datetime(input_df.time_UTC).tolist()
     
-    # Import functions for calculating solar time
-    from solar_apparent_time import calculate_solar_day_of_year, calculate_solar_hour_of_day
-    from geopandas import GeoSeries
-    from shapely.geometry import Point as ShapelyPoint
-    
     # Calculate day_of_year and hour_of_day for each point
     day_of_year_list = []
     hour_of_day_list = []
@@ -283,7 +284,8 @@ def process_BESS_table(
         NIR_albedo=albedo,
         Ca=Ca,
         wind_speed_mps=wind_speed_mps,
-        verbose=verbose
+        verbose=verbose,
+        offline_mode=offline_mode
     )
     
     albedo = BESS_GEOS5FP_inputs['albedo']
@@ -335,7 +337,8 @@ def process_BESS_table(
         canopy_temperature_C=canopy_temperature_C,
         soil_temperature_C=soil_temperature_C,
         C4_fraction_scale_factor=C4_fraction_scale_factor,
-        GEOS5FP_connection=GEOS5FP_connection
+        GEOS5FP_connection=GEOS5FP_connection,
+        offline_mode=offline_mode
     )
 
     output_df = input_df.copy()
