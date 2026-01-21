@@ -13,14 +13,13 @@ C4_FRACTION_SCALE_FACTOR = 0.01
 UPSCALE_TO_DAYLIGHT = True
 
 # GEOS-5 FP variables retrieved by the model
-GEOS5FP_VARIABLES = [
+GEOS5FP_INPUTS = [
     "Ta_C",        # Air temperature (°C)
     "RH",          # Relative humidity (fraction)
     "COT",         # Cloud optical thickness
     "AOT",         # Aerosol optical thickness
-    "ALBEDO",      # Surface albedo
-    "ALBVISDR",    # Visible direct beam albedo
-    "ALBNIRDR",    # Near-infrared direct beam albedo
-    "CO2SC",       # Atmospheric CO₂ concentration (ppm)
-    "wind_speed"   # Wind speed (m/s)
+    "PAR_albedo",    # Visible direct beam albedo
+    "NIR_albedo",    # Near-infrared direct beam albedo
+    "Ca",       # Atmospheric CO₂ concentration (ppm)
+    "wind_speed_mps"   # Wind speed (m/s)
 ]

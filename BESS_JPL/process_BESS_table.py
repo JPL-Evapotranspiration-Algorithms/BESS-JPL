@@ -6,6 +6,11 @@ import rasters as rt
 from dateutil import parser
 from pandas import DataFrame
 
+# Import functions for calculating solar time
+from solar_apparent_time import calculate_solar_day_of_year, calculate_solar_hour_of_day
+from geopandas import GeoSeries
+from shapely.geometry import Point as ShapelyPoint
+
 from GEOS5FP import GEOS5FP
 
 from .constants import *
@@ -32,7 +37,8 @@ def process_BESS_table(
         input_df: DataFrame,
         GEOS5FP_connection: GEOS5FP = None,
         C4_fraction_scale_factor: float = C4_FRACTION_SCALE_FACTOR,
-        verbose: bool = None) -> DataFrame:
+        verbose: bool = None,
+        offline_mode: bool = False) -> DataFrame:
     # Set verbose default based on environment if not explicitly provided
     if verbose is None:
         verbose = not _is_notebook()
@@ -149,7 +155,8 @@ def process_BESS_table(
     if "Ca" in input_df:
         Ca = np.array(input_df.Ca).astype(np.float64)
     else:
-        Ca = None
+        # Default to 400 ppm when Ca is not provided
+        Ca = np.full_like(ST_C, 400.0, dtype=np.float64)
 
     if "wind_speed_mps" in input_df:
         wind_speed_mps = np.array(input_df.wind_speed_mps).astype(np.float64)
@@ -168,6 +175,19 @@ def process_BESS_table(
         ozone_cm = np.array(input_df.ozone_cm).astype(np.float64)
     else:
         ozone_cm = None
+
+    # Handle temperature defaults
+    if "canopy_temperature_C" in input_df:
+        canopy_temperature_C = np.array(input_df.canopy_temperature_C).astype(np.float64)
+    else:
+        # Default to surface temperature when canopy temperature is not provided
+        canopy_temperature_C = ST_C.copy()
+
+    if "soil_temperature_C" in input_df:
+        soil_temperature_C = np.array(input_df.soil_temperature_C).astype(np.float64)
+    else:
+        # Default to surface temperature when soil temperature is not provided
+        soil_temperature_C = ST_C.copy()
 
     # --- Handle geometry and time columns ---
     import pandas as pd
@@ -214,11 +234,6 @@ def process_BESS_table(
 
     logger.info("started extracting time from BESS input table")
     time_UTC_list = pd.to_datetime(input_df.time_UTC).tolist()
-    
-    # Import functions for calculating solar time
-    from solar_apparent_time import calculate_solar_day_of_year, calculate_solar_hour_of_day
-    from geopandas import GeoSeries
-    from shapely.geometry import Point as ShapelyPoint
     
     # Calculate day_of_year and hour_of_day for each point
     day_of_year_list = []
@@ -269,7 +284,8 @@ def process_BESS_table(
         NIR_albedo=albedo,
         Ca=Ca,
         wind_speed_mps=wind_speed_mps,
-        verbose=verbose
+        verbose=verbose,
+        offline_mode=offline_mode
     )
     
     albedo = BESS_GEOS5FP_inputs['albedo']
@@ -318,23 +334,32 @@ def process_BESS_table(
         ozone_cm=ozone_cm,
         PAR_albedo=albedo,
         NIR_albedo=albedo,
+        canopy_temperature_C=canopy_temperature_C,
+        soil_temperature_C=soil_temperature_C,
         C4_fraction_scale_factor=C4_fraction_scale_factor,
-        GEOS5FP_connection=GEOS5FP_connection
+        GEOS5FP_connection=GEOS5FP_connection,
+        offline_mode=offline_mode
     )
 
     output_df = input_df.copy()
 
+    # Collect new columns to avoid DataFrame fragmentation
+    new_columns = {}
     for key, value in results.items():
         # Skip non-array-like objects (e.g., MultiPoint geometry)
         if hasattr(value, '__len__') and not isinstance(value, (str, MultiPoint)):
             try:
-                output_df[key] = value
+                new_columns[key] = value
             except (ValueError, TypeError):
                 # Skip values that can't be assigned to DataFrame
                 logger.warning(f"Skipping assignment of key '{key}' to output DataFrame")
                 continue
         elif isinstance(value, (int, float, np.number)):
             # Handle scalar values
-            output_df[key] = value
+            new_columns[key] = value
+
+    # Add all new columns at once using concat to avoid fragmentation
+    if new_columns:
+        output_df = pd.concat([output_df, pd.DataFrame(new_columns, index=output_df.index)], axis=1)
 
     return output_df

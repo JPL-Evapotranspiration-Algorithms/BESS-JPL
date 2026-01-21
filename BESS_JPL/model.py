@@ -93,7 +93,8 @@ def BESS_JPL(
         NASADEM_connection: NASADEMConnection = None,
         upscale_to_daylight: bool = UPSCALE_TO_DAYLIGHT,
         resampling: str = RESAMPLING,
-        GEDI_download_directory: str = GEDI_DOWNLOAD_DIRECTORY):  # clumping index
+        GEDI_download_directory: str = GEDI_DOWNLOAD_DIRECTORY,
+        offline_mode: bool = False) -> dict:
     """
     Breathing Earth System Simulator (BESS) model for estimating gross primary productivity (GPP)
     and evapotranspiration (ET) using coupled atmospheric and canopy radiative transfer processes.
@@ -165,7 +166,8 @@ def BESS_JPL(
         MODISCI_connection=MODISCI_connection,
         NASADEM_connection=NASADEM_connection,
         resampling=resampling,
-        GEDI_download_directory=GEDI_download_directory
+        GEDI_download_directory=GEDI_download_directory,
+        offline_mode=offline_mode
     )
 
     # Extract all variables from the resulting dictionary

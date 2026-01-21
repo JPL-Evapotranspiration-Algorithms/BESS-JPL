@@ -12,6 +12,9 @@ from GEOS5FP import GEOS5FP
 import logging
 logger = logging.getLogger(__name__)
 
+class MissingOfflineParameter(Exception):
+    """Custom exception for missing offline parameters."""
+    pass
 
 def retrieve_BESS_JPL_GEOS5FP_inputs(
         time_UTC: Union[datetime, List[datetime]],
@@ -29,7 +32,8 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
         Ca: Union[Raster, np.ndarray] = None,
         wind_speed_mps: Union[Raster, np.ndarray] = None,
         resampling: str = "cubic",
-        verbose: bool = False) -> dict:
+        verbose: bool = False,
+        offline_mode: bool = False) -> dict:
     """
     Retrieve GEOS-5 FP meteorological inputs for BESS-JPL model.
     
@@ -169,6 +173,9 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
     else:
         logger.info(f"Retrieving GEOS-5 FP variables: {', '.join(variables_to_retrieve)}")
 
+    if offline_mode and variables_to_retrieve:
+        raise MissingOfflineParameter(f"missing offline parameters for BESS: {', '.join(variables_to_retrieve)}")
+
     # Retrieve all missing variables in a single query
     if variables_to_retrieve:
         logger.info(f"Retrieving GEOS-5 FP variables: {', '.join(variables_to_retrieve)}")
@@ -184,7 +191,7 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
             time_UTC=time_UTC,
             geometry=geometry,
             resampling=resampling,
-            verbose=verbose
+            verbose=True  # Enable verbose logging to see progress
         )
         
         logger.info(f"Retrieved keys: {list(retrieved.keys())}")
@@ -230,6 +237,15 @@ def retrieve_BESS_JPL_GEOS5FP_inputs(
             albedo_NWP = retrieved["ALBEDO"]
             RNIR_NWP = retrieved["ALBNIRDR"]
             results["NIR_albedo"] = rt.clip(albedo * (RNIR_NWP / albedo_NWP), 0, 1)
+    
+    # Apply default for Ca if not provided and not retrieved
+    if 'Ca' not in results:
+        logger.info("Ca not provided, using default value of 400 ppm")
+        # Create an array of 400.0 with the same shape as albedo
+        if isinstance(albedo, np.ndarray):
+            results['Ca'] = np.full_like(albedo, 400.0, dtype=np.float64)
+        else:
+            results['Ca'] = 400.0
     
     # Verify all required keys are present
     required_keys = ['albedo', 'Ta_C', 'RH', 'COT', 'AOT', 'vapor_gccm', 'ozone_cm', 
