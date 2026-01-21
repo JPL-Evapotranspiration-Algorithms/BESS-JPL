@@ -7,7 +7,7 @@ if __name__ == "__main__" and __package__ is None:
     sys.path.insert(0, dirname(dirname(__file__)))
     __package__ = "BESS_JPL"
 
-from ECOv002_calval_tables import load_times_locations
+from ECOv002_calval_tables import load_times_locations, load_calval_table
 from GEOS5FP import GEOS5FP
 from BESS_JPL import GEOS5FP_INPUTS
 
@@ -24,16 +24,24 @@ def generate_BESS_GEOS5FP_inputs(
 
     # Load sample times and locations
     targets_df = load_times_locations()
+    calval_table_df = load_calval_table()
     
     if sample_size is not None:
         targets_df = targets_df.sample(n=sample_size).reset_index(drop=True)
 
     # Create GEOS5FP connection
     GEOS5FP_connection = GEOS5FP()
+    
+    target_variables = [
+        variable
+        for variable
+        in GEOS5FP_INPUTS
+        if variable not in calval_table_df.columns
+    ]
 
     # Query for FLiESANN GEOS5FP input variables
     results_df = GEOS5FP_connection.query(
-        target_variables=GEOS5FP_INPUTS,
+        target_variables=target_variables,
         targets_df=targets_df
     )
 

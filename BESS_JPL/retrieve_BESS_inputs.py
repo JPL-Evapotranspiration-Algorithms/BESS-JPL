@@ -18,6 +18,7 @@ from MODISCI import MODISCI
 from NASADEM import NASADEMConnection
 
 from .constants import *
+from .exceptions import *
 from .colors import *
 from .C3_photosynthesis import *
 from .C4_photosynthesis import *
@@ -118,6 +119,9 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
 
     if CI is None and geometry is not None:
+        if offline_mode:
+            raise MissingOfflineParameter("CI not provided in offline mode")
+        
         if MODISCI_connection is None:
             MODISCI_connection = MODISCI()
 
@@ -127,6 +131,9 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
     results["CI"] = CI
 
     if elevation_m is None and geometry is not None:
+        if offline_mode:
+            raise MissingOfflineParameter("elevation_m not provided in offline mode")
+        
         if NASADEM_connection is None:
             NASADEM_connection = NASADEMConnection()
 
