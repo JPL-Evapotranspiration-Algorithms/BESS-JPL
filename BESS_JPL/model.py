@@ -82,7 +82,7 @@ def BESS_JPL(
         carbon_uptake_efficiency: Union[Raster, np.ndarray] = None,  # intrinsic quantum efficiency for carbon uptake
         kn: np.ndarray = None,
         ball_berry_intercept_C3: np.ndarray = None,  # Ball-Berry intercept for C3 plants
-        ball_berry_intercept_C4: Union[np.ndarray, float] = BALL_BERRY_INTERCEPT_C4, # Ball-Berry intercept for C4 plants
+        ball_berry_intercept_C4: Union[np.ndarray, float] = None, # Ball-Berry intercept for C4 plants
         ball_berry_slope_C3: np.ndarray = None,  # Ball-Berry slope for C3 plants
         ball_berry_slope_C4: np.ndarray = None,  # Ball-Berry slope for C4 plants
         peakVCmax_C3_μmolm2s1: np.ndarray = None,  # peak maximum carboxylation rate for C3 plants
@@ -105,6 +105,9 @@ def BESS_JPL(
     
     if geometry is None and isinstance(ST_C, Raster):
         geometry = ST_C.geometry
+        
+    if ball_berry_intercept_C4 is None:
+        ball_berry_intercept_C4 = BALL_BERRY_INTERCEPT_C4
 
     if GEOS5FP_connection is None:
             GEOS5FP_connection = GEOS5FP()
