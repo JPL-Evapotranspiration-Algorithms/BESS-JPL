@@ -125,6 +125,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
         if MODISCI_connection is None:
             MODISCI_connection = MODISCI()
 
+        logger.info("loading clumping index")
         CI = MODISCI_connection.CI(geometry=geometry, resampling=resampling)
 
     check_distribution(CI, "CI")
@@ -137,6 +138,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
         if NASADEM_connection is None:
             NASADEM_connection = NASADEMConnection()
 
+        logger.info("loading elevation")  
         elevation_m = NASADEM_connection.elevation_m(geometry=geometry)
 
     check_distribution(elevation_m, "elevation_m")
@@ -145,6 +147,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     # load minimum NDVI if not provided
     if NDVI_minimum is None and geometry is not None:
+        logger.info("loading minimum NDVI")
         NDVI_minimum = load_NDVI_minimum(geometry=geometry, resampling=resampling)
 
     check_distribution(NDVI_minimum, "NDVI_minimum")
@@ -152,6 +155,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     # load maximum NDVI if not provided
     if NDVI_maximum is None and geometry is not None:
+        logger.info("loading maximum NDVI")
         NDVI_maximum = load_NDVI_maximum(geometry=geometry, resampling=resampling)
 
     check_distribution(NDVI_maximum, "NDVI_maximum")
@@ -159,6 +163,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     # load C4 fraction if not provided
     if C4_fraction is None:
+        logger.info("loading C4 fraction")
         C4_fraction = load_C4_fraction(
             geometry=geometry, 
             resampling=resampling,
@@ -170,6 +175,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     # load carbon uptake efficiency if not provided
     if carbon_uptake_efficiency is None:
+        logger.info("loading carbon uptake efficiency")
         carbon_uptake_efficiency = load_carbon_uptake_efficiency(geometry=geometry, resampling=resampling)
     
     check_distribution(carbon_uptake_efficiency, "carbon_uptake_efficiency")
@@ -177,6 +183,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     # load kn if not provided
     if kn is None:
+        logger.info("loading kn")
         kn = load_kn(geometry=geometry, resampling=resampling)
 
     check_distribution(kn, "kn")
@@ -184,6 +191,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     # load peak VC max for C3 plants if not provided
     if peakVCmax_C3_μmolm2s1 is None:
+        logger.info("loading peak VCmax for C3 plants")
         peakVCmax_C3_μmolm2s1 = load_peakVCmax_C3(geometry=geometry, resampling=resampling)
 
     check_distribution(peakVCmax_C3_μmolm2s1, "peakVCmax_C3_μmolm2s1")
@@ -191,6 +199,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     # load peak VC max for C4 plants if not provided
     if peakVCmax_C4_μmolm2s1 is None:
+        logger.info("loading peak VCmax for C4 plants")
         peakVCmax_C4_μmolm2s1 = load_peakVCmax_C4(geometry=geometry, resampling=resampling)
 
     check_distribution(peakVCmax_C4_μmolm2s1, "peakVCmax_C4_μmolm2s1")
@@ -198,6 +207,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     # load Ball-Berry slope for C3 plants if not provided
     if ball_berry_slope_C3 is None:
+        logger.info("loading Ball-Berry slope for C3 plants")
         ball_berry_slope_C3 = load_ball_berry_slope_C3(geometry=geometry, resampling=resampling)
     
     check_distribution(ball_berry_slope_C3, "ball_berry_slope_C3")
@@ -205,6 +215,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     # load Ball-Berry slope for C4 plants if not provided
     if ball_berry_slope_C4 is None:
+        logger.info("loading Ball-Berry slope for C4 plants")
         ball_berry_slope_C4 = load_ball_berry_slope_C4(geometry=geometry, resampling=resampling)
 
     check_distribution(ball_berry_slope_C4, "ball_berry_slope_C4")
@@ -212,6 +223,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     # load Ball-Berry intercept for C3 plants if not provided
     if ball_berry_intercept_C3 is None:
+        logger.info("loading Ball-Berry intercept for C3 plants")
         ball_berry_intercept_C3 = load_ball_berry_intercept_C3(geometry=geometry, resampling=resampling)
 
     check_distribution(ball_berry_intercept_C3, "ball_berry_intercept_C3")
@@ -219,6 +231,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     # load koppen geiger climate classification if not provided
     if KG_climate is None:
+        logger.info("loading Koppen-Geiger climate classification")
         KG_climate = load_koppen_geiger(geometry=geometry)
 
     check_distribution(np.float32(KG_climate), "KG_climate")
@@ -226,6 +239,7 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
 
     # load canopy height in meters if not provided
     if canopy_height_meters is None:
+        logger.info("loading canopy height")
         canopy_height_meters = load_canopy_height(
             geometry=geometry, 
             resampling=resampling,
