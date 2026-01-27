@@ -11,6 +11,8 @@ from solar_apparent_time import calculate_solar_day_of_year, calculate_solar_hou
 from geopandas import GeoSeries
 from shapely.geometry import Point as ShapelyPoint
 
+from rasters import MultiPoint
+
 from GEOS5FP import GEOS5FP
 
 from .constants import *
@@ -233,41 +235,57 @@ def process_BESS_table(
     logger.info("completed extracting geometry from BESS input table")
 
     logger.info("started extracting time from BESS input table")
-    time_UTC_list = pd.to_datetime(input_df.time_UTC).tolist()
+    time_UTC_list = pd.to_datetime(input_df.time_UTC, format='ISO8601').tolist()
     
-    # Calculate day_of_year and hour_of_day for each point
-    day_of_year_list = []
-    hour_of_day_list = []
+    logger.info("started calculating day of year and hour of day")
     
-    for i, (time_utc, geom) in enumerate(zip(time_UTC_list, geometry)):
-        # Create a GeoSeries with a Shapely Point (lon, lat order)
-        shapely_point = ShapelyPoint(geom.x, geom.y)
-        geoseries = GeoSeries([shapely_point])
-        doy = calculate_solar_day_of_year(time_UTC=time_utc, geometry=geoseries)
-        hod = calculate_solar_hour_of_day(time_UTC=time_utc, geometry=geoseries)
-        # Extract scalar values if returned as arrays
-        doy_scalar = doy[0] if hasattr(doy, '__getitem__') else doy
-        hod_scalar = hod[0] if hasattr(hod, '__getitem__') else hod
-        day_of_year_list.append(doy_scalar)
-        hour_of_day_list.append(hod_scalar)
+    # Create shapely points once for all geometry
+    shapely_points = [ShapelyPoint(geom.x, geom.y) for geom in geometry]
     
-    # Convert to numpy arrays (1D)
-    day_of_year = np.array(day_of_year_list)
-    hour_of_day = np.array(hour_of_day_list)
+    # Check if all times are the same for optimization
+    unique_times = set(time_UTC_list)
+    if len(unique_times) == 1:
+        # All timestamps are identical - vectorize the calculation
+        geoseries_all = GeoSeries(shapely_points)
+        doy = calculate_solar_day_of_year(time_UTC=time_UTC_list[0], geometry=geoseries_all)
+        hod = calculate_solar_hour_of_day(time_UTC=time_UTC_list[0], geometry=geoseries_all)
+        day_of_year = np.asarray(doy)
+        hour_of_day = np.asarray(hod)
+    else:
+        # Different times per point - still optimize by pre-creating shapely points
+        day_of_year_list = []
+        hour_of_day_list = []
+        
+        for time_utc, shapely_point in zip(time_UTC_list, shapely_points):
+            geoseries = GeoSeries([shapely_point])
+            doy = calculate_solar_day_of_year(time_UTC=time_utc, geometry=geoseries)
+            hod = calculate_solar_hour_of_day(time_UTC=time_utc, geometry=geoseries)
+            # Extract scalar values if returned as arrays
+            doy_scalar = doy[0] if hasattr(doy, '__getitem__') else doy
+            hod_scalar = hod[0] if hasattr(hod, '__getitem__') else hod
+            day_of_year_list.append(doy_scalar)
+            hour_of_day_list.append(hod_scalar)
+        
+        day_of_year = np.array(day_of_year_list)
+        hour_of_day = np.array(hour_of_day_list)
     
     # Convert list of rasters.Point to MultiPoint for compatibility with FLiESANN and other functions
-    from rasters import MultiPoint
+    
+    logger.info("started extractly geometry")
+    
     # Extract (x, y) tuples from rasters.Point objects
     point_tuples = [(pt.x, pt.y) for pt in geometry]
     geometry_multipoint = MultiPoint(point_tuples)
     
-    # Check if all times are the same
-    if len(set(time_UTC_list)) == 1:
+    # Use the same set check for time_UTC (already computed as unique_times)
+    if len(unique_times) == 1:
         # All timestamps are identical, use single datetime
         time_UTC = time_UTC_list[0]
     else:
         # Different timestamps per point, keep as list
         time_UTC = time_UTC_list
+        
+    logger.info("started retrieving BESS inputs")
 
     BESS_GEOS5FP_inputs = retrieve_BESS_JPL_GEOS5FP_inputs(
         time_UTC=time_UTC,
@@ -287,6 +305,8 @@ def process_BESS_table(
         verbose=verbose,
         offline_mode=offline_mode
     )
+    
+    logger.info("finished retrieving BESS inputs")
     
     albedo = BESS_GEOS5FP_inputs['albedo']
     Ta_C = BESS_GEOS5FP_inputs['Ta_C']
