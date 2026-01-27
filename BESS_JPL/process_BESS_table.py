@@ -343,23 +343,18 @@ def process_BESS_table(
 
     output_df = input_df.copy()
 
-    # Collect new columns to avoid DataFrame fragmentation
-    new_columns = {}
+    # Update or add columns from results, overwriting existing columns to avoid duplicates
     for key, value in results.items():
         # Skip non-array-like objects (e.g., MultiPoint geometry)
         if hasattr(value, '__len__') and not isinstance(value, (str, MultiPoint)):
             try:
-                new_columns[key] = value
+                output_df[key] = value  # Direct assignment overwrites existing columns
             except (ValueError, TypeError):
                 # Skip values that can't be assigned to DataFrame
                 logger.warning(f"Skipping assignment of key '{key}' to output DataFrame")
                 continue
         elif isinstance(value, (int, float, np.number)):
             # Handle scalar values
-            new_columns[key] = value
-
-    # Add all new columns at once using concat to avoid fragmentation
-    if new_columns:
-        output_df = pd.concat([output_df, pd.DataFrame(new_columns, index=output_df.index)], axis=1)
+            output_df[key] = value
 
     return output_df
