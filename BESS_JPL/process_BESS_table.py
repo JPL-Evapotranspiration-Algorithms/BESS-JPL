@@ -5,11 +5,14 @@ import pandas as pd
 import rasters as rt
 from dateutil import parser
 from pandas import DataFrame
+from pytictoc import TicToc
 
 # Import functions for calculating solar time
 from solar_apparent_time import calculate_solar_day_of_year, calculate_solar_hour_of_day
 from geopandas import GeoSeries
 from shapely.geometry import Point as ShapelyPoint
+
+from rasters import MultiPoint
 
 from GEOS5FP import GEOS5FP
 
@@ -42,6 +45,8 @@ def process_BESS_table(
     # Set verbose default based on environment if not explicitly provided
     if verbose is None:
         verbose = not _is_notebook()
+    
+    timer = TicToc()
     
     ST_C = np.array(input_df.ST_C).astype(np.float64)
     NDVI = np.array(input_df.NDVI).astype(np.float64)
@@ -216,6 +221,7 @@ def process_BESS_table(
     input_df = ensure_geometry(input_df)
 
     logger.info("started extracting geometry from BESS input table")
+    timer.tic()
 
     if "geometry" in input_df:
         # Convert Point objects to a list of Points
@@ -230,44 +236,43 @@ def process_BESS_table(
     else:
         raise KeyError("Input DataFrame must contain either 'geometry' or both 'lat' and 'lon' columns.")
 
-    logger.info("completed extracting geometry from BESS input table")
+    elapsed = timer.tocvalue()
+    logger.info(f"completed extracting geometry from BESS input table ({elapsed:.2f} seconds)")
 
     logger.info("started extracting time from BESS input table")
-    time_UTC_list = pd.to_datetime(input_df.time_UTC).tolist()
+    timer.tic()
+    time_UTC_list = pd.to_datetime(input_df.time_UTC, format='ISO8601').tolist()
+    elapsed = timer.tocvalue()
+    logger.info(f"completed extracting time from BESS input table ({elapsed:.2f} seconds)")
     
-    # Calculate day_of_year and hour_of_day for each point
-    day_of_year_list = []
-    hour_of_day_list = []
+    logger.info("started calculating day of year and hour of day")
+    timer.tic()
     
-    for i, (time_utc, geom) in enumerate(zip(time_UTC_list, geometry)):
-        # Create a GeoSeries with a Shapely Point (lon, lat order)
-        shapely_point = ShapelyPoint(geom.x, geom.y)
-        geoseries = GeoSeries([shapely_point])
-        doy = calculate_solar_day_of_year(time_UTC=time_utc, geometry=geoseries)
-        hod = calculate_solar_hour_of_day(time_UTC=time_utc, geometry=geoseries)
-        # Extract scalar values if returned as arrays
-        doy_scalar = doy[0] if hasattr(doy, '__getitem__') else doy
-        hod_scalar = hod[0] if hasattr(hod, '__getitem__') else hod
-        day_of_year_list.append(doy_scalar)
-        hour_of_day_list.append(hod_scalar)
+    # Create GeoSeries once for all geometry
+    geoseries_all = GeoSeries([ShapelyPoint(geom.x, geom.y) for geom in geometry])
     
-    # Convert to numpy arrays (1D)
-    day_of_year = np.array(day_of_year_list)
-    hour_of_day = np.array(hour_of_day_list)
+    # Call functions once with full arrays - they should handle broadcasting
+    day_of_year = np.asarray(calculate_solar_day_of_year(time_UTC=time_UTC_list, geometry=geoseries_all))
+    hour_of_day = np.asarray(calculate_solar_hour_of_day(time_UTC=time_UTC_list, geometry=geoseries_all))
+    
+    elapsed = timer.tocvalue()
+    logger.info(f"completed calculating day of year and hour of day ({elapsed:.2f} seconds)")
     
     # Convert list of rasters.Point to MultiPoint for compatibility with FLiESANN and other functions
-    from rasters import MultiPoint
+    
+    logger.info("started extracting geometry")
+    timer.tic()
+    
     # Extract (x, y) tuples from rasters.Point objects
     point_tuples = [(pt.x, pt.y) for pt in geometry]
     geometry_multipoint = MultiPoint(point_tuples)
+    time_UTC = time_UTC_list
     
-    # Check if all times are the same
-    if len(set(time_UTC_list)) == 1:
-        # All timestamps are identical, use single datetime
-        time_UTC = time_UTC_list[0]
-    else:
-        # Different timestamps per point, keep as list
-        time_UTC = time_UTC_list
+    elapsed = timer.tocvalue()
+    logger.info(f"completed extracting geometry ({elapsed:.2f} seconds)")
+        
+    logger.info("started retrieving BESS inputs")
+    timer.tic()
 
     BESS_GEOS5FP_inputs = retrieve_BESS_JPL_GEOS5FP_inputs(
         time_UTC=time_UTC,
@@ -288,6 +293,9 @@ def process_BESS_table(
         offline_mode=offline_mode
     )
     
+    elapsed = timer.tocvalue()
+    logger.info(f"finished retrieving BESS inputs ({elapsed:.2f} seconds)")
+    
     albedo = BESS_GEOS5FP_inputs['albedo']
     Ta_C = BESS_GEOS5FP_inputs['Ta_C']
     RH = BESS_GEOS5FP_inputs['RH']
@@ -299,8 +307,6 @@ def process_BESS_table(
     NIR_albedo = BESS_GEOS5FP_inputs['NIR_albedo']
     Ca = BESS_GEOS5FP_inputs['Ca']
     wind_speed_mps = BESS_GEOS5FP_inputs['wind_speed_mps']
-    
-    logger.info("completed extracting time from BESS input table")
 
     results = BESS_JPL(
         geometry=geometry_multipoint,
@@ -343,23 +349,18 @@ def process_BESS_table(
 
     output_df = input_df.copy()
 
-    # Collect new columns to avoid DataFrame fragmentation
-    new_columns = {}
+    # Update or add columns from results, overwriting existing columns to avoid duplicates
     for key, value in results.items():
         # Skip non-array-like objects (e.g., MultiPoint geometry)
         if hasattr(value, '__len__') and not isinstance(value, (str, MultiPoint)):
             try:
-                new_columns[key] = value
+                output_df[key] = value  # Direct assignment overwrites existing columns
             except (ValueError, TypeError):
                 # Skip values that can't be assigned to DataFrame
                 logger.warning(f"Skipping assignment of key '{key}' to output DataFrame")
                 continue
         elif isinstance(value, (int, float, np.number)):
             # Handle scalar values
-            new_columns[key] = value
-
-    # Add all new columns at once using concat to avoid fragmentation
-    if new_columns:
-        output_df = pd.concat([output_df, pd.DataFrame(new_columns, index=output_df.index)], axis=1)
+            output_df[key] = value
 
     return output_df
