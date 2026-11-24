@@ -79,6 +79,7 @@ def calculate_water_vapor_deficit(SVP_Pa: np.ndarray, Ea_Pa: np.ndarray) -> np.n
     """
     return np.clip(SVP_Pa - Ea_Pa, 0, None)
 
+
 def calculate_relative_humidity(SVP_Pa: np.ndarray, Ea_Pa: np.ndarray) -> np.ndarray:
     """
     Calculate the relative humidity (RH).
@@ -92,6 +93,7 @@ def calculate_relative_humidity(SVP_Pa: np.ndarray, Ea_Pa: np.ndarray) -> np.nda
     """
     return np.clip(Ea_Pa / SVP_Pa, 0, 1)
 
+
 def calculate_latent_heat_of_vaporization(Ta_C: np.ndarray) -> np.ndarray:
     """
     Calculate the latent heat of vaporization in Joules per kilogram (J/kg).
@@ -103,6 +105,7 @@ def calculate_latent_heat_of_vaporization(Ta_C: np.ndarray) -> np.ndarray:
         np.ndarray: Latent heat of vaporization in J/kg.
     """
     return 2.501 - (2.361e-3 * Ta_C)
+
 
 def calculate_psychrometric_constant(Ps_Pa: np.ndarray, latent_heat: np.ndarray) -> np.ndarray:
     """
@@ -116,6 +119,7 @@ def calculate_psychrometric_constant(Ps_Pa: np.ndarray, latent_heat: np.ndarray)
         np.ndarray: Psychrometric constant in Pa/K.
     """
     return 0.00163 * Ps_Pa / latent_heat
+
 
 def calculate_specific_humidity(Ea_Pa: np.ndarray, Ps_Pa: np.ndarray) -> np.ndarray:
     """
@@ -131,6 +135,7 @@ def calculate_specific_humidity(Ea_Pa: np.ndarray, Ps_Pa: np.ndarray) -> np.ndar
     mv_ma = 0.622  # Ratio of molecular weight of water vapor to dry air
     return (mv_ma * Ea_Pa) / (Ps_Pa - 0.378 * Ea_Pa)
 
+
 def calculate_air_density(Ps_Pa: np.ndarray, Ta_K: np.ndarray) -> np.ndarray:
     """
     Calculate the air density in kilograms per cubic meter (kg/m³).
@@ -143,6 +148,7 @@ def calculate_air_density(Ps_Pa: np.ndarray, Ta_K: np.ndarray) -> np.ndarray:
         np.ndarray: Air density in kg/m³.
     """
     return Ps_Pa / (287.05 * Ta_K)
+
 
 # Define additional functions for remaining formulas
 def calculate_inverse_relative_distance_earth_sun(day_of_year: np.ndarray) -> np.ndarray:
@@ -157,6 +163,7 @@ def calculate_inverse_relative_distance_earth_sun(day_of_year: np.ndarray) -> np
     """
     return 1.0 + 0.033 * np.cos(2 * np.pi / 365.0 * day_of_year)
 
+
 def calculate_solar_declination(day_of_year: np.ndarray) -> np.ndarray:
     """
     Calculate the solar declination angle in radians.
@@ -168,6 +175,7 @@ def calculate_solar_declination(day_of_year: np.ndarray) -> np.ndarray:
         np.ndarray: Solar declination in radians.
     """
     return 0.409 * np.sin(2 * np.pi / 365.0 * day_of_year - 1.39)
+
 
 def calculate_sunset_hour_angle(latitude: np.ndarray, delta: np.ndarray) -> np.ndarray:
     """
@@ -184,6 +192,7 @@ def calculate_sunset_hour_angle(latitude: np.ndarray, delta: np.ndarray) -> np.n
     omegaS = np.where(np.isnan(omegaS) | np.isinf(omegaS), 0, omegaS)
     return np.real(omegaS)
 
+
 def calculate_day_length(omegaS: np.ndarray) -> np.ndarray:
     """
     Calculate the day length in hours.
@@ -195,6 +204,7 @@ def calculate_day_length(omegaS: np.ndarray) -> np.ndarray:
         np.ndarray: Day length in hours.
     """
     return 24.0 / np.pi * omegaS
+
 
 def calculate_snapshot_radiation(dr: np.ndarray, SZA: np.ndarray) -> np.ndarray:
     """
@@ -208,6 +218,7 @@ def calculate_snapshot_radiation(dr: np.ndarray, SZA: np.ndarray) -> np.ndarray:
         np.ndarray: Snapshot radiation in W/m².
     """
     return 1333.6 * dr * np.cos(SZA * np.pi / 180.0)
+
 
 def calculate_daily_mean_radiation(dr: np.ndarray, omegaS: np.ndarray, latitude: np.ndarray, delta: np.ndarray) -> np.ndarray:
     """
@@ -227,6 +238,7 @@ def calculate_daily_mean_radiation(dr: np.ndarray, omegaS: np.ndarray, latitude:
         + np.cos(latitude * np.pi / 180.0) * np.cos(delta) * np.sin(omegaS)
     )
 
+
 def calculate_clear_sky_radiation(elevation_m: np.ndarray, Ra: np.ndarray) -> np.ndarray:
     """
     Calculate the clear-sky solar radiation in W/m².
@@ -239,6 +251,7 @@ def calculate_clear_sky_radiation(elevation_m: np.ndarray, Ra: np.ndarray) -> np
         np.ndarray: Clear-sky solar radiation in W/m².
     """
     return (0.75 + 2e-5 * elevation_m) * Ra
+
 
 def calculate_cloudiness_index(Rg_Wm2: np.ndarray, Rgo: np.ndarray) -> np.ndarray:
     """
@@ -253,6 +266,7 @@ def calculate_cloudiness_index(Rg_Wm2: np.ndarray, Rgo: np.ndarray) -> np.ndarra
     """
     return np.clip(1.0 - Rg_Wm2 / Rgo, 0, 1)
 
+
 def calculate_all_sky_emissivity(epsa0: np.ndarray, cloudy: np.ndarray) -> np.ndarray:
     """
     Calculate the all-sky emissivity.
@@ -266,7 +280,6 @@ def calculate_all_sky_emissivity(epsa0: np.ndarray, cloudy: np.ndarray) -> np.nd
     """
     return epsa0 * (1 - cloudy) + cloudy
 
-# Define additional functions for remaining formulas
 
 def calculate_upscaling_factor(RaDaily: np.ndarray, Ra: np.ndarray, SZA: np.ndarray) -> np.ndarray:
     """
@@ -284,6 +297,7 @@ def calculate_upscaling_factor(RaDaily: np.ndarray, Ra: np.ndarray, SZA: np.ndar
     SFd = np.where(SZA > 89.0, 1, SFd)
     return np.clip(SFd, None, 1)
 
+
 def calculate_upscaling_factor_net_radiation(hour_of_day: np.ndarray, DL: np.ndarray) -> np.ndarray:
     """
     Calculate the upscaling factor for net radiation.
@@ -298,6 +312,7 @@ def calculate_upscaling_factor_net_radiation(hour_of_day: np.ndarray, DL: np.nda
     dT = np.abs(hour_of_day - 12.0)
     return 1.5 / (np.pi * np.sin((DL - 2.0 * dT) / (2.0 * DL) * np.pi)) * DL / 24.0
 
+
 def calculate_stress_factor(RH: np.ndarray, VPD_Pa: np.ndarray) -> np.ndarray:
     """
     Calculate the stress factor.
@@ -311,7 +326,7 @@ def calculate_stress_factor(RH: np.ndarray, VPD_Pa: np.ndarray) -> np.ndarray:
     """
     return RH ** (VPD_Pa / 1000.0)
 
-# Update calculate_desTa to match the original formula
+
 def calculate_desTa(SVP_Pa: np.ndarray, Ta_C: np.ndarray) -> np.ndarray:
     """
     Calculate the first derivative of saturated vapor pressure with respect to temperature.
@@ -325,7 +340,7 @@ def calculate_desTa(SVP_Pa: np.ndarray, Ta_C: np.ndarray) -> np.ndarray:
     """
     return SVP_Pa * 4098.0 * pow((Ta_C + 237.3), -2)
 
-# Update calculate_ddesTa to match the original formula
+
 def calculate_ddesTa(desTa: np.ndarray, SVP_Pa: np.ndarray, Ta_C: np.ndarray) -> np.ndarray:
     """
     Calculate the second derivative of saturated vapor pressure with respect to temperature.
@@ -340,7 +355,7 @@ def calculate_ddesTa(desTa: np.ndarray, SVP_Pa: np.ndarray, Ta_C: np.ndarray) ->
     """
     return 4098.0 * (desTa * pow((Ta_C + 237.3), -2) + (-2) * SVP_Pa * pow((Ta_C + 237.3), -3))
 
-# Update calculate_specific_heat_of_air to include q and Cpd
+
 def calculate_specific_heat_of_air(Ta_C: np.ndarray, q: np.ndarray) -> np.ndarray:
     """
     Calculate the specific heat of air in J/kg/K.
@@ -355,7 +370,7 @@ def calculate_specific_heat_of_air(Ta_C: np.ndarray, q: np.ndarray) -> np.ndarra
     Cpd = 1005 + (Ta_C + 273.15 - 250) ** 2 / 3364  # Specific heat of dry air
     return Cpd * (1 + 0.84 * q)
 
-# Update the meteorology function to use the corrected helper functions
+
 def meteorology(
         day_of_year: np.ndarray,  # day of year
         hour_of_day: np.ndarray,  # hour of day
@@ -372,9 +387,8 @@ def meteorology(
     Adapted from Youngryel Ryu's MATLAB code by Gregory Halverson and Robert Freepartner
     :return: Dictionary of meteorological outputs with keys identical to variable names
     """
-    # Use the refactored helper functions
     Ps_Pa = calculate_surface_pressure(elevation_m, Ta_K)
-    Ta_C = Ta_K - 273.16  # Convert Kelvin to Celsius
+    Ta_C = Ta_K - 273.16  # Convert Kelvin to Celsius (preserved from Ryu MATLAB baseline for ECOSTRESS Cal-Val parity)
     SVP_Pa = calculate_saturation_vapor_pressure(Ta_C)
     VPD_Pa = calculate_water_vapor_deficit(SVP_Pa, Ea_Pa)
     RH = calculate_relative_humidity(SVP_Pa, Ea_Pa)
@@ -407,7 +421,6 @@ def meteorology(
     ddesTa = calculate_ddesTa(desTa, SVP_Pa, Ta_C)
     Cp = calculate_specific_heat_of_air(Ta_C, q)
 
-    # Include R, Rc, Rs, and SFd in the return dictionary
     return {
         "Ps_Pa": Ps_Pa,
         "VPD_Pa": VPD_Pa,

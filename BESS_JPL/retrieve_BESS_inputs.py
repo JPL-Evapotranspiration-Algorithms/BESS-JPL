@@ -111,8 +111,8 @@ def retrieve_BESS_inputs(ST_C: Union[Raster, np.ndarray],  # surface temperature
             # cast SZA_deg numpy array to float32
             SZA_deg = SZA_deg.astype(np.float32)
 
-    print(type(SZA_deg))
-    print(SZA_deg.dtype if isinstance(SZA_deg, np.ndarray) else type(SZA_deg))
+    logger.debug(f"SZA_deg type: {type(SZA_deg)}")
+    logger.debug(f"SZA_deg dtype: {SZA_deg.dtype if isinstance(SZA_deg, np.ndarray) else type(SZA_deg)}")
 
     check_distribution(SZA_deg, "SZA_deg")
     results["SZA_deg"] = SZA_deg

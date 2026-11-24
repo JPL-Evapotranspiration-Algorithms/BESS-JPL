@@ -5,11 +5,13 @@ include pyproject.toml
 # Include the main package with all its files
 recursive-include BESS_JPL *
 
-# Exclude specific directories  
+# Exclude specific directories
 prune notebooks
 prune references
 prune examples
 prune tests
+prune notes
+prune debugging
 
 # Exclude development files
 global-exclude .git*

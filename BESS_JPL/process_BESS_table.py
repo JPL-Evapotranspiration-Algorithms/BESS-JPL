@@ -12,7 +12,7 @@ from solar_apparent_time import calculate_solar_day_of_year, calculate_solar_hou
 from geopandas import GeoSeries
 from shapely.geometry import Point as ShapelyPoint
 
-from rasters import MultiPoint
+from rasters import MultiPoint, Point
 
 from GEOS5FP import GEOS5FP
 
@@ -21,6 +21,7 @@ from .model import BESS_JPL
 from .retrieve_BESS_JPL_GEOS5FP_inputs import retrieve_BESS_JPL_GEOS5FP_inputs
 
 logger = logging.getLogger(__name__)
+
 
 def _is_notebook() -> bool:
     """Check if code is running in a Jupyter notebook environment."""
@@ -36,41 +37,48 @@ def _is_notebook() -> bool:
     except (ImportError, NameError):
         return False      # Probably standard Python interpreter
 
+
 def process_BESS_table(
         input_df: DataFrame,
         GEOS5FP_connection: GEOS5FP = None,
         C4_fraction_scale_factor: float = C4_FRACTION_SCALE_FACTOR,
         verbose: bool = None,
-        offline_mode: bool = False) -> DataFrame:
+        offline_mode: bool = False,
+        use_spectral_albedo: bool = False) -> DataFrame:
     # Set verbose default based on environment if not explicitly provided
     if verbose is None:
         verbose = not _is_notebook()
-    
+
     timer = TicToc()
-    
+
     ST_C = np.array(input_df.ST_C).astype(np.float64)
     NDVI = np.array(input_df.NDVI).astype(np.float64)
 
     NDVI = np.where(NDVI > 0.06, NDVI, np.nan).astype(np.float64)
 
     albedo = np.array(input_df.albedo).astype(np.float64)
-    
+
     if "PAR_albedo" in input_df:
         PAR_albedo = np.array(input_df.PAR_albedo).astype(np.float64)
     else:
         PAR_albedo = None
-        
+
     if "NIR_albedo" in input_df:
         NIR_albedo = np.array(input_df.NIR_albedo).astype(np.float64)
     else:
         NIR_albedo = None
-    
+
     if "Ta_C" in input_df:
         Ta_C = np.array(input_df.Ta_C).astype(np.float64)
     elif "Ta" in input_df:
         Ta_C = np.array(input_df.Ta).astype(np.float64)
+    else:
+        Ta_C = None
 
-    RH = np.array(input_df.RH).astype(np.float64)
+    if "RH" in input_df:
+        RH = np.array(input_df.RH).astype(np.float64)
+    else:
+        RH = None
 
     if "elevation_m" in input_df:
         elevation_m = np.array(input_df.elevation_m).astype(np.float64)
@@ -88,10 +96,10 @@ def process_BESS_table(
         NDVI_minimum = None
 
     if "NDVI_maximum" in input_df:
-        NDVI_maximum = np.array(input_df.NDVI_maximum).astype(np.float64).astype(np.float64)
+        NDVI_maximum = np.array(input_df.NDVI_maximum).astype(np.float64)
     else:
         NDVI_maximum = None
-    
+
     if "C4_fraction" in input_df:
         C4_fraction = np.array(input_df.C4_fraction).astype(np.float64)
     else:
@@ -106,7 +114,7 @@ def process_BESS_table(
         kn = np.array(input_df.kn).astype(np.float64)
     else:
         kn = None
-    
+
     if "peakVCmax_C3" in input_df:
         peakVCmax_C3 = np.array(input_df.peakVCmax_C3).astype(np.float64)
     else:
@@ -116,12 +124,12 @@ def process_BESS_table(
         peakVCmax_C4 = np.array(input_df.peakVCmax_C4).astype(np.float64)
     else:
         peakVCmax_C4 = None
-    
+
     if "ball_berry_slope_C3" in input_df:
         ball_berry_slope_C3 = np.array(input_df.ball_berry_slope_C3).astype(np.float64)
     else:
         ball_berry_slope_C3 = None
-    
+
     if "ball_berry_slope_C4" in input_df:
         ball_berry_slope_C4 = np.array(input_df.ball_berry_slope_C4).astype(np.float64)
     else:
@@ -165,9 +173,6 @@ def process_BESS_table(
 
     if "wind_speed_mps" in input_df:
         wind_speed_mps = np.array(input_df.wind_speed_mps).astype(np.float64)
-        # Apply default wind speed of 7.4 m/s when wind speed is 0 or very low
-        # to avoid numerical instability in aerodynamic resistance calculations
-        # wind_speed_mps = np.where(wind_speed_mps < 0.1, 7.4, wind_speed_mps)
     else:
         wind_speed_mps = None
 
@@ -175,7 +180,7 @@ def process_BESS_table(
         vapor_gccm = np.array(input_df.vapor_gccm).astype(np.float64)
     else:
         vapor_gccm = None
-    
+
     if "ozone_cm" in input_df:
         ozone_cm = np.array(input_df.ozone_cm).astype(np.float64)
     else:
@@ -195,14 +200,9 @@ def process_BESS_table(
         soil_temperature_C = ST_C.copy()
 
     # --- Handle geometry and time columns ---
-    import pandas as pd
-    from rasters import MultiPoint, WGS84
-    # from shapely.geometry import Point
-    from rasters import Point
-
     def ensure_geometry(df):
         if "geometry" in df:
-            if isinstance(df.geometry.iloc[0], str):
+            if len(df) > 0 and isinstance(df.geometry.iloc[0], str):
                 def parse_geom(s):
                     s = s.strip()
                     if s.startswith("POINT"):
@@ -225,7 +225,7 @@ def process_BESS_table(
 
     if "geometry" in input_df:
         # Convert Point objects to a list of Points
-        if hasattr(input_df.geometry.iloc[0], "x") and hasattr(input_df.geometry.iloc[0], "y"):
+        if len(input_df) > 0 and hasattr(input_df.geometry.iloc[0], "x") and hasattr(input_df.geometry.iloc[0], "y"):
             geometry = [Point(pt.x, pt.y) for pt in input_df.geometry]
         else:
             geometry = [Point(pt) for pt in input_df.geometry]
@@ -241,42 +241,43 @@ def process_BESS_table(
 
     logger.info("started extracting time from BESS input table")
     timer.tic()
-    time_UTC_list = pd.to_datetime(input_df.time_UTC, format='ISO8601').tolist()
+    time_UTC_list = pd.to_datetime(input_df.time_UTC, format='mixed').tolist()
     elapsed = timer.tocvalue()
     logger.info(f"completed extracting time from BESS input table ({elapsed:.2f} seconds)")
-    
+
     logger.info("started calculating day of year and hour of day")
     timer.tic()
-    
+
     # Create GeoSeries once for all geometry
     geoseries_all = GeoSeries([ShapelyPoint(geom.x, geom.y) for geom in geometry])
-    
+
     # Call functions once with full arrays - they should handle broadcasting
     day_of_year = np.asarray(calculate_solar_day_of_year(time_UTC=time_UTC_list, geometry=geoseries_all))
     hour_of_day = np.asarray(calculate_solar_hour_of_day(time_UTC=time_UTC_list, geometry=geoseries_all))
-    
+
     elapsed = timer.tocvalue()
     logger.info(f"completed calculating day of year and hour of day ({elapsed:.2f} seconds)")
-    
-    # Convert list of rasters.Point to MultiPoint for compatibility with FLiESANN and other functions
-    
+
+    # Convert list of rasters.Point to MultiPoint for compatibility with FLiESANN and model
     logger.info("started extracting geometry")
     timer.tic()
-    
-    # Extract (x, y) tuples from rasters.Point objects
+
     point_tuples = [(pt.x, pt.y) for pt in geometry]
     geometry_multipoint = MultiPoint(point_tuples)
     time_UTC = time_UTC_list
-    
+
     elapsed = timer.tocvalue()
     logger.info(f"completed extracting geometry ({elapsed:.2f} seconds)")
-        
+
     logger.info("started retrieving BESS inputs")
     timer.tic()
 
+    PAR_albedo_input = PAR_albedo if use_spectral_albedo else albedo
+    NIR_albedo_input = NIR_albedo if use_spectral_albedo else albedo
+
     BESS_GEOS5FP_inputs = retrieve_BESS_JPL_GEOS5FP_inputs(
         time_UTC=time_UTC,
-        geometry=geometry_multipoint,
+        geometry=geometry,
         albedo=albedo,
         GEOS5FP_connection=GEOS5FP_connection,
         Ta_C=Ta_C,
@@ -285,17 +286,17 @@ def process_BESS_table(
         AOT=AOT,
         vapor_gccm=vapor_gccm,
         ozone_cm=ozone_cm,
-        PAR_albedo=PAR_albedo,
-        NIR_albedo=albedo,
+        PAR_albedo=PAR_albedo_input,
+        NIR_albedo=NIR_albedo_input,
         Ca=Ca,
         wind_speed_mps=wind_speed_mps,
         verbose=verbose,
         offline_mode=offline_mode
     )
-    
+
     elapsed = timer.tocvalue()
     logger.info(f"finished retrieving BESS inputs ({elapsed:.2f} seconds)")
-    
+
     albedo = BESS_GEOS5FP_inputs['albedo']
     Ta_C = BESS_GEOS5FP_inputs['Ta_C']
     RH = BESS_GEOS5FP_inputs['RH']
@@ -338,8 +339,8 @@ def process_BESS_table(
         wind_speed_mps=wind_speed_mps,
         vapor_gccm=vapor_gccm,
         ozone_cm=ozone_cm,
-        PAR_albedo=albedo,
-        NIR_albedo=albedo,
+        PAR_albedo=PAR_albedo,
+        NIR_albedo=NIR_albedo,
         canopy_temperature_C=canopy_temperature_C,
         soil_temperature_C=soil_temperature_C,
         C4_fraction_scale_factor=C4_fraction_scale_factor,
