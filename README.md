@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/JPL-Evapotranspiration-Algorithms/BESS-JPL/actions/workflows/ci.yml/badge.svg)](https://github.com/JPL-Evapotranspiration-Algorithms/BESS-JPL/actions/workflows/ci.yml)
 
-`BESS-JPL` is a NASA Jet Propulsion Laboratory Python implementation of the Breathing Earth System Simulator (BESS) model for estimating coupled Gross Primary Productivity ($\text{GPP}$) and Evapotranspiration ($\text{ET}$) from remote sensing observations. Developed for the ECOSTRESS mission and as a precursor for Surface Biology and Geology (SBG), it integrates atmospheric radiative transfer (`FLiESANN`), two-stream canopy shortwave and longwave radiation, $C_3$/$C_4$ photosynthesis, stomatal conductance, and two-source surface energy balance.
+`BESS-JPL` is a NASA Jet Propulsion Laboratory Python implementation of the Breathing Earth System Simulator (BESS) model for estimating coupled Gross Primary Productivity (GPP) and Evapotranspiration (ET) from remote sensing observations. Developed for the ECOSTRESS mission and as a precursor for Surface Biology and Geology (SBG), it integrates atmospheric radiative transfer (`FLiESANN`), two-stream canopy shortwave and longwave radiation, C<sub>3</sub> / C<sub>4</sub> photosynthesis, stomatal conductance, and two-source surface energy balance.
 
 ## Contributors
 
@@ -74,9 +74,9 @@ If you use `BESS-JPL` in research, operational pipelines, or publications, pleas
 
 ## Overview & Background
 
-This software package is a Python re-implementation of the Breathing Earth System Simulator (BESS) model developed at NASA's Jet Propulsion Laboratory based on [MATLAB code](https://www.environment.snu.ac.kr/bess-flux) produced by Youngryel Ryu at Seoul National University. Originally formulated to quantify global gross primary productivity ($\text{GPP}$) and evapotranspiration ($\text{ET}$) from 1–5 km, 8-day MODIS products, `BESS-JPL` adapts the coupled-process framework to fine-resolution thermal and optical remote sensing observations.
+This software package is a Python re-implementation of the Breathing Earth System Simulator (BESS) model developed at NASA's Jet Propulsion Laboratory based on [MATLAB code](https://www.environment.snu.ac.kr/bess-flux) produced by Youngryel Ryu at Seoul National University. Originally formulated to quantify global gross primary productivity (GPP) and evapotranspiration (ET) from 1–5 km, 8-day MODIS products, `BESS-JPL` adapts the coupled-process framework to fine-resolution thermal and optical remote sensing observations.
 
-Specifically, `BESS-JPL` is engineered to process $\text{GPP}$ and $\text{ET}$ at 70 m spatial resolution using land surface temperature ($\text{ST}$) from the ECOsystem Spaceborne Thermal Radiometer Experiment on Space Station (ECOSTRESS) mission together with Normalized Difference Vegetation Index ($\text{NDVI}$) and surface albedo from the [Spatial Timeseries for Automated high-Resolution multi-Sensor (STARS)](https://github.com/STARS-Data-Fusion) data fusion system. Within the ECOSTRESS Collection 3 `JET3` ensemble (`ECOv003-L3T-L4T-JET`), `BESS-JPL` serves both as one of four constituent evapotranspiration models (`L3T_JET`) and as the sole provider of $\text{GPP}$ for Water Use Efficiency (`L4T_WUE`).
+Specifically, `BESS-JPL` is engineered to process GPP and ET at 70 m spatial resolution using land surface temperature (ST) from the ECOsystem Spaceborne Thermal Radiometer Experiment on Space Station (ECOSTRESS) mission together with Normalized Difference Vegetation Index (NDVI) and surface albedo from the [Spatial Timeseries for Automated high-Resolution multi-Sensor (STARS)](https://github.com/STARS-Data-Fusion) data fusion system. Within the ECOSTRESS Collection 3 `JET3` ensemble (`ECOv003-L3T-L4T-JET`), `BESS-JPL` serves both as one of four constituent evapotranspiration models (`L3T_JET`) and as the sole provider of GPP for Water Use Efficiency (`L4T_WUE`).
 
 Developed under a NASA Research Opportunities in Space and Earth Sciences (ROSES) grant as an algorithmic precursor for the Surface Biology and Geology (SBG) mission, the package supports interactive research in Jupyter notebooks as well as automated, air-gapped production pipelines, and is released in accordance with NASA SPD-41 open-science requirements.
 
@@ -124,12 +124,12 @@ results = BESS_JPL(
 )
 
 # Inspect key gridded outputs
-gpp_inst = results["GPP"]            # Instantaneous GPP [μmol CO2 m^-2 s^-1]
-gpp_daily = results["GPP_daily"]     # Daily GPP [g C m^-2 day^-1]
-le_inst = results["LE_Wm2"]          # Instantaneous latent heat flux [W m^-2]
-rn_inst = results["Rn_Wm2"]          # Instantaneous net radiation [W m^-2]
-g_inst = results["G_Wm2"]            # Soil heat flux [W m^-2]
-et_daylight = results["ET_daylight_kg"]  # Daylight upscaled ET [kg m^-2 / mm]
+gpp_inst = results["GPP"]               # Instantaneous GPP [μmol CO2 m^-2 s^-1]
+gpp_daily = results["GPP_daily"]        # Daily GPP [g C m^-2 day^-1]
+le_inst = results["LE_Wm2"]             # Instantaneous latent heat flux [W m^-2]
+rn_inst = results["Rn_Wm2"]             # Instantaneous net radiation [W m^-2]
+g_inst = results["G_Wm2"]               # Soil heat flux [W m^-2]
+et_daylight = results["ET_daylight_kg"] # Daylight upscaled ET [kg m^-2 / mm]
 ```
 
 ### 2. Tabular Point & Cal-Val Processing (`process_BESS_table`)
@@ -169,24 +169,66 @@ assert verify(), "BESS-JPL numerical verification failed"
 
 `BESS-JPL` couples five physical sub-models across sunlit canopy, shaded canopy, and soil compartments:
 
-1. **Atmospheric Radiative Transfer (`FLiESANN` & Spectral Albedo Scaling):**
-   When incoming shortwave components are not supplied, `BESS-JPL` invokes the Forest Light Environmental Simulator artificial neural network emulator (`FLiESANN`) using cloud optical thickness ($\text{COT}$), aerosol optical thickness ($\text{AOT}$), precipitable water vapor, column ozone, surface elevation, solar zenith angle ($\text{SZA}$), and Köppen-Geiger climate class to partition total incoming shortwave radiation ($S_{\text{Win}}$) into direct and diffuse photosynthetically active radiation ($\text{PAR}$, $400\text{--}700\,\text{nm}$), near-infrared radiation ($\text{NIR}$), and ultraviolet radiation ($\text{UV}$). Broadband surface albedo ($\alpha$) is scaled to visible ($\alpha_{\text{PAR}}$) and near-infrared ($\alpha_{\text{NIR}}$) albedos using GEOS-5 FP directional albedo ratios ($\text{ALBVISDR}/\text{ALBEDO}$ and $\text{ALBNIRDR}/\text{ALBEDO}$).
+### 1. Atmospheric Radiative Transfer & Spectral Albedo Scaling (`FLiESANN`)
 
-2. **Canopy Structure & Two-Stream Shortwave/Longwave Transfer (`canopy_shortwave_radiation`, `canopy_longwave_radiation`):**
-   Leaf Area Index ($\text{LAI}$) is derived from $\text{NDVI}$ via Beer-Lambert inversion ($\text{LAI} = -\ln(1 - \text{fIPAR}) / k_{\text{PAR}}$) and adjusted by MODIS clumping index ($\text{CI}$) to partition the canopy into sunlit and shaded leaf fractions ($f_{\text{sun}}$). Two-stream radiative transfer computes absorbed $\text{PAR}$ ($\text{APAR}_{\text{sunlit}}$, $\text{APAR}_{\text{shade}}$) and absorbed shortwave radiation ($\text{ASW}_{\text{sunlit}}$, $\text{ASW}_{\text{shade}}$, $\text{ASW}_{\text{soil}}$), while ground heat storage is parameterized from soil-absorbed $\text{PAR}$ ($G = 0.28\,\text{APAR}_{\text{soil}}$). Absorbed longwave radiation ($\text{ALW}$) is evaluated for sunlit leaves, shaded leaves, and soil following Wang et al. (2006) using Stefan-Boltzmann emission and clear/all-sky atmospheric emissivity ($\varepsilon_a$).
+When incoming shortwave components are not supplied, `BESS-JPL` invokes the Forest Light Environmental Simulator artificial neural network emulator (`FLiESANN`) using cloud optical thickness (COT), aerosol optical thickness (AOT), precipitable water vapor, column ozone, surface elevation, solar zenith angle (SZA), and Köppen-Geiger climate class to partition total incoming shortwave radiation (*S*<sub>Win</sub>) into direct and diffuse photosynthetically active radiation (PAR, 400–700 nm), near-infrared radiation (NIR), and ultraviolet radiation (UV). Broadband surface albedo (*α*) is scaled to visible and near-infrared albedos using GEOS-5 FP directional albedo ratios:
 
-3. **Canopy Nitrogen Scaling & $\mathrm{C}_3$/$\mathrm{C}_4$ Biochemical Photosynthesis (`calculate_VCmax`, `C3_photosynthesis`, `C4_photosynthesis`):** Leaf-level peak carboxylation capacity at $25\,^\circ\mathrm{C}$ ($V_{\mathrm{cmax},25}$) is scaled across seasonal phenology ($\mathrm{LAI}_{\min}$ to $\mathrm{LAI}_{\max}$) and integrated vertically over sunlit and shaded canopy fractions using beam ($k_b$) and nitrogen ($k_n$) extinction coefficients. Net carbon assimilation ($A_n$) is computed separately for $\mathrm{C}_3$ pathways (Collatz et al., 1991, co-limited by Rubisco $J_C$, electron transport $J_E$, and export capacity $J_S$) and $\mathrm{C}_4$ pathways (Collatz et al., 1992).
+$$
+\alpha_{\mathrm{PAR}} = \mathrm{clip}\!\left(\alpha \cdot \frac{\mathrm{ALBVISDR}}{\mathrm{ALBEDO}},\, 0,\, 1\right), \qquad \alpha_{\mathrm{NIR}} = \mathrm{clip}\!\left(\alpha \cdot \frac{\mathrm{ALBNIRDR}}{\mathrm{ALBEDO}},\, 0,\, 1\right)
+$$
 
-4. **Coupled Stomatal Conductance & Two-Source Surface Energy Balance (`canopy_energy_balance`, `soil_energy_balance`, `process_paw_and_gao_LE`):**
-   Stomatal conductance ($g_s$) is coupled to net assimilation via the Ball-Berry formulation ($g_s = m\,\text{RH}\,A_n / C_a + b_0\,f_{\text{stress}}$) and solved iteratively for intercellular $\text{CO}_2$ ($C_i$), leaf temperature ($T_f$), and soil temperature ($T_s$). Canopy latent heat flux ($\text{LE}_{\text{canopy}}$) is solved via the quadratic Penman-Monteith formulation of Paw U & Gao (1988), and soil evaporation ($\text{LE}_{\text{soil}}$) is computed via equilibrium evaporation moderated by relative humidity and vapor pressure deficit ($\text{RH}^{\text{VPD}/1000}$).
+### 2. Canopy Structure & Two-Stream Radiative Transfer (`canopy_shortwave_radiation`, `canopy_longwave_radiation`)
 
-5. **$C_3$/$C_4$ Blending & Daylight Upscaling (`interpolate_C3_C4`, `daylight-evapotranspiration`):**
-   Total ecosystem fluxes ($\text{GPP}$, $\text{LE}$, $\text{LE}_{\text{canopy}}$, $\text{LE}_{\text{soil}}$, $R_n$, $R_{n,\text{canopy}}$, $R_{n,\text{soil}}$) are linearly interpolated between $C_3$ and $C_4$ solutions using the local $C_4$ vegetation fraction. Instantaneous $\text{GPP}$ is upscaled to daily $\text{GPP}_{\text{daily}}$ ($\text{g C m}^{-2}\,\text{day}^{-1}$) via the solar radiation ratio $\text{SF}_d$ (Ryu et al., 2008), and instantaneous $\text{LE}$ is upscaled to daylight evapotranspiration ($\text{ET}_{\text{daylight}}$) using `daylight-evapotranspiration`.
+Leaf Area Index (LAI) is derived from NDVI via Beer-Lambert inversion and adjusted by MODIS clumping index (CI) to partition the canopy into sunlit and shaded leaf fractions (*f*<sub>sun</sub>):
+
+$$
+\mathrm{LAI} = -\frac{\ln(1 - \mathrm{fIPAR})}{k_{\mathrm{PAR}}}, \qquad f_{\mathrm{sun}} = \frac{1 - \exp(-k_b \, \mathrm{LAI} \, \mathrm{CI})}{k_b \, \mathrm{LAI}}
+$$
+
+Two-stream shortwave radiative transfer computes absorbed PAR (APAR<sub>sunlit</sub>, APAR<sub>shade</sub>) and absorbed shortwave radiation (ASW<sub>sunlit</sub>, ASW<sub>shade</sub>, ASW<sub>soil</sub>), while ground heat storage (*G*) is parameterized from soil-absorbed PAR:
+
+$$
+G = 0.28 \, \mathrm{APAR}_{\mathrm{soil}}
+$$
+
+Absorbed longwave radiation (ALW) is evaluated for sunlit leaves, shaded leaves, and soil following Wang et al. (2006) using Stefan-Boltzmann emission and all-sky atmospheric emissivity (*ε*<sub>a</sub>).
+
+### 3. Canopy Nitrogen Scaling & C<sub>3</sub> / C<sub>4</sub> Biochemical Photosynthesis (`calculate_VCmax`, `C3_photosynthesis`, `C4_photosynthesis`)
+
+Leaf-level peak carboxylation capacity at 25 °C (*V*<sub>cmax,25</sub>) is scaled across seasonal phenology (LAI<sub>min</sub> to LAI<sub>max</sub>) and integrated vertically over sunlit and shaded canopy fractions using beam (*k*<sub>b</sub>) and nitrogen (*k*<sub>n</sub>) extinction coefficients:
+
+$$
+V_{\mathrm{cmax,sunlit}} = \mathrm{LAI} \cdot V_{\mathrm{cmax},25} \cdot \frac{1 - \exp(-(k_n + k_b \, \mathrm{LAI}))}{k_n + k_b \, \mathrm{LAI}}
+$$
+
+Net carbon assimilation (*A*<sub>n</sub>) is computed separately for C<sub>3</sub> pathways (Collatz et al., 1991, co-limited by Rubisco *J*<sub>C</sub>, electron transport *J*<sub>E</sub>, and export capacity *J*<sub>S</sub>) and C<sub>4</sub> pathways (Collatz et al., 1992).
+
+### 4. Coupled Stomatal Conductance & Two-Source Surface Energy Balance (`canopy_energy_balance`, `soil_energy_balance`, `process_paw_and_gao_LE`)
+
+Stomatal conductance (*g*<sub>s</sub>) is coupled to net assimilation via the Ball-Berry formulation and solved iteratively for intercellular CO<sub>2</sub> (*C*<sub>i</sub>), leaf temperature (*T*<sub>f</sub>), and soil temperature (*T*<sub>s</sub>):
+
+$$
+g_s = m \, \mathrm{RH} \, \frac{A_n}{C_a} + b_0 \, f_{\mathrm{stress}}
+$$
+
+Canopy latent heat flux (LE<sub>canopy</sub>) is solved via the quadratic Penman-Monteith formulation of Paw U & Gao (1988), and soil evaporation (LE<sub>soil</sub>) is computed via equilibrium evaporation moderated by relative humidity and vapor pressure deficit:
+
+$$
+\mathrm{LE}_{\mathrm{soil}} = \frac{\Delta}{\Delta + \gamma} (R_{n,\mathrm{soil}} - G) \, \mathrm{RH}^{\mathrm{VPD} / 1000}
+$$
+
+### 5. C<sub>3</sub> / C<sub>4</sub> Blending & Daylight Upscaling (`interpolate_C3_C4`, `daylight-evapotranspiration`)
+
+Total ecosystem fluxes (GPP, LE, LE<sub>canopy</sub>, LE<sub>soil</sub>, *R*<sub>n</sub>, *R*<sub>n,canopy</sub>, *R*<sub>n,soil</sub>) are linearly interpolated between C<sub>3</sub> and C<sub>4</sub> solutions using the local C<sub>4</sub> vegetation fraction (*f*<sub>C4</sub>). Instantaneous GPP is upscaled to daily GPP<sub>daily</sub> (g C m<sup>−2</sup> day<sup>−1</sup>) via the solar radiation ratio SF<sub>d</sub> (Ryu et al., 2008), and instantaneous LE is upscaled to daylight evapotranspiration (ET<sub>daylight</sub>) using `daylight-evapotranspiration`:
+
+$$
+\mathrm{GPP}_{\mathrm{daily}} = \frac{1800 \, \mathrm{GPP}}{\mathrm{SF}_d} \times 12 \times 10^{-6}
+$$
 
 ## Operational Notes & Known Behaviors
 
 * **Spectral vs. broadband albedo in `process_BESS_table()`:** The gridded `BESS_JPL()` entry point (and `JET3.JET()`) preserves separate `PAR_albedo` and `NIR_albedo` inputs or scales broadband `albedo` using GEOS-5 FP `ALBVISDR` and `ALBNIRDR`. In `process_BESS_table()`, `use_spectral_albedo` defaults to `False` to preserve exact parity with the frozen `ECOv002-cal-val-BESS-JPL-outputs.csv` verification baseline (`rtol=1e-4, atol=1e-7`); pass `use_spectral_albedo=True` to enable directional PAR/NIR albedos in tabular workflows.
-* **Default atmospheric $\text{CO}_2$ (`Ca`) in `process_BESS_table()`:** When `Ca` is omitted from `input_df`, `process_BESS_table()` defaults `Ca` to `400.0` ppm so offline verification tables without `Ca` run deterministically without network access.
+* **Default atmospheric CO<sub>2</sub> (`Ca`) in `process_BESS_table()`:** When `Ca` is omitted from `input_df`, `process_BESS_table()` defaults `Ca` to `400.0` ppm so offline verification tables without `Ca` run deterministically without network access.
 * **Kelvin-to-Celsius conversion in `meteorology.py`:** `meteorology()` retains `Ta_C = Ta_K - 273.16` from Youngryel Ryu's original MATLAB formulation to preserve `rtol=1e-4` numerical parity with the ECOSTRESS Collection 2/3 Cal-Val and `JET3` baseline.
 
 ## Release History & Technical Evolution
@@ -239,13 +281,13 @@ assert verify(), "BESS-JPL numerical verification failed"
 | **`v1.5.4`** | 2025-03-28 | Added `check_distribution` assertions for inputs and intermediates in `canopy_shortwave_radiation`. |
 | **`v1.5.3`** | 2025-03-28 | Added intermediate radiative transfer checks and zero-LAI handling in `canopy_shortwave_radiation`. |
 | **`v1.5.2`** | 2025-03-28 | Made `check_distribution` compatible with NumPy arrays in addition to `Raster` objects. |
-| **`v1.5.1`** | 2025-03-28 | Added intermediate distribution diagnostics across meteorology, $V_{\mathrm{cmax}}$, radiation, and flux modules. |
+| **`v1.5.1`** | 2025-03-28 | Added intermediate distribution diagnostics across meteorology, *V*<sub>cmax</sub>, radiation, and flux modules. |
 | **`v1.5.0`** | 2025-03-28 | Updated `BESS()` to return a named dictionary of flux and radiation outputs instead of a positional tuple. |
 | **`v1.4.8`** | 2025-03-28 | Updated clumping index integration to use the uppercase `MODISCI` package (`>=1.3.0`). |
 | **`v1.4.7`** | 2025-03-28 | Added automatic clumping index (`CI`) retrieval via `MODISCI`. |
 | **`v1.4.6`** | 2025-03-28 | Added `None` parameter validation in `canopy_shortwave_radiation`. |
 | **`v1.4.5`** | 2025-03-28 | Fixed `geometry` handling and removed legacy `CoordinateArray` overrides. |
-| **`v1.4.4`** | 2025-03-28 | Fixed atmospheric $\text{CO}_2$ retrieval using `GEOS5FP_connection.CO2SC()`. |
+| **`v1.4.4`** | 2025-03-28 | Fixed atmospheric CO<sub>2</sub> retrieval using `GEOS5FP_connection.CO2SC()`. |
 | **`v1.4.3`** | 2025-03-28 | Migrated meteorological data retrieval to the uppercase `GEOS5FP` package (`>=1.1.1`). |
 | **`v1.4.1`** | 2025-03-27 | Updated `FLiESANN` dependency pin (`>=1.4.0` / `>=1.4.1`). |
 | **`v1.4.0`** | 2025-03-27 | Switched radiative transfer calls to the unified `FLiESANN()` entry point. |
