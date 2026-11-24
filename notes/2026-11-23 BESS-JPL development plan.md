@@ -104,7 +104,7 @@ Every change in `BESS-JPL v1.29.0` is governed by two strict, non-negotiable inv
 | **`v1.4.7`** | 2025-03-28 | Added automatic clumping index (`CI`) retrieval via `MODISCI`. |
 | **`v1.4.8`** | 2025-03-28 | Migrated clumping index dependency from `modisci` to uppercase `MODISCI>=1.3.0`. |
 | **`v1.5.0`** | 2025-03-28 | Changed `BESS()` return value from an 8-element positional tuple to a named `dict` (`GPP`, `GPP_daily`, `Rn`, `Rn_soil`, `Rn_canopy`, `LE`, `LE_soil`, `LE_canopy`). |
-| **`v1.5.1`** | 2025-03-28 | Instrumented meteorology, $V_{c,\max}$, canopy radiation, and carbon/water flux outputs with `check_distribution` diagnostics. |
+| **`v1.5.1`** | 2025-03-28 | Instrumented meteorology, $V_{\mathrm{cmax}}$, canopy radiation, and carbon/water flux outputs with `check_distribution` diagnostics. |
 | **`v1.5.2`** | 2025-03-28 | Extended `check_distribution` to support `numpy.ndarray` inputs alongside `Raster` objects. |
 | **`v1.5.3`** | 2025-03-28 | Added `check_distribution` assertions across all intermediate radiative transfer variables and guarded `fSun` against `LAI == 0`. |
 | **`v1.5.4`** | 2025-03-28 | Added `check_distribution` validation on input parameters in `canopy_shortwave_radiation.py`. |
